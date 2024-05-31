@@ -10,7 +10,14 @@
 #define FLAG_Z 1
 #define FLAG_C 0
 
+//define constant for one Byte of memory
+#define BYTE uint8_t
+
 void BRK();
+void RTI();
+void ORA(BYTE compared);
+//may need to change to take memory address to update
+BYTE ASL(BYTE byte);
 
 //ensure Program Counter is an int that takes 2 bytes/16 bits of memory
 uint16_t PC = 0xFFu; 
@@ -28,7 +35,7 @@ uint16_t PC = 0xFFu;
 
 can use SET_ON constants to turn on
 */
-uint8_t P = 0x00u;
+BYTE P = 0x00u;
 
 /*
   Stack $0100-$01FF
@@ -47,24 +54,59 @@ uint8_t P = 0x00u;
   */
 
   
-uint8_t SP = 0xFFu;
+BYTE SP = 0xFFu;
+
+/* Accumulator Register: 8-bit register used to store results of arithmetic
+and logical operations or hold a value from memory.
+*/
+BYTE A = 0x00u;
 
 //declare an array to hold NES memory addresses from $0000-$FFFF
 //each page is 0xFF
 //will need to do memory mirroring $0000-$07FF mapped to $0800-$1FFF
 char memory[0xFFFF];
 
+//helper function to check memory value bits
+void check_memory(BYTE mem) {
+    BYTE mask = ~(~0 << 1);
+    for(int i = 7; i >= 0; i--) {
+        printf("%u", (mem >> i) & mask);
+    }
+    printf("\n");
+}
+
+//returns 0 if not negative and 128 if it is because c has no bool
+unsigned int check_neg(BYTE byte) {
+    BYTE neg_mask = (~0 << 7);
+    return neg_mask & byte;
+}
+
+unsigned int getBit(BYTE byte, int position) {
+    BYTE mask = ~(~0 << 1);
+    return (byte >> position) & mask;
+}
+
 unsigned int getFlag(int position) {
     unsigned int flag;
-    uint8_t mask = ~(~0 << 1);
-    flag = (P >> position) & mask;
+    flag = getBit(P, position);
     return flag;
 }
 
 void setFlag(int position) {
-    uint8_t setFlag = ~(~0 << 1);
-    P = P | (setFlag << position);
+    BYTE setMask = ~(~0 << 1);
+    P = P | (setMask << position);
 }
+
+/* 
+works by checking if Flag to be reset is 0, in which case unchanged
+otherwise perform AND bitwise operation on mask with all bits except Flag to 
+be reset to 1
+*/
+void resetFlag(int position) {
+    BYTE resetMask = ~(~0 << 1);
+    P = P & ~(resetMask << position);
+}
+
 
 void IRQ_Interrupt() {
     uint16_t InterruptPointer = (memory[0xFFFF] << 8) + memory[0xFFFE];
@@ -103,6 +145,41 @@ int main() {
 
     printf("%u\n", PC);
 
+    RTI();
+
+    A = 20;
+    check_memory(A);
+    ORA(27);
+    check_memory(27);
+    check_memory(A);
+    printf("%u\n", check_neg(A));
+    printf("%u\n", check_neg(-2));
+
+    printf("The Processor Status register is: 0x%x\n", P);
+    for(int i = 7; i >= 0; i--) {
+        printf("%u", getFlag(i));
+    }
+    printf("\n");
+
+    resetFlag(FLAG_B);
+    printf("The Processor Status register is: 0x%x\n", P);
+    for(int i = 7; i >= 0; i--) {
+        printf("%u", getFlag(i));
+    }
+    printf("\n");
+    resetFlag(FLAG_B);
+    printf("The Processor Status register is: 0x%x\n", P);
+    for(int i = 7; i >= 0; i--) {
+        printf("%u", getFlag(i));
+    }
+    printf("\n");
+
+    check_memory(A);
+    A = -27;
+    check_memory(A);
+    A = ASL(A);
+    check_memory(A);
+
 }
 
 //function for break instruction
@@ -125,25 +202,14 @@ void BRK() {
     SP--;
     printf("%u\n", SP);
     memory[SP] = P; // status register
+    SP--;
     
-    /*
-    check it worked
-    for(int i = 0; i < 3; i++) {
-        printf("%u\n", memory[SP]);
-        SP++;
-    }
-    */
-
     //Interrupt Mask bit is set to 1
+    //note described as disables maskable interrupt? 
     setFlag(FLAG_I);
     //Interrupt pointer $FFFE and $FFFF loaded into PC
     IRQ_Interrupt();
-
-    //does RTI need to be in BRK? seems like separate instruction
-    
-    
-
-
+  
     /*The BRK instruction forces the generation of an interrupt request. 
     The program counter and processor status are pushed on the stack then 
     the IRQ interrupt vector at $FFFE/F is loaded into the PC and the break 
@@ -157,9 +223,84 @@ void BRK() {
     RTI will be correct. */
 }
 
-void ORA() {
-    //affects flags N and Z
+/*
+    Return from Interrupt. Pulls the Status (P) register and PC off top of the 
+    Stack.
+    Relies on Stack Pointer pointing to correct position in stack
+*/
+void RTI() {
+    printf("%u\n", SP);
+    SP++;
+    printf("%u\n", SP);
+    printf("%u\n", P);
+    P = memory[SP]; //status register
+    //note loses interrupt mask set during BRK instruction
+    printf("%u\n", P);
+    SP++;
+    printf("%u\n", SP);
+    BYTE lowByte = memory[SP];
+    SP++;
+    printf("%u\n", SP);
+    PC = memory[SP] << 8;
+    printf("%u\n", PC);
+    PC = PC + lowByte;
+    printf("%u\n", PC);
+    //check if meant to be +2 ***
+}
+
+/*
+Logically OR Memory with Accumulator
+Can be immediate, Zero Page, Absolute or Indirect addressing
+*/
+//immediate addressing
+/*note takes mem loc to be compared as argument so parser will need to extract
+it from instruction and pass it to the function. Alternatively can have
+different function for each addressing type.
+*/
+void ORA(BYTE compared_mem) {
     //differing clock cycle time
     //is Len for PC?
+    A = (A | compared_mem);
+    //sets zero flag if A is 0
+    if (A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    //sets negative flag if A negative (bit 7 set)
+    if (check_neg(A)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+Shift accumulator or memory byte left
+This shifts all bits in accumulator or memory byte left by 1 bit.
+Bit 0 is set to 0 and bit 7 is placed in the carry flag.
+Effectively multiplies memory contents by 2.
+Accumulator or memory byte is determined by addressing mode.
+*/
+//either needs to return a Byte or update memory as a side effect
+BYTE ASL(BYTE byte) {
+    if (getBit(byte, 7)) {
+        setFlag(FLAG_C);
+    } else {
+        resetFlag(FLAG_C);
+    }
+    byte = byte << 1;
+    if (check_neg(byte)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+    //question if 0 after carry as overall wasn't 0 so is flag still set????
+    if (byte != 0) {
+        resetFlag(FLAG_Z);
+    } else {
+        setFlag(FLAG_Z);
+    }
+    return byte;
 }
 
