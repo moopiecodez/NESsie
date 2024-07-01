@@ -18,6 +18,8 @@ void RTI();
 void ORA(BYTE compared);
 //may need to change to take memory address to update
 BYTE ASL(BYTE byte);
+void PHP(); 
+void push_SP_to_stack();
 
 //ensure Program Counter is an int that takes 2 bytes/16 bits of memory
 uint16_t PC = 0xFFu; 
@@ -201,9 +203,8 @@ void BRK() {
     memory[SP] = PC; // low byte of PC
     SP--;
     printf("%u\n", SP);
-    memory[SP] = P; // status register
-    SP--;
-    
+    push_SP_to_stack();
+
     //Interrupt Mask bit is set to 1
     //note described as disables maskable interrupt? 
     setFlag(FLAG_I);
@@ -302,5 +303,20 @@ BYTE ASL(BYTE byte) {
         setFlag(FLAG_Z);
     }
     return byte;
+}
+
+/* Push processor status
+    Stores contents of the Status (P) register on top of the stack.
+    Then decrements Stack Pointer by 1.
+    No other registers/statuses are affected.
+*/
+void PHP() {
+    push_SP_to_stack();
+}
+
+//function for pushing status register to stack, used by various instructions
+void push_SP_to_stack() {
+    memory[SP] = P;
+    SP--;
 }
 
