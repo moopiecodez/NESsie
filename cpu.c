@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include "instructions.h"
 
 //define constants for Flag positions in Processor Status register
 #define FLAG_N 7
@@ -11,19 +12,6 @@
 #define FLAG_C 0
 //define constant for one Byte of memory
 
-#define BYTE uint8_t
-void BRK();
-void RTI();
-void ORA(BYTE compared);
-//may need to change to take memory address to update
-BYTE ASL(BYTE byte);
-void PHP(); 
-void push_SP_to_stack();
-void CLC();
-void CLD();
-void CLI();
-void CLV();
-void CMP(BYTE memory);
 
 //ensure Program Counter is an int that takes 2 bytes/16 bits of memory
 uint16_t PC = 0xFFu; 
