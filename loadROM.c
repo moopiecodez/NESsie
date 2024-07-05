@@ -1,8 +1,14 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#define HEADERSIZE 100
+#define HEADERSIZE 16
+#define PRGBANKSIZE 16384
+#define CHRBANKSIZE 8192
 #define BYTE uint8_t
+
+//allocate space for NES memory
+BYTE memory[0xFFFF];
+
 
 //size of PRG ROM in 16kb units
 BYTE PRGROM_BANKS;
@@ -11,10 +17,16 @@ BYTE CHRROM_BANKS;
 
 //FLAGS 6 mapper, mirroring, battery, trainer
 BYTE FLAGS_6;
-
 BYTE FLAGS_7;
 BYTE FLAGS_8;
 BYTE FLAGS_9;
+BYTE FLAGS_10;
+//11-15 unused should be 0;
+BYTE FLAGS_11;
+BYTE FLAGS_12;
+BYTE FLAGS_13;
+BYTE FLAGS_14;
+BYTE FLAGS_15;
 
 //note in cpu file as well
 unsigned int getBit(BYTE byte, int position) {
@@ -22,12 +34,12 @@ unsigned int getBit(BYTE byte, int position) {
     return (byte >> position) & mask;
 }
 
-void extractHeader(FILE *, char contents[]);
+void extractROMdata(FILE *, BYTE destination[], int destinationIndex, int size);
 
 
 int main(int argc, char *argv[]) {
     FILE *fp;
-    char header [HEADERSIZE];
+    BYTE header [HEADERSIZE];
 
     if (argc == 1) {
         printf("Error no file given\n");
@@ -40,8 +52,9 @@ int main(int argc, char *argv[]) {
             printf("Error: can't open %s\n", *argv);
             return 1;
         } else {
-            extractHeader(fp, header);
-            fclose(fp);
+            extractROMdata(fp, header, 0, HEADERSIZE);
+            //need to remember to close file when all extracted
+            //fclose(fp);
         }
     }
     if (strstr(header, "NES") != NULL) {
@@ -70,7 +83,7 @@ int main(int argc, char *argv[]) {
     if (getBit(FLAGS_6, 1) == 1) {
         printf("Battery-backed PRG Ram/persistent memory");
     }
-    if (getBit(FLAGS_6, 2) ==1) {
+    if (getBit(FLAGS_6, 2) == 1) {
         printf("Contains a trainer");
     }
     BYTE low_mapper = FLAGS_6 >> 4;
@@ -95,17 +108,71 @@ int main(int argc, char *argv[]) {
     }
     printf("\n");
 
-    FLAGS_8 = header[8];
     /*size of PRG RAM in 8kb units, vlue 0 infers 8KB or 1 page of RAM, not 
     widely used. NES2.0 recommended to specify PRG RAM
     */
+    FLAGS_8 = header[8];
+    
+    //TV system - rarely used
+    FLAGS_9 = header[9];
+    
+    //TV system, PRG-RAM presence (rarely used)
+    FLAGS_10 = header[10];
+
+    FLAGS_11 = header[11];
+    FLAGS_12 = header[12];
+    FLAGS_13 = header[13];
+    FLAGS_14 = header[14];
+    FLAGS_15 = header[15];
+
+    //deal with optional trainer
+    if (getBit(FLAGS_6, 2) == 1) {
+        //there is a trainer and first 512 bytes after header are the trainer
+        // goes locations $7000-$71FF
+        printf("%d\n",memory[0x7000]);
+        extractROMdata(fp, memory, 0x7000, 512);
+        printf("Now memory holds %d\n",memory[0x7000]);
+
+    }
+
+    //get PRG ROM data
+    int PRG_ROM_Size = PRGBANKSIZE * PRGROM_BANKS;
+    printf("PRG Banks %d\n",PRGROM_BANKS);
+
+    BYTE PRG_ROM_Data[PRG_ROM_Size];
+    printf("PRG ROM Size %d\n", PRG_ROM_Size);
+    printf("Initial data %u\n",PRG_ROM_Data[PRG_ROM_Size -1]);
+
+    extractROMdata(fp, PRG_ROM_Data, 0, PRG_ROM_Size);
+    
+    /*
+    for(int i = 0; i < PRG_ROM_Size; i++) {
+        printf("position %d is %x\n", i, PRG_ROM_Data[i]);
+    }
+    */    
+    printf("Now data holds %x\n",PRG_ROM_Data[(PRG_ROM_Size -3)]);
+    printf("Now data holds %x\n",PRG_ROM_Data[PRG_ROM_Size -1]);
+
+    int CHR_ROM_Size = CHRBANKSIZE * CHRROM_BANKS;
+    if (CHR_ROM_Size > 0) {
+        printf("extracting CHR ROM\n");
+        BYTE CHR_ROM_DATA[CHR_ROM_Size];
+        extractROMdata(fp, CHR_ROM_DATA, 0, CHR_ROM_Size);
+    } else {
+        printf("no CHR data\n");
+    }
+    fclose(fp);
+
+    //Playchoice ignored for now as not often used
     return 0;
 }
 
-void extractHeader(FILE *ifp, char contents[]) {
+void extractROMdata(FILE *ifp, BYTE destination[], int destinationIndex, int size) {
     int c;
-    
-    for (int i = 0; i< HEADERSIZE && (c =getc(ifp)) != EOF; i++) {
-        contents[i] = c;
+    for (int i = destinationIndex; i < (destinationIndex + size) && (c =getc(ifp)) != EOF; i++) {
+        // print in hex i and c
+        //printf("%06d is %x\n", i, c);
+        destination[i] = c;
+        //need to go from start
     }
 }
