@@ -4,15 +4,14 @@
 //define constants for Flag positions in Processor Status register
 #define FLAG_N 7
 #define FLAG_V 6
-#define FLAG_B 4
+#define FLAG_B 4 
 #define FLAG_D 3
 #define FLAG_I 2
 #define FLAG_Z 1
 #define FLAG_C 0
-
 //define constant for one Byte of memory
-#define BYTE uint8_t
 
+#define BYTE uint8_t
 void BRK();
 void RTI();
 void ORA(BYTE compared);
@@ -20,6 +19,11 @@ void ORA(BYTE compared);
 BYTE ASL(BYTE byte);
 void PHP(); 
 void push_SP_to_stack();
+void CLC();
+void CLD();
+void CLI();
+void CLV();
+void CMP(BYTE memory);
 
 //ensure Program Counter is an int that takes 2 bytes/16 bits of memory
 uint16_t PC = 0xFFu; 
@@ -30,7 +34,7 @@ uint16_t PC = 0xFFu;
 6   -   V (overflow flag)
 5   -   not used
 4   -   B (break command flag)
-3   -   D (decimal mode flag)
+3   -   D (decimal mode flag)   - not implemented in NES version
 2   -   I (interrupt disable flag)
 1   -   Z (zero flag)
 0   -   C (carry flag)
@@ -42,8 +46,8 @@ BYTE P = 0x00u;
 /*
   Stack $0100-$01FF
   Stack Pointer - 8 bit register acts as offset from $0100, so starts at $FF
-  When byte pushed onto stack, SP decremented and when byte pulled
-  SP is incremented.
+  When byte pushed onto stack, S decremented and when byte pulled
+  S is incremented.
   No concept of overflow and will just wrap around from $00 to $FF
   
   In an empty stack, the stack pointer points to the element where the next 
@@ -54,19 +58,28 @@ BYTE P = 0x00u;
   available to store the next value. It is common practice on a 6502 to 
   initialize the stack pointer to $FF at reset time. 
   */
-
-  
-BYTE SP = 0xFFu;
+ 
+BYTE S = 0xFFu;
 
 /* Accumulator Register: 8-bit register used to store results of arithmetic
 and logical operations or hold a value from memory.
 */
 BYTE A = 0x00u;
 
+/*  Index Register X (X): 8-bit register used as counter/offset. Can be set
+    to a value from memory. Can get or set value of stack pointer.
+*/
+BYTE X = 0x00u;
+
+/*  Index Register Y (Y): 8-bit register used as counter/offset. Cannot affect
+    stack pointer.
+*/
+BYTE Y = 0x00u;
+
 //declare an array to hold NES memory addresses from $0000-$FFFF
 //each page is 0xFF
 //will need to do memory mirroring $0000-$07FF mapped to $0800-$1FFF
-char memory[0xFFFF];
+BYTE memory[0xFFFF];
 
 //helper function to check memory value bits
 void check_memory(BYTE mem) {
@@ -100,8 +113,8 @@ void setFlag(int position) {
 }
 
 /* 
-works by checking if Flag to be reset is 0, in which case unchanged
-otherwise perform AND bitwise operation on mask with all bits except Flag to 
+ensures Flag is 0
+perform AND bitwise operation on mask with all bits except Flag to 
 be reset to 1
 */
 void resetFlag(int position) {
@@ -115,7 +128,27 @@ void IRQ_Interrupt() {
     PC = InterruptPointer;
 }
 
+void power_CPU() {
+    A, X, Y = 0x00u;
+    PC = 0xFFFCu;
+    S = 0xFFu;
+    //is S $FF or $FD?
+    P = 0x00u;
+    setFlag(FLAG_I);
+    //clear internal RAM except high scores $0000-$07FF
+}
+
+void reset_CPU() {
+    //S -= 3;
+    //is it FF or -=3?
+    S = 0xFFu;
+    PC = 0xFFFCu;
+    setFlag(FLAG_I);
+    //clear internal RAM except high scores $0000-$07FF
+}
+
 int main() {
+    power_CPU();
     printf("Hello I'm a CPU\n");
     printf("I'm a 6502!\n");
     printf("Ok... I'm actually a virtual RP2A07.. but it still counts!\n");
@@ -196,13 +229,13 @@ void BRK() {
     //if PC is 16 bits 2 memory locations?
     //if used elsewhere make helper function
     
-    printf("%u\n", SP);
-    memory[SP] = PC >> 8; //high byte of PC
-    SP--;
-    printf("%u\n", SP);
-    memory[SP] = PC; // low byte of PC
-    SP--;
-    printf("%u\n", SP);
+    printf("%u\n", S);
+    memory[S] = PC >> 8; //high byte of PC
+    S--;
+    printf("%u\n", S);
+    memory[S] = PC; // low byte of PC
+    S--;
+    printf("%u\n", S);
     push_SP_to_stack();
 
     //Interrupt Mask bit is set to 1
@@ -230,19 +263,19 @@ void BRK() {
     Relies on Stack Pointer pointing to correct position in stack
 */
 void RTI() {
-    printf("%u\n", SP);
-    SP++;
-    printf("%u\n", SP);
+    printf("%u\n", S);
+    S++;
+    printf("%u\n", S);
     printf("%u\n", P);
-    P = memory[SP]; //status register
+    P = memory[S]; //status register
     //note loses interrupt mask set during BRK instruction
     printf("%u\n", P);
-    SP++;
-    printf("%u\n", SP);
-    BYTE lowByte = memory[SP];
-    SP++;
-    printf("%u\n", SP);
-    PC = memory[SP] << 8;
+    S++;
+    printf("%u\n", S);
+    BYTE lowByte = memory[S];
+    S++;
+    printf("%u\n", S);
+    PC = memory[S] << 8;
     printf("%u\n", PC);
     PC = PC + lowByte;
     printf("%u\n", PC);
@@ -316,7 +349,76 @@ void PHP() {
 
 //function for pushing status register to stack, used by various instructions
 void push_SP_to_stack() {
-    memory[SP] = P;
-    SP--;
+    memory[S] = P;
+    S--;
 }
 
+/*
+    Clear carry flag
+    Initialises carry flag to 0
+    Single byte instruction, addressing mode implied
+    2 cycles
+*/
+void CLC() {
+    resetFlag(FLAG_C);
+}
+
+/*
+    Clear decimal mode
+    Sets decimal flag to 0
+    single byte instruction, addressing mode implied
+    2 cycles
+    not strictly necessary - NES doesn't use decimal
+*/
+void CLD() {
+    resetFlag(FLAG_D);
+}
+
+/*
+    Clear interrupt disable bit
+    Sets interrupt disable flag to 0
+    single byte instruction, addressing mode implied
+    2 cycles
+*/
+void CLI() {
+    resetFlag(FLAG_I);
+}
+
+/*
+    Clear overflow flag
+    Sets overflow flag to 0
+    single byte instruction, addressing mode implied
+    2 cycles
+*/
+void CLV() {
+    resetFlag(FLAG_V);
+}
+
+
+/*
+    Compare memory and accumulator
+    subtracts contents of memory from accumulator
+    Z is set if A = M otherwise reset
+    N is set by result bit 7
+    C when memory less than or equal to accumulator, reset if M greater than A
+
+*/
+void CMP(BYTE memory) {
+    BYTE result = A - memory;
+    if (check_neg(result)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+    if (A == memory) {
+        setFlag(FLAG_Z);
+        setFlag(FLAG_C);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (A > memory) {
+        setFlag(FLAG_C);
+    } else if (A < memory) {
+        resetFlag(FLAG_C);
+    }
+}
