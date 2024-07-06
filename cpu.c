@@ -392,21 +392,51 @@ void CLV() {
 
 */
 void CMP(BYTE memory) {
-    BYTE result = A - memory;
+    //check if negative flag set on result or memory value
+    compare_set_flags(A, memory);
+}
+
+void compare_set_flags(BYTE reg, BYTE memory) {
+    BYTE result = reg - memory;
+
     if (check_neg(result)) {
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
     }
-    if (A == memory) {
+    if (result = 0) {
         setFlag(FLAG_Z);
         setFlag(FLAG_C);
     } else {
         resetFlag(FLAG_Z);
     }
-    if (A > memory) {
+    if (result > 0) {
         setFlag(FLAG_C);
-    } else if (A < memory) {
+    } else if (result < 0) {
         resetFlag(FLAG_C);
     }
+}
+
+/*
+    Compare memory and X register
+    subtracts contents of memory from X register
+    Z is set if X = M otherwise reset
+    N is set by result bit 7
+    C when memory less than or equal to X, reset if M greater than X
+
+*/
+void CPX(BYTE memory) {
+    compare_set_flags(X, memory);
+}
+
+/*
+    Compare memory and Y register
+    subtracts contents of memory from Y register
+    Z is set if Y = M otherwise reset
+    N is set by result bit 7
+    C when memory less than or equal to Y, reset if M greater than Y
+
+*/
+void CPY(BYTE memory) {
+    compare_set_flags(Y, memory);
 }
