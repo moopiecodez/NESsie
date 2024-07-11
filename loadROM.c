@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include "mappers.h"
 #define HEADERSIZE 16
 #define PRGBANKSIZE 16384
 #define CHRBANKSIZE 8192
@@ -9,7 +10,7 @@
 //allocate space for NES memory
 BYTE memory[0xFFFF];
 
-
+    
 //size of PRG ROM in 16kb units
 BYTE PRGROM_BANKS;
 //size of CHR ROM in 8kb units, value 0 means board uses CHR RAM
@@ -38,6 +39,9 @@ void extractROMdata(FILE *, BYTE destination[], int destinationIndex, int size);
 
 
 int main(int argc, char *argv[]) {
+    
+    
+    
     FILE *fp;
     BYTE header [HEADERSIZE];
 
@@ -106,7 +110,13 @@ int main(int argc, char *argv[]) {
     for (int i = 7; i >= 0; i--) {
         printf("%d", getBit(mapper_number, i));
     }
-    printf("\n");
+
+    //mapper_number = 16;
+    char *mapper_name = mappers[mapper_number];
+    if (mapper_name == NULL) {
+        mapper_name = "undefined"; 
+    }
+    printf(" is mapper %s \n", mapper_name);
 
     /*size of PRG RAM in 8kb units, vlue 0 infers 8KB or 1 page of RAM, not 
     widely used. NES2.0 recommended to specify PRG RAM
