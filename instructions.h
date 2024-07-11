@@ -1,6 +1,8 @@
 #include <stdint.h>
 #define BYTE uint8_t
 
+void ADC(BYTE memory);
+
 void BRK();
 void RTI();
 void ORA(BYTE compared);
@@ -9,7 +11,7 @@ BYTE ASL(BYTE byte);
 void PHP(); 
 
 //helper functions
-void push_SP_to_stack();
+void push_to_stack(BYTE reg);
 void compare_set_flags(BYTE reg, BYTE memory);
 
 //clear flag instructions
