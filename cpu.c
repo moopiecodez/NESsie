@@ -39,7 +39,7 @@ void setFlag(int position) {
 /* 
 ensures Flag is 0
 perform AND bitwise operation on mask with all bits except Flag to 
-be reset to 1
+be set to 1, so clears intended position
 */
 void resetFlag(int position) {
     BYTE resetMask = ~(~0 << 1);
@@ -308,19 +308,32 @@ BYTE pull_from_stack() {
 
 
 /* Pull accumulator from stack
-    Then increments Stack Pointer by 1.
+    Increments Stack Pointer by 1.
+    Then load accumulator from Top of stack
     Sets Zero flag and negative flag based on A.    
 */
 void PLA() {
-
+    A = pull_from_stack();
+    if (check_neg(A)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+    if (A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
 }
 
 /* Pull processor status from stack
-    Then increments Stack Pointer by 1.
+    Increments Stack Pointer by 1.
+    Load processor status register from top of stack
     Sets flags based on stack
 */
 void PLP() {
-
+    P = pull_from_stack();
+    //flags automatically set as held in bits
 }
 
 /*
@@ -452,3 +465,107 @@ void ADC(BYTE memory) {
     }
 
 }
+
+/*
+ AND - ands memory with Accumulator
+*/
+void AND(BYTE memory) {
+    A = A & memory;
+    if (check_neg(A)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+     if (A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }   
+}
+
+/*
+    BCC - Branch if Carry Clear
+    If C flag clear add relative displacement to PC to branch.
+    i.e. add second object code byte contents (signed 8 bit displacement) to
+    PC + 2. Result is memory address for next instruction
+    otherwise just PC + 2 is next address
+*/
+void BCC(BYTE rdisplacement) {
+    if (getFlag(FLAG_C) == 0) {
+        //check when addressing ***
+        PC += 2 + rdisplacement;
+    }
+}
+
+/*
+    BCS - Branch if Carry Set
+    Same as BCC except branch triggered if C is set.
+*/
+void BCS(BYTE rdisplacement) {
+    if (getFlag(FLAG_C) != 0) {
+        PC += 2 + rdisplacement;
+    }
+}
+
+/*
+    BEQ - Branch if Equal to Zero
+    Same as BCC except branch triggered if Z is set.
+*/
+void BEQ(BYTE rdisplacement) {
+    if (getFlag(FLAG_Z) != 0) {
+        PC += 2 + rdisplacement;
+    }
+}
+
+/*
+    BMI - Branch if Minus
+    Same as BMI except branch triggered if N is set.
+*/
+void BMI(BYTE rdisplacement) {
+    if (getFlag(FLAG_N) != 0) {
+        PC += 2 + rdisplacement;
+    }
+}
+
+/*
+    BNE - Branch if not equal to Zero
+    Same as BMI except branch triggered if Z is clear.
+*/
+void BNE(BYTE rdisplacement) {
+    if (getFlag(FLAG_Z) == 0) {
+        PC += 2 + rdisplacement;
+    }
+}
+
+/*
+    BPL - Branch if Plus
+    Same as BMI except branch triggered if N is clear.
+*/
+void BPL(BYTE rdisplacement) {
+    if (getFlag(FLAG_N) == 0) {
+        PC += 2 + rdisplacement;
+    }
+}
+
+/*
+    BVC - Branch if Overflow clear
+    Same as BMI except branch triggered if V is clear.
+*/
+void BVC(BYTE rdisplacement) {
+    if (getFlag(FLAG_V) == 0) {
+        PC += 2 + rdisplacement;
+    }
+}
+
+/*
+    BVS - Branch if Overflow set
+    Same as BMI except branch triggered if V is set.
+*/
+void BVS(BYTE rdisplacement) {
+    if (getFlag(FLAG_V) != 0) {
+        PC += 2 + rdisplacement;
+    }
+}
+/*
+    BIT
+*/
