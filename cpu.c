@@ -3,8 +3,6 @@
 #include "cpu.h"
 #include "instructions.h"
 
-BYTE pull_from_stack();
-
 //helper function to check memory value bits
 void check_memory(BYTE mem) {
     BYTE mask = ~(~0 << 1);
@@ -148,11 +146,12 @@ int main() {
     check_memory(A);
     A = -27;
     check_memory(A);
-    A = ASL(A);
+    ASL(&A);
     check_memory(A);
     printf("memory is: ");
     check_memory(memory[0xFFFF]);
-    memory[0xFFFF] = ASL(memory[0xFFFF]);
+    ASL(&memory[0xFFFF]);
+    //memory[0xFFFF] = ASL(memory[0xFFFF]);
     check_memory(memory[0xFFFF]);
     memory[0xFFFF] = 48;
     printf("%d\n", A);
@@ -255,25 +254,25 @@ Effectively multiplies memory contents by 2.
 Accumulator or memory byte is determined by addressing mode.
 */
 //either needs to return a Byte or update memory as a side effect
-BYTE ASL(BYTE byte) {
-    if (getBit(byte, 7)) {
+void ASL(BYTE *byte) {
+    if (getBit(*byte, 7)) {
         setFlag(FLAG_C);
     } else {
         resetFlag(FLAG_C);
     }
-    byte = byte << 1;
-    if (check_neg(byte)) {
+    *byte = *byte << 1;
+    if (check_neg(*byte)) {
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
     }
     //question if 0 after carry as overall wasn't 0 so is flag still set????
-    if (byte != 0) {
+    if (*byte != 0) {
         resetFlag(FLAG_Z);
     } else {
         setFlag(FLAG_Z);
     }
-    return byte;
+    //return byte;
 }
 
 /* Push processor status
@@ -387,10 +386,10 @@ void CLV() {
 */
 void CMP(BYTE memory) {
     //check if negative flag set on result or memory value
-    compare_set_flags(A, memory);
+    compare_flags(A, memory);
 }
 
-void compare_set_flags(BYTE reg, BYTE memory) {
+void compare_flags(BYTE reg, BYTE memory) {
     BYTE result = reg - memory;
 
     if (check_neg(result)) {
@@ -420,7 +419,7 @@ void compare_set_flags(BYTE reg, BYTE memory) {
 
 */
 void CPX(BYTE memory) {
-    compare_set_flags(X, memory);
+    compare_flags(X, memory);
 }
 
 /*
@@ -432,7 +431,7 @@ void CPX(BYTE memory) {
 
 */
 void CPY(BYTE memory) {
-    compare_set_flags(Y, memory);
+    compare_flags(Y, memory);
 }
 
 /*
@@ -567,5 +566,157 @@ void BVS(BYTE rdisplacement) {
     }
 }
 /*
-    BIT
+    BIT - BIT test
+    logically AND A and memory contents, leaves A and memory unchanged.
+    Z flag set depending on result of AND operation
+    N flag set based on 7th bit of memory byte
+    V flag set based on 6th bit of memory byte
 */
+void BIT(BYTE memory) {
+    BYTE result = A ^ memory;
+    if (result == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (check_neg(memory)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+    if (getBit(memory, 6)) {
+        setFlag(FLAG_V);
+    } else {
+        resetFlag(FLAG_V);
+    }
+}
+
+/*
+    DEC - decrement memory
+    decrements contents of memory contents by one
+    sets Z and N flags accordingly
+*/
+void DEC(BYTE *memory) {
+    *memory = *memory - 1;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (check_neg(*memory)){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    DEX - decrement X register
+    decrements contents of X register by one
+    sets Z and N flags accordingly
+*/
+void DEX() {
+    X--;
+    if (X == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (check_neg(X)){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    } 
+}
+
+/*
+    DEY - decrement Y register
+    decrements contents of Y register by one
+    sets Z and N flags accordingly
+*/
+void DEY() {
+    Y--;
+    if (Y == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (check_neg(Y)){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    } 
+}
+
+/*
+    EOR - exclusive OR
+    exclusively or contents of Accumulator and memory location
+    Set N and Z flags based on result
+*/
+void EOR(BYTE memory) {
+    A = A ^ memory;
+    if (A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (check_neg(A)){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    } 
+}
+
+/*
+    INC - increment memory by 1
+    Z and N flags set depending on result
+*/
+void INC(BYTE *memory) {
+    *memory = *memory + 1;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (check_neg(*memory)){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    INX - increment X register by 1
+    Z and N flags set depending on result
+*/
+void INX() {
+    X++;
+    if (X == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (check_neg(X)){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    INY - increment Y register by 1
+    Z and N flags set depending on result
+*/
+void INY() {
+    Y++;
+    if (Y == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (check_neg(Y)){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
