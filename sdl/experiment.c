@@ -1,15 +1,29 @@
 #include <SDL2/SDL.h>
+#include <stdbool.h>
 
 SDL_Window *create_screen();
 
 int main(void) {
     Uint32 flags;
+    bool quit;
+    SDL_Event event;
+
     flags = SDL_INIT_VIDEO;
 
     SDL_Init(flags);
     SDL_Window *Nessie_screen = create_screen();
 
-    SDL_Delay(3000);
+    quit = false;
+    while (!quit) {
+        SDL_WaitEvent(&event);
+
+        switch (event.type) {
+            case SDL_QUIT:
+                quit = true;
+                break;
+        }
+    }
+
     SDL_Quit();
 
     return 0;
