@@ -4,5 +4,5 @@ int main(void) {
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_Quit();
 
-    return 3;
+    return 0;
 }
