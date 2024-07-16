@@ -22,11 +22,8 @@ unsigned int getBit(BYTE source, int position) {
     unsigned int bit = (source >> position) & FLAG_MASK;
     return bit;
 }
-/*
-    INC - increment memory by 1
-    Z and N flags set depending on result
-*/
-void INC(BYTE *memory) {
+
+void increment(BYTE *memory) {
     *memory = *memory + 1;
     if (*memory == 0) {
         setFlag(FLAG_Z);
@@ -38,4 +35,28 @@ void INC(BYTE *memory) {
     } else {
         resetFlag(FLAG_N);
     }
+}
+
+/*
+    INC - increment memory by 1
+    Z and N flags set depending on result
+*/
+void INC(BYTE *memory) {
+    increment(memory);
+}
+
+/*
+    INX - increment X register by 1
+    Z and N flags set depending on result
+*/
+void INX() {
+    increment(&cpu.X);
+}
+
+/*
+    INY - increment Y register by 1
+    Z and N flags set depending on result
+*/
+void INY() {
+    increment(&cpu.Y);
 }

@@ -33,4 +33,8 @@ void power_cpu();
 void setFlag();
 unsigned int getBit(BYTE source, int position);
 
+void increment(BYTE *memory);
 void INC(BYTE *memory);
+
+void INX();
+void INY();
