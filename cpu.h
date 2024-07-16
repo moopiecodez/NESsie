@@ -20,7 +20,7 @@
 typedef struct cpu_registers {
     uint16_t PC;    /* Program Counter */
     BYTE P;         /* Processor status register */
-    BYTE A;         /* Accumulator register */
+    BYTE A;         /* Accumulator register */  
     BYTE X;         /* Index Register X */
     BYTE Y;         /* Index Register Y */
     BYTE S;         /* Stack Pointer/offset from $0100, initialised at $FF*/
@@ -28,5 +28,9 @@ typedef struct cpu_registers {
 
 extern CPU cpu;
 
+void power_cpu();
 
+void setFlag();
+unsigned int getBit(BYTE source, int position);
 
+void INC(BYTE *memory);

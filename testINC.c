@@ -1,16 +1,26 @@
 #include <stdio.h>
 #include <assert.h>
 #include "cpu.h"
-#include "instructions.h"
+
+BYTE memory[0xFFFF];
 
 int main(void) {
-    printf("Testing INC instruction\n");
-    int expected = 4;
-    memory[0xFFFE] = 3;
+    //arrange
+    power_cpu();
+    BYTE expectedNeg = 1;
+    BYTE val = -3;
+    BYTE expectedVal = val + 1;
+    memory[0xFFFE] = val;
     BYTE *mem = &memory[0xFFFE];
+
+    //action
+    printf("Testing INC instruction\n");
     INC(mem);
-    int actual = memory[0xFFFE];
-    //any expression resolving to 0 triggers error
-    assert(actual == expected);
+    int actualVal = memory[0xFFFE];
+    unsigned int actualNflag = getBit(*mem, FLAG_N);
+    //assert
+    assert(actualVal == expectedVal);
+    assert( actualNflag == 1);
+    printf("Test passed\n");
     return 0;
 }
