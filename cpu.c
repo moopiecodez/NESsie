@@ -18,7 +18,7 @@ void resetFlag(int position) {
     cpu.P = cpu.P & ~(FLAG_MASK << position);
 }
 
-unsigned int getBit(BYTE source, int position) {
+BYTE getBit(BYTE source, int position) {
     unsigned int bit = (source >> position) & FLAG_MASK;
     return bit;
 }
@@ -59,4 +59,58 @@ void INX() {
 */
 void INY() {
     increment(&cpu.Y);
+}
+
+/*
+    LDA - load a byte of memory into accumulator
+    Z and N flags set depending on result
+*/
+void LDA(BYTE *memory) {
+    cpu.A = *memory;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) == 1){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    LDX - load a byte of memory into X register
+    Z and N flags set depending on result
+*/
+void LDX(BYTE *memory) {
+    cpu.X = *memory;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) == 1){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    LDY - load a byte of memory into Y register
+    Z and N flags set depending on result
+*/
+void LDY(BYTE *memory) {
+    cpu.Y = *memory;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) == 1){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
 }

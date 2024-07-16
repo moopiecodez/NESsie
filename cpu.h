@@ -31,10 +31,13 @@ extern CPU cpu;
 void power_cpu();
 
 void setFlag();
-unsigned int getBit(BYTE source, int position);
+BYTE getBit(BYTE source, int position);
 
 void increment(BYTE *memory);
 void INC(BYTE *memory);
-
 void INX();
 void INY();
+
+void LDA(BYTE *memory);
+void LDX(BYTE *memory);
+void LDY(BYTE *memory);
