@@ -41,3 +41,6 @@ void INY();
 void LDA(BYTE *memory);
 void LDX(BYTE *memory);
 void LDY(BYTE *memory);
+
+void ASL(BYTE *memory);
+void LSR(BYTE *memory);

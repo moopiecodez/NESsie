@@ -114,3 +114,55 @@ void LDY(BYTE *memory) {
         resetFlag(FLAG_N);
     }
 }
+
+/*
+    ASL - Arithmetic Shift Left
+    Shifts bits in A or memory left by one place.
+    Carry flag set to contents of old 7 bit.
+    Sets Zero and Negative flag based on result.
+*/
+void ASL(BYTE *memory) {
+    if (getBit(*memory, 7) != 0) {
+        setFlag(FLAG_C);
+    } else {
+        resetFlag(FLAG_C);
+    }
+    *memory = *memory << 1;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) == 1) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+
+/*
+    LSR - logical shift right
+    Shifts bits in A or memory right by one place. 
+    Carry flag set to contents of old 0 bit.
+    Sets Zero and Negative flag based on result.
+*/
+void LSR(BYTE *memory) {
+    if (getBit(*memory, 0) != 0) {
+        setFlag(FLAG_C);
+    } else {
+        resetFlag(FLAG_C);
+    }
+    *memory = *memory >> 1;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) == 1){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+
+}
