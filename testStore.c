@@ -64,5 +64,4 @@ int main(void) {
     srunner_free(sr);
 
     return number_failed == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
-
 }
