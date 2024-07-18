@@ -48,3 +48,10 @@ void LSR(BYTE *memory);
 void STA(BYTE *memory);
 void STX(BYTE *memory);
 void STY(BYTE *memory);
+
+void TAX();
+void TAY();
+void TSX();
+void TXA();
+void TXS();
+void TYA();

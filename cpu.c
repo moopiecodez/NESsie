@@ -39,7 +39,7 @@ void increment(BYTE *memory) {
 
 /*
     INC - increment memory by 1
-    Z and N flags set depending on result
+    Z and N flags set depending on result.
 */
 void INC(BYTE *memory) {
     increment(memory);
@@ -47,7 +47,7 @@ void INC(BYTE *memory) {
 
 /*
     INX - increment X register by 1
-    Z and N flags set depending on result
+    Z and N flags set depending on result.
 */
 void INX() {
     increment(&cpu.X);
@@ -55,7 +55,7 @@ void INX() {
 
 /*
     INY - increment Y register by 1
-    Z and N flags set depending on result
+    Z and N flags set depending on result.
 */
 void INY() {
     increment(&cpu.Y);
@@ -63,7 +63,7 @@ void INY() {
 
 /*
     LDA - load a byte of memory into accumulator
-    Z and N flags set depending on result
+    Z and N flags set depending on result.
 */
 void LDA(BYTE *memory) {
     cpu.A = *memory;
@@ -81,7 +81,7 @@ void LDA(BYTE *memory) {
 
 /*
     LDX - load a byte of memory into X register
-    Z and N flags set depending on result
+    Z and N flags set depending on result.
 */
 void LDX(BYTE *memory) {
     cpu.X = *memory;
@@ -99,7 +99,7 @@ void LDX(BYTE *memory) {
 
 /*
     LDY - load a byte of memory into Y register
-    Z and N flags set depending on result
+    Z and N flags set depending on result.
 */
 void LDY(BYTE *memory) {
     cpu.Y = *memory;
@@ -168,7 +168,7 @@ void LSR(BYTE *memory) {
 
 /*
     STA - Store Accumulator
-    store contents of A into memory
+    Store contents of A into memory.
 */
 void STA(BYTE *memory) {
     *memory = cpu.A;
@@ -176,7 +176,7 @@ void STA(BYTE *memory) {
 
 /*
     STX - Store X Register
-    store contents of X into memory
+    Store contents of X into memory.
 */
 void STX(BYTE *memory) {
     *memory = cpu.X;
@@ -184,8 +184,112 @@ void STX(BYTE *memory) {
 
 /*
     STY - Store Y Register
-    store contents of Y into memory
+    Store contents of Y into memory.
 */
 void STY(BYTE *memory) {
     *memory = cpu.Y;
+}
+
+/*
+    TAX - Transfer Accumulator to X
+    Copies accumulator contents into X.
+    Sets Zero and Negative flags as appropriate.
+*/
+void TAX() {
+    cpu.X = cpu.A;
+    if (cpu.X == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(cpu.X, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    TAY - Transfer Accumulator to Y
+    Copies accumulator contents into Y.
+    Sets Zero and Negative flags as appropriate.
+*/
+void TAY() {
+    cpu.Y = cpu.A;
+    if (cpu.Y == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(cpu.Y, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    TSX - Transfer Stack Pointer to X
+    Copies Stack Pointer value into X.
+    Sets Zero and Negative flags as appropriate.
+*/
+void TSX() {
+    cpu.X = cpu.S;
+    if (cpu.X == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(cpu.X, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    TXA - Transfer X to Accumulator
+    Copies X contents into Accumulator.
+    Sets Zero and Negative flags as appropriate.
+*/
+void TXA() {
+    cpu.A = cpu.X;
+    if (cpu.A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(cpu.A, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    TXS - Transfer X to Stack Pointer
+    Copies X contents into Stack Pointer.
+    Does not affect status flags.
+*/
+void TXS() {
+    cpu.S = cpu.X;
+}
+
+/*
+    TYA - Transfer Y to Accumulator
+    Copies Y contents into Accumulator.
+    Sets Zero and Negative flags as appropriate.
+*/
+void TYA() {
+    cpu.A = cpu.Y;
+    if (cpu.A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(cpu.A, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
 }
