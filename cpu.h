@@ -44,3 +44,7 @@ void LDY(BYTE *memory);
 
 void ASL(BYTE *memory);
 void LSR(BYTE *memory);
+
+void STA(BYTE *memory);
+void STX(BYTE *memory);
+void STY(BYTE *memory);

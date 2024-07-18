@@ -140,7 +140,6 @@ void ASL(BYTE *memory) {
     }
 }
 
-
 /*
     LSR - logical shift right
     Shifts bits in A or memory right by one place. 
@@ -165,4 +164,28 @@ void LSR(BYTE *memory) {
         resetFlag(FLAG_N);
     }
 
+}
+
+/*
+    STA - Store Accumulator
+    store contents of A into memory
+*/
+void STA(BYTE *memory) {
+    *memory = cpu.A;
+}
+
+/*
+    STX - Store X Register
+    store contents of X into memory
+*/
+void STX(BYTE *memory) {
+    *memory = cpu.X;
+}
+
+/*
+    STY - Store Y Register
+    store contents of Y into memory
+*/
+void STY(BYTE *memory) {
+    *memory = cpu.Y;
 }
