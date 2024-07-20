@@ -55,3 +55,8 @@ void TSX();
 void TXA();
 void TXS();
 void TYA();
+
+void AND(BYTE *memory);
+void EOR(BYTE *memory);
+void ORA(BYTE *memory);
+void BIT(BYTE *memory);

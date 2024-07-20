@@ -293,3 +293,88 @@ void TYA() {
         resetFlag(FLAG_N);
     }
 }
+
+/*
+    AND - AND memory and Accumulator
+    Bitwise AND performed on contents of memory and Accumulator.
+    Result stored in Accumulator.
+    Sets Z and N flags according to result.
+*/
+void AND(BYTE *memory) {
+    cpu.A = cpu.A & *memory;
+    if (cpu.A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(cpu.A, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    EOR - Exclusive OR
+    Bitwise Exclusive Or performed on contents of memory and Accumulator.
+    Result stored in Accumulator.
+    Sets Z and N flags according to result.
+*/
+void EOR(BYTE *memory) {
+    cpu.A = cpu.A ^ *memory;
+    if (cpu.A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(cpu.A, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    ORA - Inclusive OR
+    Bitwise OR performed on contents of memory and Accumulator.
+    Result stored in Accumulator.
+    Sets Z and N flags according to result.
+*/
+void ORA(BYTE*memory) {
+    cpu.A = cpu.A | *memory;
+    if (cpu.A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(cpu.A, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    BIT - Bit Test
+    Tests if bits set in memory location based on Accumulator.
+    ANDs Accumulator and memory location but does not store results.
+    Condition flags are set according to AND result (z)
+    and memory contents (N and V).
+*/
+void BIT(BYTE *memory) {
+    if((cpu.A & *memory) == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) != 0) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+    if (getBit(*memory, FLAG_V) != 0) {
+        setFlag(FLAG_V);
+    } else {
+        resetFlag(FLAG_V);
+    }
+}
