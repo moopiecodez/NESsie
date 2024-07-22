@@ -2,6 +2,7 @@
 
 CPU cpu = {0x0000u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u};
 
+
 void power_cpu() {
     cpu.P = cpu.A = cpu.X = cpu.Y = 0x00u;
     cpu.PC = 0xFFFCu;
@@ -377,4 +378,72 @@ void BIT(BYTE *memory) {
     } else {
         resetFlag(FLAG_V);
     }
+}
+
+/*
+    Helper function - pushes register to stack and decrements Stack Pointer
+    by 1 to next position on Stack
+*/
+void push_to_stack(BYTE *memory, BYTE reg) {
+    memory[STACK_BASE + cpu.S] = reg;
+    cpu.S--;
+}
+
+
+/*
+    Push - Accumulator
+    Stores contents of the Accumulator on top of the stack.
+    Then decrements Stack Pointer by 1.
+    No other registers/statuses are affected.
+*/
+void PHA(BYTE *memory) {
+    push_to_stack(memory, cpu.A);
+}
+
+/*
+    Push - Processor Status
+    Stores contents of Processor Status on stack.
+    Then decrements Stack Pointer by 1.
+    No other registers/statuses are affected.
+*/
+void PHP(BYTE *memory) {
+    push_to_stack(memory, cpu.P);
+}
+
+/*
+    Helper function - pulls register from stack
+    Increments stack pointer before pulling contents
+*/
+void pull_from_stack(BYTE *memory, BYTE *reg) {
+    cpu.S++;
+    *reg = memory[STACK_BASE + cpu.S];
+}
+
+/*
+    Pull accumulator from stack
+    Increments Stack Pointer by 1.
+    Then load accumulator from Top of stack.
+    Sets Zero flag and negative flag based on A.
+*/
+void PLA(BYTE *memory) {
+    pull_from_stack(memory, &cpu.A);
+    if (getBit(cpu.A, FLAG_N)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+    if (cpu.A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+}
+
+/*
+    Pull processor status from stack
+    Increments Stack Pointer by 1.
+    Then load processor status from top of stack.
+*/
+void PLP(BYTE *memory) {
+    pull_from_stack(memory, &cpu.P);
 }

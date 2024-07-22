@@ -60,3 +60,11 @@ void AND(BYTE *memory);
 void EOR(BYTE *memory);
 void ORA(BYTE *memory);
 void BIT(BYTE *memory);
+
+void push_to_stack(BYTE *memory, BYTE reg);
+void PHA(BYTE *memory);
+void PHP(BYTE *memory);
+
+void pull_from_stack(BYTE *memory, BYTE *reg);
+void PLA(BYTE *memory);
+void PLP(BYTE *memory);
