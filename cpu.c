@@ -2,7 +2,6 @@
 
 CPU cpu = {0x0000u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u};
 
-
 void power_cpu() {
     cpu.P = cpu.A = cpu.X = cpu.Y = 0x00u;
     cpu.PC = 0xFFFCu;
@@ -446,4 +445,113 @@ void PLA(BYTE *memory) {
 */
 void PLP(BYTE *memory) {
     pull_from_stack(memory, &cpu.P);
+}
+
+/*
+    ADC - Add with Carry
+    Adds contents of memory to accumulator with carry value.
+    Carry flag is set if overflow occurs.
+    Z flag set if result is 0.
+    N flag set if result is negative.
+    V flag set if sign bit is incorrect.
+*/
+void ADC(BYTE *memory) {
+    BYTE HIGH_BIT_MASK = 0x80;
+    int sum = *memory + cpu.A + getBit(cpu.P, FLAG_C);
+    if((cpu.A ^ sum) & (*memory ^ sum) & HIGH_BIT_MASK) {
+        setFlag(FLAG_V);
+    } else {
+        resetFlag(FLAG_V);
+    }
+    cpu.A = sum;
+    //check if unsigned sum larger than 255 to determine if carry set
+    if((sum >> 9) & ~(~0 << 1)) {
+        setFlag(FLAG_C);
+    } else {
+        resetFlag(FLAG_C);
+    }
+    if (getBit(cpu.A, FLAG_N)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+     if (cpu.A == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+
+}
+
+/*
+    SBC - Subtract with Carry
+    Subtracts contents of memory from accumulator with not of carry value.
+    Carry flag is clear if overflow occurs.
+    Z flag set if result is 0.
+    N flag set if result is negative.
+    V flag set if sign bit is incorrect.
+*/
+void SBC(BYTE *memory) {
+   BYTE mem_complement = ~(*memory);
+   ADC(&mem_complement);
+}
+
+/*
+    Compare helper function
+    Compares given register with memory value and sets flags accordingly.
+*/
+void set_flags_on_compare(BYTE reg, BYTE *memory) {
+    BYTE result = reg - *memory;
+    if (getBit(result, FLAG_N)) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+    if (reg == *memory) {
+        setFlag(FLAG_Z);
+        setFlag(FLAG_C);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (reg > *memory) {
+        setFlag(FLAG_C);
+    } else if (reg < *memory) {
+        resetFlag(FLAG_C);
+    }
+}
+
+/*
+    Compare memory and accumulator
+    Subtracts contents of memory from accumulator.
+    Z Flag is set if A = M otherwise reset.
+    N Flag is set by result bit 7.
+    C when memory less than or equal to accumulator, reset if M greater than A
+
+*/
+void CMP(BYTE *memory) {
+    set_flags_on_compare(cpu.A, memory);
+}
+
+/*
+    Compare memory and X register
+    Subtracts contents of memory from X register.
+    Z is set if X = M otherwise reset.
+    N is set by result bit 7.
+    C when memory less than or equal to X, reset if M greater than X.
+
+*/
+void CPX(BYTE *memory) {
+    set_flags_on_compare(cpu.X, memory);
+}
+
+/*
+    Compare memory and Y register
+    Subtracts contents of memory from Y register.
+    Z is set if Y = M otherwise reset.
+    N is set by result bit 7.
+    C when memory less than or equal to Y, reset if M greater than Y.
+
+*/
+void CPY(BYTE *memory) {
+    set_flags_on_compare(cpu.Y, memory);
 }

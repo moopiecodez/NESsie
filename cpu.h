@@ -68,3 +68,11 @@ void PHP(BYTE *memory);
 void pull_from_stack(BYTE *memory, BYTE *reg);
 void PLA(BYTE *memory);
 void PLP(BYTE *memory);
+
+void ADC(BYTE *memory);
+void SBC(BYTE *memory);
+
+void set_flags_on_compare(BYTE reg, BYTE *memory);
+void CMP(BYTE *memory);
+void CPX(BYTE *memory);
+void CPY(BYTE *memory);
