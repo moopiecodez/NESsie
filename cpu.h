@@ -7,8 +7,12 @@
 #define LEFT_BIT 7
 #define RIGHT_BIT 0
 
+//IRQ interrupt vector locations
+#define IRQ_HIGH 0xFFFFu
+#define IRQ_LOW 0xFFFEu
+
 //constant for base stack location in memory
-#define STACK_BASE 0x0100
+#define STACK_BASE 0x0100u
 
 //constants for Processor Status register flags position, 5 not used
 #define FLAG_N 7    /* N (negative flag) */
@@ -106,3 +110,7 @@ void BVS(BYTE displacement);
 void JMP(BYTE low, BYTE high);
 void JSR(BYTE *memory, BYTE low, BYTE high);
 void RTS(BYTE *memory);
+
+void BRK(BYTE *memor);
+void NOP();
+void RTI(BYTE *memory);

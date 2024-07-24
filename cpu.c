@@ -829,10 +829,55 @@ void JSR(BYTE *memory, BYTE low, BYTE high) {
     Pulls the Program Counter from the stack and increments by 1.
 */
 void RTS(BYTE *memory) {
-    BYTE low;
-    BYTE high;
-    pull_from_stack(memory, &low);
-    pull_from_stack(memory, &high);
-    cpu.PC = high << 8;
-    cpu.PC = cpu.PC + low + 1;
+    BYTE lowByte;
+    BYTE highByte;
+    pull_from_stack(memory, &lowByte);
+    pull_from_stack(memory, &highByte);
+    cpu.PC = highByte << 8;
+    cpu.PC = cpu.PC + lowByte + 1;
+}
+
+/*
+    RTI - Return from Interrupt
+    Pulls the Status (P) register and Program Counter off top of the Stack.
+    Relies on Stack Pointer pointing to correct position in stack.
+*/
+void RTI(BYTE *memory) {
+    pull_from_stack(memory, &cpu.P);
+    BYTE lowByte;
+    BYTE highByte;
+    pull_from_stack(memory, &lowByte);
+    pull_from_stack(memory, &highByte);
+    cpu.PC = highByte << 8;
+    cpu.PC = cpu.PC + lowByte;
+}
+
+/*
+    BRK - Break
+    Assumes Opcode process has already incremented PC by 2.
+    B flag set.
+    PC and P pushed to stack.
+    I flag set.
+    Interrupt Pointer ($FFFF and $FFFE) loaded into PC.
+*/
+void BRK(BYTE *memory) {
+    setFlag(FLAG_B);
+    BYTE lowByte;
+    BYTE highByte;
+    highByte = cpu.PC >> 8;
+    push_to_stack(memory, highByte);
+    push_to_stack(memory, lowByte);
+    push_to_stack(memory, cpu.P);
+
+    setFlag(FLAG_I);
+    //Interrupt pointer $FFFE and $FFFF loaded into PC
+    cpu.PC = (memory[IRQ_HIGH] << 8) + memory[IRQ_LOW];
+}
+
+/*
+    NOP - No operation
+    Does nothing except increment PC which is done in opcode processing.
+*/
+void NOP() {
+    ; //intention is that it does nothing
 }
