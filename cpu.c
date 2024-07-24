@@ -204,6 +204,74 @@ void LSR(BYTE *memory) {
 }
 
 /*
+    ROL - Rotate Left
+    Shifts bits in A or memory left by one place.
+    Bit 0 is set to contents of Carry flag.
+    Carry flag set to contents of old 7 bit.
+    Sets Zero and Negative flag based on result.
+*/
+void ROL(BYTE *memory) {
+    BYTE mask;
+    if(getBit(cpu.P, FLAG_C) != 0) {
+        mask = FLAG_MASK;
+    } else {
+        mask = 0x0;
+    }
+    if (getBit(*memory, LEFT_BIT) != 0) {
+        setFlag(FLAG_C);
+    } else {
+        resetFlag(FLAG_C);
+    }
+    *memory = *memory << 1;
+    //sets 0 bit
+    *memory = *memory | mask;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) == 1) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    ROR - Rotate Right
+    Shifts bits in A or memory right by one place.
+    Bit 7 is set to contents of Carry flag.
+    Carry flag set to contents of old 0 bit.
+    Sets Zero and Negative flag based on result.
+*/
+void ROR(BYTE *memory) {
+    BYTE mask;
+    if(getBit(cpu.P, FLAG_C) != 0) {
+        mask = FLAG_MASK << LEFT_BIT;
+    } else {
+        mask = 0x0;
+    }
+    if (getBit(*memory, RIGHT_BIT) != 0) {
+        setFlag(FLAG_C);
+    } else {
+        resetFlag(FLAG_C);
+    }
+    *memory = *memory >> 1;
+    //sets 0 bit
+    *memory = *memory | mask;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) == 1) {
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
     STA - Store Accumulator
     Store contents of A into memory.
 */

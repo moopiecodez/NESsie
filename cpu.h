@@ -4,6 +4,8 @@
 
 //constant for flag bitwise operations
 #define FLAG_MASK ~(~0 << 1)
+#define LEFT_BIT 7
+#define RIGHT_BIT 0
 
 //constant for base stack location in memory
 #define STACK_BASE 0x0100
@@ -48,6 +50,8 @@ void LDY(BYTE *memory);
 
 void ASL(BYTE *memory);
 void LSR(BYTE *memory);
+void ROL(BYTE *memory);
+void ROR(BYTE *memory);
 
 void STA(BYTE *memory);
 void STX(BYTE *memory);

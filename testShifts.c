@@ -109,6 +109,34 @@ START_TEST(test_LSR_zer) {
 }
 END_TEST
 
+START_TEST(test_ROL) {
+    power_cpu();
+    setFlag(FLAG_C);
+    memory[0xFFF1] = 0x2e;
+    BYTE expected = 0x5D;
+
+    ROL(&memory[0xFFF1]);
+    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect carry flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
+}
+END_TEST
+
+START_TEST(test_ROR) {
+    power_cpu();
+    setFlag(FLAG_C);
+    memory[0xFFF1] = 0x5D;
+    BYTE expected = 0xAE;
+
+    ROR(&memory[0xFFF1]);
+    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect negative flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect carry flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
+}
+END_TEST
+
 Suite * Shift_suite(void)
 {
     Suite *s;
@@ -122,6 +150,9 @@ Suite * Shift_suite(void)
 
     tcase_add_test(tc_core, test_LSR);
     tcase_add_test(tc_core, test_ASL);
+    tcase_add_test(tc_core, test_ROL);
+    tcase_add_test(tc_core, test_ROR);
+
     suite_add_tcase(s, tc_core);
 
     /*Limits test case*/
