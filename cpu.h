@@ -32,7 +32,8 @@ extern CPU cpu;
 
 void power_cpu();
 
-void setFlag();
+void setFlag(int position);
+void resetFlag(int position);
 BYTE getBit(BYTE source, int position);
 
 void increment(BYTE *memory);
@@ -84,3 +85,11 @@ void set_flags_on_compare(BYTE reg, BYTE *memory);
 void CMP(BYTE *memory);
 void CPX(BYTE *memory);
 void CPY(BYTE *memory);
+
+void CLC();
+void CLD();
+void CLI();
+void CLV();
+void SEC();
+void SED();
+void SEI();

@@ -660,3 +660,60 @@ void CPX(BYTE *memory) {
 void CPY(BYTE *memory) {
     set_flags_on_compare(cpu.Y, memory);
 }
+
+/*
+    Clear carry flag
+    Sets C flag to 0
+*/
+void CLC() {
+    resetFlag(FLAG_C);
+}
+
+/*
+    Clear decimal mode
+    Sets D flag to 0
+    Not used in NES (NES doesn't use decimal mode)
+*/
+void CLD() {
+    resetFlag(FLAG_D);
+}
+
+/*
+    Clear interrupt disable bit
+    Sets I flag to 0
+*/
+void CLI() {
+    resetFlag(FLAG_I);
+}
+
+/*
+    Clear overflow flag
+    Sets V flag to 0
+*/
+void CLV() {
+    resetFlag(FLAG_V);
+}
+
+/*
+    Set carry flag
+    Sets C flag to 1
+*/
+void SEC() {
+    setFlag(FLAG_C);
+}
+
+/*
+    Set decimal mode flag
+    Sets D flag to 1
+*/
+void SED() {
+    setFlag(FLAG_D);
+}
+
+/*
+    Set interrupt disable flag
+    Sets I flag to 1
+*/
+void SEI() {
+    setFlag(FLAG_I);
+}
