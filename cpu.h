@@ -37,6 +37,10 @@ void increment(BYTE *memory);
 void INC(BYTE *memory);
 void INX();
 void INY();
+void decrement(BYTE *memory);
+void DEC(BYTE *memory);
+void DEX();
+void DEY();
 
 void LDA(BYTE *memory);
 void LDX(BYTE *memory);

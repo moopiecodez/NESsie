@@ -61,6 +61,43 @@ void INY() {
     increment(&cpu.Y);
 }
 
+void decrement(BYTE *memory) {
+    *memory = *memory - 1;
+    if (*memory == 0) {
+        setFlag(FLAG_Z);
+    } else {
+        resetFlag(FLAG_Z);
+    }
+    if (getBit(*memory, FLAG_N) == 1){
+        setFlag(FLAG_N);
+    } else {
+        resetFlag(FLAG_N);
+    }
+}
+
+/*
+    DEC - decrement memory by 1
+    Z and N flags set depending on result.
+*/
+void DEC(BYTE *memory) {
+    decrement(memory);
+}
+
+/*
+    DEX - decrement X register by 1
+    Z and N flags set depending on result.
+*/
+void DEX() {
+    decrement(&cpu.X);
+}
+
+/*
+    DEY - decrement Y register by 1
+    Z and N flags set depending on result.
+*/
+void DEY() {
+    decrement(&cpu.Y);
+}
 /*
     LDA - load a byte of memory into accumulator
     Z and N flags set depending on result.
