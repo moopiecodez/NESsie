@@ -93,3 +93,12 @@ void CLV();
 void SEC();
 void SED();
 void SEI();
+
+void BCC(BYTE displacement);
+void BCS(BYTE displacement);
+void BEQ(BYTE displacement);
+void BMI(BYTE displacement);
+void BNE(BYTE displacement);
+void BPL(BYTE displacement);
+void BVC(BYTE displacement);
+void BVS(BYTE displacement);

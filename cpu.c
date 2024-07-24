@@ -717,3 +717,83 @@ void SED() {
 void SEI() {
     setFlag(FLAG_I);
 }
+
+/*
+    BCC - Branch if Carry Flag Clear
+    If C flag clear relative displacement added to PC to cause branch.
+*/
+void BCC(BYTE displacement) {
+    if(getBit(cpu.P, FLAG_C) == 0) {
+        cpu.PC += displacement;
+    }
+}
+
+/*
+    BCS - Branch if Carry Flag Set
+    If C flag set relative displacement added to PC to cause branch.
+*/
+void BCS(BYTE displacement){
+    if(getBit(cpu.P, FLAG_C) != 0) {
+        cpu.PC += displacement;
+    }
+}
+
+/*
+    BEQ - Branch if Equal
+    If Z flag set relative displacement added to PC to cause branch.
+*/
+void BEQ(BYTE displacement) {
+    if(getBit(cpu.P, FLAG_Z) != 0) {
+        cpu.PC += displacement;
+    }
+}
+
+/*
+    BMI - Branch if Minus
+    If N flag set relative displacement added to PC to cause branch.
+*/
+void BMI(BYTE displacement) {
+    if(getBit(cpu.P, FLAG_N) != 0) {
+        cpu.PC += displacement;
+    }
+}
+
+/*
+    BNE - Branch if Not Equal
+    If Z flag clear relative displacement added to PC to cause branch.
+*/
+void BNE(BYTE displacement) {
+    if(getBit(cpu.P, FLAG_Z) == 0) {
+        cpu.PC += displacement;
+    }
+}
+
+/*
+    BPL - Branch if Positive
+    If N flag clear relative displacement added to PC to cause branch.
+*/
+void BPL(BYTE displacement) {
+    if(getBit(cpu.P, FLAG_N) == 0) {
+        cpu.PC += displacement;
+    }
+}
+
+/*
+    BVC - Branch if Overflow Clear
+    If V flag clear relative displacement added to PC to cause branch.
+*/
+void BVC(BYTE displacement) {
+    if(getBit(cpu.P, FLAG_V) == 0) {
+        cpu.PC += displacement;
+    }
+}
+
+/*
+    BVS - Branch if Overflow Set
+    If V flag set relative displacement added to PC to cause branch.
+*/
+void BVS(BYTE displacement) {
+    if(getBit(cpu.P, FLAG_V) != 0) {
+        cpu.PC += displacement;
+    }
+}
