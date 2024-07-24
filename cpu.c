@@ -865,6 +865,7 @@ void BRK(BYTE *memory) {
     BYTE lowByte;
     BYTE highByte;
     highByte = cpu.PC >> 8;
+    lowByte = cpu.PC;
     push_to_stack(memory, highByte);
     push_to_stack(memory, lowByte);
     push_to_stack(memory, cpu.P);
