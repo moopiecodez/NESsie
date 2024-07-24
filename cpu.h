@@ -102,3 +102,7 @@ void BNE(BYTE displacement);
 void BPL(BYTE displacement);
 void BVC(BYTE displacement);
 void BVS(BYTE displacement);
+
+void JMP(BYTE low, BYTE high);
+void JSR(BYTE *memory, BYTE low, BYTE high);
+void RTS(BYTE *memory);

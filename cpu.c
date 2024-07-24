@@ -797,3 +797,42 @@ void BVS(BYTE displacement) {
         cpu.PC += displacement;
     }
 }
+
+/*
+    JMP - Jumps
+    Sets PC to target address set in instruction operand.
+*/
+void JMP(BYTE low, BYTE high) {
+    uint16_t address = high << 8;
+    address += low;
+    cpu.PC = address;
+}
+
+/*
+    JSR - Jump to Subroutine
+    Pushes PC onto the Stack. Stack Pointer adjusted as part of this.
+    High byte is stored first.
+    Relies on Opcode process calling this function to have incremented PC by 2
+    before this function is called.
+    Address part of instruction then stored in PC.    
+*/
+void JSR(BYTE *memory, BYTE low, BYTE high) {
+    push_to_stack(memory, (cpu.PC >> 8));
+    push_to_stack(memory, cpu.PC);
+    uint16_t address = high << 8;
+    address += low;
+    cpu.PC = address;
+}
+
+/*
+    RTS - Return from Subroutine
+    Pulls the Program Counter from the stack and increments by 1.
+*/
+void RTS(BYTE *memory) {
+    BYTE low;
+    BYTE high;
+    pull_from_stack(memory, &low);
+    pull_from_stack(memory, &high);
+    cpu.PC = high << 8;
+    cpu.PC = cpu.PC + low + 1;
+}
