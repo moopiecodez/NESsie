@@ -43,7 +43,7 @@ START_TEST(test_RTS) {
 
     RTS(memory);
     ck_assert_msg(cpu.PC == expectedPC, "incorrect PC value");
-    ck_assert_msg(cpu.S == 0xFF, "incorrect PC value");    
+    ck_assert_msg(cpu.S == 0xFF, "incorrect Stack Pointer value");    
 }
 END_TEST
 
