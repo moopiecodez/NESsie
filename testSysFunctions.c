@@ -17,9 +17,12 @@ START_TEST(test_BRK) {
     
     BRK(memory);
     BYTE P_on_stack = memory[0x01FD];
+
     ck_assert_msg(cpu.PC == expectedPC, "incorrect PC value");
     ck_assert_msg(getBit(P_on_stack, FLAG_B) != 0, "incorrect B flag on stack");
     ck_assert_msg(getBit(P_on_stack, FLAG_I) == 0, "incorrect I flag on stack");
+    ck_assert_msg(memory[0x01FE] == 0x00, "incorrect low bit on stack");
+    ck_assert_msg(memory[0x01FF] == 0xFF, "incorrect high bit on stack");
     ck_assert_msg(cpu.S == 0xFC, "incorrect Stack Pointer value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
