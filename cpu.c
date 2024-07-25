@@ -30,7 +30,7 @@ void increment(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1){
+    if (getBit(*memory, FLAG_N) != 0){
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
@@ -68,7 +68,7 @@ void decrement(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1){
+    if (getBit(*memory, FLAG_N) != 0){
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
@@ -109,7 +109,7 @@ void LDA(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1){
+    if (getBit(*memory, FLAG_N) != 0){
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
@@ -127,7 +127,7 @@ void LDX(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1){
+    if (getBit(*memory, FLAG_N) != 0){
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
@@ -145,7 +145,7 @@ void LDY(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1){
+    if (getBit(*memory, FLAG_N) != 0){
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
@@ -170,7 +170,7 @@ void ASL(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1) {
+    if (getBit(*memory, FLAG_N) != 0) {
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
@@ -195,7 +195,7 @@ void LSR(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1){
+    if (getBit(*memory, FLAG_N) != 0){
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
@@ -230,7 +230,7 @@ void ROL(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1) {
+    if (getBit(*memory, FLAG_N) != 0) {
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
@@ -264,7 +264,7 @@ void ROR(BYTE *memory) {
     } else {
         resetFlag(FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) == 1) {
+    if (getBit(*memory, FLAG_N) != 0) {
         setFlag(FLAG_N);
     } else {
         resetFlag(FLAG_N);
