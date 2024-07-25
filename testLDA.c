@@ -1,48 +1,63 @@
 #include <stdio.h>
-#include <assert.h>
-#include "cpu.h"
+#include <check.h>
+#include "testAll.h"
 
-BYTE memory[0xFFFF];
-
-int main(void) {
-    //arrange
+START_TEST(test_LDA) {
     power_cpu();
-    BYTE expectedA = 0x2c;
-    BYTE expectedX = 0x00; //zero
-    BYTE expectedY = 0x85; //negative
+    BYTE expectedA = 0x2C;
     memory[0xFFF1] = expectedA;
-    memory[0xFFF2] = expectedX;
-    memory[0xFFF3] = expectedY;
+
+    LDA(&memory[0xFFF1]);
+
+    ck_assert_msg(cpu.A == expectedA, "incorrect Accumulator value");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
+
     BYTE expectedFlagset_N = 1;
     BYTE expectedFlagclear_N = 0;
     BYTE expectedFlagset_Z = 1;
     BYTE expectedFlagclear_Z = 0;
+}
+END_TEST
 
-    //action
-    LDA(&memory[0xFFF1]);
-    BYTE actualFlagN_A = getBit(cpu.P, FLAG_N);
-    BYTE actualFlagZ_A = getBit(cpu.P, FLAG_Z);
+START_TEST(test_LDX) {
+    power_cpu();
+    BYTE expectedX = 0x00; //zero
+    memory[0xFFF2] = expectedX;
+
     LDX(&memory[0xFFF2]);
-    BYTE actualFlagN_X = getBit(cpu.P, FLAG_N); 
-    BYTE actualFlagZ_X = getBit(cpu.P, FLAG_Z);
-    LDY(&memory[0xFFF3]);
-    BYTE actualFlagN_Y = getBit(cpu.P, FLAG_N);
-    BYTE actualFlagZ_Y = getBit(cpu.P, FLAG_Z);
 
-    //assert
-    printf("Testing LDA().\n");
-    assert(cpu.A == expectedA);
-    assert(actualFlagN_A == expectedFlagclear_N);
-    assert(actualFlagZ_A == expectedFlagclear_Z);
-    printf("Testing LDX().\n");
-    assert(cpu.X == expectedX);
-    assert(actualFlagN_X == expectedFlagclear_N);
-    assert(actualFlagZ_X == expectedFlagset_Z);
-    
-    printf("Testing LDY().\n");
-    assert(cpu.Y == expectedY);
-    assert(actualFlagN_Y == expectedFlagset_N);
-    assert(actualFlagZ_Y == expectedFlagclear_Z);
-    printf("Test passed.\n");
-    return 0;
+    ck_assert_msg(cpu.X == expectedX, "incorrect X register value");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) != 0, "incorrect Z flag");
+}
+END_TEST
+
+START_TEST(test_LDY) {
+    power_cpu();
+    BYTE expectedY = 0x85; //negative
+    memory[0xFFF3] = expectedY;
+
+    LDY(&memory[0xFFF3]);
+    ck_assert_msg(cpu.Y == expectedY, "incorrect Y register value");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) != 0, "incorrect N flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
+}
+END_TEST
+
+Suite *Load_suite(void) {
+    Suite *s;
+    TCase *tc_core;
+
+    s = suite_create("Load Instructions");
+
+    /*Core test case*/
+    tc_core = tcase_create("Core");
+    tcase_add_test(tc_core, test_LDA);
+    tcase_add_test(tc_core, test_LDX);
+    tcase_add_test(tc_core, test_LDY);
+
+    suite_add_tcase(s, tc_core);
+
+    return s;
 }

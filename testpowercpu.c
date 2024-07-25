@@ -1,37 +1,38 @@
 #include <stdio.h>
-#include <assert.h>
-#include "cpu.h"
+#include <check.h>
+#include "testAll.h"
 
-BYTE memory[0xFFFF];
-
-int main(void) {
-    //arrange
-    // registers set to 0x12u to check power_cpu correctly sets them
+START_TEST(test_Pwr) {
+    
     cpu.P = cpu.A = cpu.X = cpu.Y = 0x12u;
     BYTE expectedP, expectedA, expectedX, expectedY;
     expectedP = 0x04u;
     expectedA = expectedX = expectedY = 0x00u;
     uint16_t expectedPC = 0xFFFCu;
     BYTE expectedS = 0xFFu;    
-    
-    //action
-    power_cpu();
-    BYTE actualP = cpu.P;
-    BYTE actualA = cpu.A;
-    BYTE actualX = cpu.X;
-    BYTE actualY = cpu.Y;
-    uint16_t actualPC = cpu.PC;
-    BYTE actualS = cpu.S;   
-    
-    //assert
-    printf("Testing power_cpu()\n");
-    assert(cpu.P == expectedP);
-    assert(cpu.A == expectedA);
-    assert(cpu.X == expectedX);
-    assert(cpu.Y == expectedY);
-    assert(cpu.PC == expectedPC);
-    assert(cpu.S == expectedS);
-    printf("Test passed\n");
 
-    return 0;
+    power_cpu();
+
+    ck_assert_msg(cpu.P == expectedP, "incorrect P register value");
+    ck_assert_msg(cpu.A == expectedA, "incorrect A register value");
+    ck_assert_msg(cpu.X == expectedX, "incorrect X register value");
+    ck_assert_msg(cpu.Y == expectedY, "incorrect Y register value");
+    ck_assert_msg(cpu.PC == expectedPC, "incorrect PC register value");
+    ck_assert_msg(cpu.S == expectedS, "incorrect S register value");
+}
+END_TEST
+
+Suite *Power_suite(void) {
+    Suite *s;
+    TCase *tc_core;
+
+    s = suite_create("Power CPU");
+
+    /*Core test case*/
+    tc_core = tcase_create("Core");
+    tcase_add_test(tc_core, test_Pwr);
+    
+    suite_add_tcase(s, tc_core);
+
+    return s;
 }
