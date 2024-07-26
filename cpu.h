@@ -32,85 +32,83 @@ typedef struct cpu_registers {
     BYTE S;         /* Stack Pointer/offset from $0100, initialised at $FF*/
 } CPU;
 
-extern CPU cpu;
+void power_cpu(CPU *cpu);
 
-void power_cpu();
-
-void setFlag(int position);
-void resetFlag(int position);
+void setFlag(CPU *cpu, int position);
+void resetFlag(CPU *cpu, int position);
 BYTE getBit(BYTE source, int position);
 
-void increment(BYTE *memory);
-void INC(BYTE *memory);
-void INX();
-void INY();
-void decrement(BYTE *memory);
-void DEC(BYTE *memory);
-void DEX();
-void DEY();
+void increment(CPU *cpu, BYTE *memory);
+void INC(CPU *cpu, BYTE *memory);
+void INX(CPU *cpu);
+void INY(CPU *cpu);
+void decrement(CPU *cpu, BYTE *memory);
+void DEC(CPU *cpu, BYTE *memory);
+void DEX(CPU *cpu);
+void DEY(CPU *cpu);
 
-void LDA(BYTE *memory);
-void LDX(BYTE *memory);
-void LDY(BYTE *memory);
+void LDA(CPU *cpu, BYTE *memory);
+void LDX(CPU *cpu, BYTE *memory);
+void LDY(CPU *cpu, BYTE *memory);
 
-void ASL(BYTE *memory);
-void LSR(BYTE *memory);
-void ROL(BYTE *memory);
-void ROR(BYTE *memory);
+void ASL(CPU *cpu, BYTE *memory);
+void LSR(CPU *cpu, BYTE *memory);
+void ROL(CPU *cpu, BYTE *memory);
+void ROR(CPU *cpu, BYTE *memory);
 
-void STA(BYTE *memory);
-void STX(BYTE *memory);
-void STY(BYTE *memory);
+void STA(CPU *cpu, BYTE *memory);
+void STX(CPU *cpu, BYTE *memory);
+void STY(CPU *cpu, BYTE *memory);
 
-void TAX();
-void TAY();
-void TSX();
-void TXA();
-void TXS();
-void TYA();
+void TAX(CPU *cpu);
+void TAY(CPU *cpu);
+void TSX(CPU *cpu);
+void TXA(CPU *cpu);
+void TXS(CPU *cpu);
+void TYA(CPU *cpu);
 
-void AND(BYTE *memory);
-void EOR(BYTE *memory);
-void ORA(BYTE *memory);
-void BIT(BYTE *memory);
+void AND(CPU *cpu, BYTE *memory);
+void EOR(CPU *cpu, BYTE *memory);
+void ORA(CPU *cpu, BYTE *memory);
+void BIT(CPU *cpu, BYTE *memory);
 
-void push_to_stack(BYTE *memory, BYTE reg);
-void PHA(BYTE *memory);
-void PHP(BYTE *memory);
+void push_to_stack(CPU *cpu, BYTE *memory, BYTE reg);
+void PHA(CPU *cpu, BYTE *memory);
+void PHP(CPU *cpu, BYTE *memory);
 
-void pull_from_stack(BYTE *memory, BYTE *reg);
-void PLA(BYTE *memory);
-void PLP(BYTE *memory);
+void pull_from_stack(CPU *cpu, BYTE *memory, BYTE *reg);
+void PLA(CPU *cpu, BYTE *memory);
+void PLP(CPU *cpu, BYTE *memory);
 
-void ADC(BYTE *memory);
-void SBC(BYTE *memory);
+void ADC(CPU *cpu, BYTE *memory);
+void SBC(CPU *cpu, BYTE *memory);
 
-void set_flags_on_compare(BYTE reg, BYTE *memory);
-void CMP(BYTE *memory);
-void CPX(BYTE *memory);
-void CPY(BYTE *memory);
+void set_flags_on_compare(CPU *cpu, BYTE reg, BYTE *memory);
+void CMP(CPU *cpu, BYTE *memory);
+void CPX(CPU *cpu, BYTE *memory);
+void CPY(CPU *cpu, BYTE *memory);
 
-void CLC();
-void CLD();
-void CLI();
-void CLV();
-void SEC();
-void SED();
-void SEI();
+void CLC(CPU *cpu);
+void CLD(CPU *cpu);
+void CLI(CPU *cpu);
+void CLV(CPU *cpu);
+void SEC(CPU *cpu);
+void SED(CPU *cpu);
+void SEI(CPU *cpu);
 
-void BCC(BYTE displacement);
-void BCS(BYTE displacement);
-void BEQ(BYTE displacement);
-void BMI(BYTE displacement);
-void BNE(BYTE displacement);
-void BPL(BYTE displacement);
-void BVC(BYTE displacement);
-void BVS(BYTE displacement);
+void BCC(CPU *cpu, BYTE displacement);
+void BCS(CPU *cpu, BYTE displacement);
+void BEQ(CPU *cpu, BYTE displacement);
+void BMI(CPU *cpu, BYTE displacement);
+void BNE(CPU *cpu, BYTE displacement);
+void BPL(CPU *cpu, BYTE displacement);
+void BVC(CPU *cpu, BYTE displacement);
+void BVS(CPU *cpu, BYTE displacement);
 
-void JMP(BYTE low, BYTE high);
-void JSR(BYTE *memory, BYTE low, BYTE high);
-void RTS(BYTE *memory);
+void JMP(CPU *cpu, BYTE low, BYTE high);
+void JSR(CPU *cpu, BYTE *memory, BYTE low, BYTE high);
+void RTS(CPU *cpu, BYTE *memory);
 
-void BRK(BYTE *memor);
+void BRK(CPU *cpu, BYTE *memor);
 void NOP();
-void RTI(BYTE *memory);
+void RTI(CPU *cpu, BYTE *memory);

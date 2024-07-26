@@ -1,21 +1,19 @@
 #include "cpu.h"
 
-CPU cpu = {0x0000u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u};
-
-void power_cpu() {
-    cpu.P = cpu.A = cpu.X = cpu.Y = 0x00u;
-    cpu.PC = 0xFFFCu;
-    cpu.S = 0xFFu;
-    setFlag(FLAG_I);
+void power_cpu(CPU *cpu) {
+    cpu->P = cpu->A = cpu->X = cpu->Y = 0x00u;
+    cpu->PC = 0xFFFCu;
+    cpu->S = 0xFFu;
+    setFlag(cpu, FLAG_I);
     //clear internal RAM except high scores $0000-$07FF
 }
 
-void setFlag(int position) {
-    cpu.P = cpu.P | (FLAG_MASK << position);
+void setFlag(CPU *cpu, int position) {
+    cpu->P = cpu->P | (FLAG_MASK << position);
 }
 
-void resetFlag(int position) {
-    cpu.P = cpu.P & ~(FLAG_MASK << position);
+void resetFlag(CPU *cpu, int position) {
+    cpu->P = cpu->P & ~(FLAG_MASK << position);
 }
 
 BYTE getBit(BYTE source, int position) {
@@ -23,17 +21,17 @@ BYTE getBit(BYTE source, int position) {
     return bit;
 }
 
-void increment(BYTE *memory) {
+void increment(CPU *cpu, BYTE *memory) {
     *memory = *memory + 1;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0){
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -41,37 +39,37 @@ void increment(BYTE *memory) {
     INC - increment memory by 1
     Z and N flags set depending on result.
 */
-void INC(BYTE *memory) {
-    increment(memory);
+void INC(CPU *cpu, BYTE *memory) {
+    increment(cpu, memory);
 }
 
 /*
     INX - increment X register by 1
     Z and N flags set depending on result.
 */
-void INX() {
-    increment(&cpu.X);
+void INX(CPU *cpu) {
+    increment(cpu, &cpu->X);
 }
 
 /*
     INY - increment Y register by 1
     Z and N flags set depending on result.
 */
-void INY() {
-    increment(&cpu.Y);
+void INY(CPU *cpu) {
+    increment(cpu, &cpu->Y);
 }
 
-void decrement(BYTE *memory) {
+void decrement(CPU *cpu, BYTE *memory) {
     *memory = *memory - 1;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0){
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -79,40 +77,40 @@ void decrement(BYTE *memory) {
     DEC - decrement memory by 1
     Z and N flags set depending on result.
 */
-void DEC(BYTE *memory) {
-    decrement(memory);
+void DEC(CPU *cpu, BYTE *memory) {
+    decrement(cpu, memory);
 }
 
 /*
     DEX - decrement X register by 1
     Z and N flags set depending on result.
 */
-void DEX() {
-    decrement(&cpu.X);
+void DEX(CPU *cpu) {
+    decrement(cpu, &cpu->X);
 }
 
 /*
     DEY - decrement Y register by 1
     Z and N flags set depending on result.
 */
-void DEY() {
-    decrement(&cpu.Y);
+void DEY(CPU *cpu) {
+    decrement(cpu, &cpu->Y);
 }
 /*
     LDA - load a byte of memory into accumulator
     Z and N flags set depending on result.
 */
-void LDA(BYTE *memory) {
-    cpu.A = *memory;
+void LDA(CPU *cpu, BYTE *memory) {
+    cpu->A = *memory;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0){
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -120,17 +118,17 @@ void LDA(BYTE *memory) {
     LDX - load a byte of memory into X register
     Z and N flags set depending on result.
 */
-void LDX(BYTE *memory) {
-    cpu.X = *memory;
+void LDX(CPU *cpu, BYTE *memory) {
+    cpu->X = *memory;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0){
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -138,17 +136,17 @@ void LDX(BYTE *memory) {
     LDY - load a byte of memory into Y register
     Z and N flags set depending on result.
 */
-void LDY(BYTE *memory) {
-    cpu.Y = *memory;
+void LDY(CPU *cpu, BYTE *memory) {
+    cpu->Y = *memory;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0){
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -158,22 +156,22 @@ void LDY(BYTE *memory) {
     Carry flag set to contents of old 7 bit.
     Sets Zero and Negative flag based on result.
 */
-void ASL(BYTE *memory) {
+void ASL(CPU *cpu, BYTE *memory) {
     if (getBit(*memory, 7) != 0) {
-        setFlag(FLAG_C);
+        setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(FLAG_C);
+        resetFlag(cpu, FLAG_C);
     }
     *memory = *memory << 1;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -183,22 +181,22 @@ void ASL(BYTE *memory) {
     Carry flag set to contents of old 0 bit.
     Sets Zero and Negative flag based on result.
 */
-void LSR(BYTE *memory) {
+void LSR(CPU *cpu, BYTE *memory) {
     if (getBit(*memory, 0) != 0) {
-        setFlag(FLAG_C);
+        setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(FLAG_C);
+        resetFlag(cpu, FLAG_C);
     }
     *memory = *memory >> 1;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0){
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 
 }
@@ -210,30 +208,30 @@ void LSR(BYTE *memory) {
     Carry flag set to contents of old 7 bit.
     Sets Zero and Negative flag based on result.
 */
-void ROL(BYTE *memory) {
+void ROL(CPU *cpu, BYTE *memory) {
     BYTE mask;
-    if(getBit(cpu.P, FLAG_C) != 0) {
+    if(getBit(cpu->P, FLAG_C) != 0) {
         mask = FLAG_MASK;
     } else {
         mask = 0x0;
     }
     if (getBit(*memory, LEFT_BIT) != 0) {
-        setFlag(FLAG_C);
+        setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(FLAG_C);
+        resetFlag(cpu, FLAG_C);
     }
     *memory = *memory << 1;
     //sets 0 bit
     *memory = *memory | mask;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -244,30 +242,30 @@ void ROL(BYTE *memory) {
     Carry flag set to contents of old 0 bit.
     Sets Zero and Negative flag based on result.
 */
-void ROR(BYTE *memory) {
+void ROR(CPU *cpu, BYTE *memory) {
     BYTE mask;
-    if(getBit(cpu.P, FLAG_C) != 0) {
+    if(getBit(cpu->P, FLAG_C) != 0) {
         mask = FLAG_MASK << LEFT_BIT;
     } else {
         mask = 0x0;
     }
     if (getBit(*memory, RIGHT_BIT) != 0) {
-        setFlag(FLAG_C);
+        setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(FLAG_C);
+        resetFlag(cpu, FLAG_C);
     }
     *memory = *memory >> 1;
     //sets 0 bit
     *memory = *memory | mask;
     if (*memory == 0) {
-        setFlag(FLAG_Z);
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -275,24 +273,24 @@ void ROR(BYTE *memory) {
     STA - Store Accumulator
     Store contents of A into memory.
 */
-void STA(BYTE *memory) {
-    *memory = cpu.A;
+void STA(CPU *cpu, BYTE *memory) {
+    *memory = cpu->A;
 }
 
 /*
     STX - Store X Register
     Store contents of X into memory.
 */
-void STX(BYTE *memory) {
-    *memory = cpu.X;
+void STX(CPU *cpu, BYTE *memory) {
+    *memory = cpu->X;
 }
 
 /*
     STY - Store Y Register
     Store contents of Y into memory.
 */
-void STY(BYTE *memory) {
-    *memory = cpu.Y;
+void STY(CPU *cpu, BYTE *memory) {
+    *memory = cpu->Y;
 }
 
 /*
@@ -300,17 +298,17 @@ void STY(BYTE *memory) {
     Copies accumulator contents into X.
     Sets Zero and Negative flags as appropriate.
 */
-void TAX() {
-    cpu.X = cpu.A;
-    if (cpu.X == 0) {
-        setFlag(FLAG_Z);
+void TAX(CPU *cpu) {
+    cpu->X = cpu->A;
+    if (cpu->X == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu.X, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->X, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -319,17 +317,17 @@ void TAX() {
     Copies accumulator contents into Y.
     Sets Zero and Negative flags as appropriate.
 */
-void TAY() {
-    cpu.Y = cpu.A;
-    if (cpu.Y == 0) {
-        setFlag(FLAG_Z);
+void TAY(CPU *cpu) {
+    cpu->Y = cpu->A;
+    if (cpu->Y == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu.Y, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->Y, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -338,17 +336,17 @@ void TAY() {
     Copies Stack Pointer value into X.
     Sets Zero and Negative flags as appropriate.
 */
-void TSX() {
-    cpu.X = cpu.S;
-    if (cpu.X == 0) {
-        setFlag(FLAG_Z);
+void TSX(CPU *cpu) {
+    cpu->X = cpu->S;
+    if (cpu->X == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu.X, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->X, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -357,17 +355,17 @@ void TSX() {
     Copies X contents into Accumulator.
     Sets Zero and Negative flags as appropriate.
 */
-void TXA() {
-    cpu.A = cpu.X;
-    if (cpu.A == 0) {
-        setFlag(FLAG_Z);
+void TXA(CPU *cpu) {
+    cpu->A = cpu->X;
+    if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu.A, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->A, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -376,8 +374,8 @@ void TXA() {
     Copies X contents into Stack Pointer.
     Does not affect status flags.
 */
-void TXS() {
-    cpu.S = cpu.X;
+void TXS(CPU *cpu) {
+    cpu->S = cpu->X;
 }
 
 /*
@@ -385,17 +383,17 @@ void TXS() {
     Copies Y contents into Accumulator.
     Sets Zero and Negative flags as appropriate.
 */
-void TYA() {
-    cpu.A = cpu.Y;
-    if (cpu.A == 0) {
-        setFlag(FLAG_Z);
+void TYA(CPU *cpu) {
+    cpu->A = cpu->Y;
+    if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu.A, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->A, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -405,17 +403,17 @@ void TYA() {
     Result stored in Accumulator.
     Sets Z and N flags according to result.
 */
-void AND(BYTE *memory) {
-    cpu.A = cpu.A & *memory;
-    if (cpu.A == 0) {
-        setFlag(FLAG_Z);
+void AND(CPU *cpu, BYTE *memory) {
+    cpu->A = cpu->A & *memory;
+    if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu.A, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->A, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -425,17 +423,17 @@ void AND(BYTE *memory) {
     Result stored in Accumulator.
     Sets Z and N flags according to result.
 */
-void EOR(BYTE *memory) {
-    cpu.A = cpu.A ^ *memory;
-    if (cpu.A == 0) {
-        setFlag(FLAG_Z);
+void EOR(CPU *cpu, BYTE *memory) {
+    cpu->A = cpu->A ^ *memory;
+    if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu.A, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->A, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -445,17 +443,17 @@ void EOR(BYTE *memory) {
     Result stored in Accumulator.
     Sets Z and N flags according to result.
 */
-void ORA(BYTE*memory) {
-    cpu.A = cpu.A | *memory;
-    if (cpu.A == 0) {
-        setFlag(FLAG_Z);
+void ORA(CPU *cpu, BYTE*memory) {
+    cpu->A = cpu->A | *memory;
+    if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu.A, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->A, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
 }
 
@@ -466,21 +464,21 @@ void ORA(BYTE*memory) {
     Condition flags are set according to AND result (z)
     and memory contents (N and V).
 */
-void BIT(BYTE *memory) {
-    if((cpu.A & *memory) == 0) {
-        setFlag(FLAG_Z);
+void BIT(CPU *cpu, BYTE *memory) {
+    if((cpu->A & *memory) == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (getBit(*memory, FLAG_N) != 0) {
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
     if (getBit(*memory, FLAG_V) != 0) {
-        setFlag(FLAG_V);
+        setFlag(cpu, FLAG_V);
     } else {
-        resetFlag(FLAG_V);
+        resetFlag(cpu, FLAG_V);
     }
 }
 
@@ -488,9 +486,9 @@ void BIT(BYTE *memory) {
     Helper function - pushes register to stack and decrements Stack Pointer
     by 1 to next position on Stack
 */
-void push_to_stack(BYTE *memory, BYTE reg) {
-    memory[STACK_BASE + cpu.S] = reg;
-    cpu.S--;
+void push_to_stack(CPU *cpu, BYTE *memory, BYTE reg) {
+    memory[STACK_BASE + cpu->S] = reg;
+    cpu->S--;
 }
 
 
@@ -500,8 +498,8 @@ void push_to_stack(BYTE *memory, BYTE reg) {
     Then decrements Stack Pointer by 1.
     No other registers/statuses are affected.
 */
-void PHA(BYTE *memory) {
-    push_to_stack(memory, cpu.A);
+void PHA(CPU *cpu, BYTE *memory) {
+    push_to_stack(cpu, memory, cpu->A);
 }
 
 /*
@@ -510,17 +508,17 @@ void PHA(BYTE *memory) {
     Then decrements Stack Pointer by 1.
     No other registers/statuses are affected.
 */
-void PHP(BYTE *memory) {
-    push_to_stack(memory, cpu.P);
+void PHP(CPU *cpu, BYTE *memory) {
+    push_to_stack(cpu, memory, cpu->P);
 }
 
 /*
     Helper function - pulls register from stack
     Increments stack pointer before pulling contents
 */
-void pull_from_stack(BYTE *memory, BYTE *reg) {
-    cpu.S++;
-    *reg = memory[STACK_BASE + cpu.S];
+void pull_from_stack(CPU *cpu, BYTE *memory, BYTE *reg) {
+    cpu->S++;
+    *reg = memory[STACK_BASE + cpu->S];
 }
 
 /*
@@ -529,17 +527,17 @@ void pull_from_stack(BYTE *memory, BYTE *reg) {
     Then load accumulator from Top of stack.
     Sets Zero flag and negative flag based on A.
 */
-void PLA(BYTE *memory) {
-    pull_from_stack(memory, &cpu.A);
-    if (getBit(cpu.A, FLAG_N)) {
-        setFlag(FLAG_N);
+void PLA(CPU *cpu, BYTE *memory) {
+    pull_from_stack(cpu, memory, &cpu->A);
+    if (getBit(cpu->A, FLAG_N)) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
-    if (cpu.A == 0) {
-        setFlag(FLAG_Z);
+    if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
 }
 
@@ -548,8 +546,8 @@ void PLA(BYTE *memory) {
     Increments Stack Pointer by 1.
     Then load processor status from top of stack.
 */
-void PLP(BYTE *memory) {
-    pull_from_stack(memory, &cpu.P);
+void PLP(CPU *cpu, BYTE *memory) {
+    pull_from_stack(cpu, memory, &cpu->P);
 }
 
 /*
@@ -560,30 +558,30 @@ void PLP(BYTE *memory) {
     N flag set if result is negative.
     V flag set if sign bit is incorrect.
 */
-void ADC(BYTE *memory) {
+void ADC(CPU *cpu, BYTE *memory) {
     BYTE HIGH_BIT_MASK = 0x80;
-    int sum = *memory + cpu.A + getBit(cpu.P, FLAG_C);
-    if((cpu.A ^ sum) & (*memory ^ sum) & HIGH_BIT_MASK) {
-        setFlag(FLAG_V);
+    int sum = *memory + cpu->A + getBit(cpu->P, FLAG_C);
+    if((cpu->A ^ sum) & (*memory ^ sum) & HIGH_BIT_MASK) {
+        setFlag(cpu, FLAG_V);
     } else {
-        resetFlag(FLAG_V);
+        resetFlag(cpu, FLAG_V);
     }
-    cpu.A = sum;
+    cpu->A = sum;
     //check if unsigned sum larger than 255 to determine if carry set
     if((sum >> 9) & ~(~0 << 1)) {
-        setFlag(FLAG_C);
+        setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(FLAG_C);
+        resetFlag(cpu, FLAG_C);
     }
-    if (getBit(cpu.A, FLAG_N)) {
-        setFlag(FLAG_N);
+    if (getBit(cpu->A, FLAG_N)) {
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
-     if (cpu.A == 0) {
-        setFlag(FLAG_Z);
+     if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
 
 }
@@ -596,32 +594,32 @@ void ADC(BYTE *memory) {
     N flag set if result is negative.
     V flag set if sign bit is incorrect.
 */
-void SBC(BYTE *memory) {
+void SBC(CPU *cpu, BYTE *memory) {
    BYTE mem_complement = ~(*memory);
-   ADC(&mem_complement);
+   ADC(cpu, &mem_complement);
 }
 
 /*
     Compare helper function
     Compares given register with memory value and sets flags accordingly.
 */
-void set_flags_on_compare(BYTE reg, BYTE *memory) {
+void set_flags_on_compare(CPU *cpu, BYTE reg, BYTE *memory) {
     BYTE result = reg - *memory;
     if (getBit(result, FLAG_N)) {
-        setFlag(FLAG_N);
+        setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(FLAG_N);
+        resetFlag(cpu, FLAG_N);
     }
     if (reg == *memory) {
-        setFlag(FLAG_Z);
-        setFlag(FLAG_C);
+        setFlag(cpu, FLAG_Z);
+        setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(FLAG_Z);
+        resetFlag(cpu, FLAG_Z);
     }
     if (reg > *memory) {
-        setFlag(FLAG_C);
+        setFlag(cpu, FLAG_C);
     } else if (reg < *memory) {
-        resetFlag(FLAG_C);
+        resetFlag(cpu, FLAG_C);
     }
 }
 
@@ -633,8 +631,8 @@ void set_flags_on_compare(BYTE reg, BYTE *memory) {
     C when memory less than or equal to accumulator, reset if M greater than A
 
 */
-void CMP(BYTE *memory) {
-    set_flags_on_compare(cpu.A, memory);
+void CMP(CPU *cpu, BYTE *memory) {
+    set_flags_on_compare(cpu, cpu->A, memory);
 }
 
 /*
@@ -645,8 +643,8 @@ void CMP(BYTE *memory) {
     C when memory less than or equal to X, reset if M greater than X.
 
 */
-void CPX(BYTE *memory) {
-    set_flags_on_compare(cpu.X, memory);
+void CPX(CPU *cpu, BYTE *memory) {
+    set_flags_on_compare(cpu, cpu->X, memory);
 }
 
 /*
@@ -657,16 +655,16 @@ void CPX(BYTE *memory) {
     C when memory less than or equal to Y, reset if M greater than Y.
 
 */
-void CPY(BYTE *memory) {
-    set_flags_on_compare(cpu.Y, memory);
+void CPY(CPU *cpu, BYTE *memory) {
+    set_flags_on_compare(cpu, cpu->Y, memory);
 }
 
 /*
     Clear carry flag
     Sets C flag to 0
 */
-void CLC() {
-    resetFlag(FLAG_C);
+void CLC(CPU *cpu) {
+    resetFlag(cpu, FLAG_C);
 }
 
 /*
@@ -674,57 +672,57 @@ void CLC() {
     Sets D flag to 0
     Not used in NES (NES doesn't use decimal mode)
 */
-void CLD() {
-    resetFlag(FLAG_D);
+void CLD(CPU *cpu) {
+    resetFlag(cpu, FLAG_D);
 }
 
 /*
     Clear interrupt disable bit
     Sets I flag to 0
 */
-void CLI() {
-    resetFlag(FLAG_I);
+void CLI(CPU *cpu) {
+    resetFlag(cpu, FLAG_I);
 }
 
 /*
     Clear overflow flag
     Sets V flag to 0
 */
-void CLV() {
-    resetFlag(FLAG_V);
+void CLV(CPU *cpu) {
+    resetFlag(cpu, FLAG_V);
 }
 
 /*
     Set carry flag
     Sets C flag to 1
 */
-void SEC() {
-    setFlag(FLAG_C);
+void SEC(CPU *cpu) {
+    setFlag(cpu, FLAG_C);
 }
 
 /*
     Set decimal mode flag
     Sets D flag to 1
 */
-void SED() {
-    setFlag(FLAG_D);
+void SED(CPU *cpu) {
+    setFlag(cpu, FLAG_D);
 }
 
 /*
     Set interrupt disable flag
     Sets I flag to 1
 */
-void SEI() {
-    setFlag(FLAG_I);
+void SEI(CPU *cpu) {
+    setFlag(cpu, FLAG_I);
 }
 
 /*
     BCC - Branch if Carry Flag Clear
     If C flag clear relative displacement added to PC to cause branch.
 */
-void BCC(BYTE displacement) {
-    if(getBit(cpu.P, FLAG_C) == 0) {
-        cpu.PC += displacement;
+void BCC(CPU *cpu, BYTE displacement) {
+    if(getBit(cpu->P, FLAG_C) == 0) {
+        cpu->PC += displacement;
     }
 }
 
@@ -732,9 +730,9 @@ void BCC(BYTE displacement) {
     BCS - Branch if Carry Flag Set
     If C flag set relative displacement added to PC to cause branch.
 */
-void BCS(BYTE displacement){
-    if(getBit(cpu.P, FLAG_C) != 0) {
-        cpu.PC += displacement;
+void BCS(CPU *cpu, BYTE displacement){
+    if(getBit(cpu->P, FLAG_C) != 0) {
+        cpu->PC += displacement;
     }
 }
 
@@ -742,9 +740,9 @@ void BCS(BYTE displacement){
     BEQ - Branch if Equal
     If Z flag set relative displacement added to PC to cause branch.
 */
-void BEQ(BYTE displacement) {
-    if(getBit(cpu.P, FLAG_Z) != 0) {
-        cpu.PC += displacement;
+void BEQ(CPU *cpu, BYTE displacement) {
+    if(getBit(cpu->P, FLAG_Z) != 0) {
+        cpu->PC += displacement;
     }
 }
 
@@ -752,9 +750,9 @@ void BEQ(BYTE displacement) {
     BMI - Branch if Minus
     If N flag set relative displacement added to PC to cause branch.
 */
-void BMI(BYTE displacement) {
-    if(getBit(cpu.P, FLAG_N) != 0) {
-        cpu.PC += displacement;
+void BMI(CPU *cpu, BYTE displacement) {
+    if(getBit(cpu->P, FLAG_N) != 0) {
+        cpu->PC += displacement;
     }
 }
 
@@ -762,9 +760,9 @@ void BMI(BYTE displacement) {
     BNE - Branch if Not Equal
     If Z flag clear relative displacement added to PC to cause branch.
 */
-void BNE(BYTE displacement) {
-    if(getBit(cpu.P, FLAG_Z) == 0) {
-        cpu.PC += displacement;
+void BNE(CPU *cpu, BYTE displacement) {
+    if(getBit(cpu->P, FLAG_Z) == 0) {
+        cpu->PC += displacement;
     }
 }
 
@@ -772,9 +770,9 @@ void BNE(BYTE displacement) {
     BPL - Branch if Positive
     If N flag clear relative displacement added to PC to cause branch.
 */
-void BPL(BYTE displacement) {
-    if(getBit(cpu.P, FLAG_N) == 0) {
-        cpu.PC += displacement;
+void BPL(CPU *cpu, BYTE displacement) {
+    if(getBit(cpu->P, FLAG_N) == 0) {
+        cpu->PC += displacement;
     }
 }
 
@@ -782,9 +780,9 @@ void BPL(BYTE displacement) {
     BVC - Branch if Overflow Clear
     If V flag clear relative displacement added to PC to cause branch.
 */
-void BVC(BYTE displacement) {
-    if(getBit(cpu.P, FLAG_V) == 0) {
-        cpu.PC += displacement;
+void BVC(CPU *cpu, BYTE displacement) {
+    if(getBit(cpu->P, FLAG_V) == 0) {
+        cpu->PC += displacement;
     }
 }
 
@@ -792,9 +790,9 @@ void BVC(BYTE displacement) {
     BVS - Branch if Overflow Set
     If V flag set relative displacement added to PC to cause branch.
 */
-void BVS(BYTE displacement) {
-    if(getBit(cpu.P, FLAG_V) != 0) {
-        cpu.PC += displacement;
+void BVS(CPU *cpu, BYTE displacement) {
+    if(getBit(cpu->P, FLAG_V) != 0) {
+        cpu->PC += displacement;
     }
 }
 
@@ -802,10 +800,10 @@ void BVS(BYTE displacement) {
     JMP - Jumps
     Sets PC to target address set in instruction operand.
 */
-void JMP(BYTE low, BYTE high) {
+void JMP(CPU *cpu, BYTE low, BYTE high) {
     uint16_t address = high << 8;
     address += low;
-    cpu.PC = address;
+    cpu->PC = address;
 }
 
 /*
@@ -816,25 +814,25 @@ void JMP(BYTE low, BYTE high) {
     before this function is called.
     Address part of instruction then stored in PC.    
 */
-void JSR(BYTE *memory, BYTE low, BYTE high) {
-    push_to_stack(memory, (cpu.PC >> 8));
-    push_to_stack(memory, cpu.PC);
+void JSR(CPU *cpu, BYTE *memory, BYTE low, BYTE high) {
+    push_to_stack(cpu, memory, (cpu->PC >> 8));
+    push_to_stack(cpu, memory, cpu->PC);
     uint16_t address = high << 8;
     address += low;
-    cpu.PC = address;
+    cpu->PC = address;
 }
 
 /*
     RTS - Return from Subroutine
     Pulls the Program Counter from the stack and increments by 1.
 */
-void RTS(BYTE *memory) {
+void RTS(CPU *cpu, BYTE *memory) {
     BYTE lowByte;
     BYTE highByte;
-    pull_from_stack(memory, &lowByte);
-    pull_from_stack(memory, &highByte);
-    cpu.PC = highByte << 8;
-    cpu.PC = cpu.PC + lowByte + 1;
+    pull_from_stack(cpu, memory, &lowByte);
+    pull_from_stack(cpu, memory, &highByte);
+    cpu->PC = highByte << 8;
+    cpu->PC = cpu->PC + lowByte + 1;
 }
 
 /*
@@ -842,14 +840,14 @@ void RTS(BYTE *memory) {
     Pulls the Status (P) register and Program Counter off top of the Stack.
     Relies on Stack Pointer pointing to correct position in stack.
 */
-void RTI(BYTE *memory) {
-    pull_from_stack(memory, &cpu.P);
+void RTI(CPU *cpu, BYTE *memory) {
+    pull_from_stack(cpu, memory, &cpu->P);
     BYTE lowByte;
     BYTE highByte;
-    pull_from_stack(memory, &lowByte);
-    pull_from_stack(memory, &highByte);
-    cpu.PC = highByte << 8;
-    cpu.PC = cpu.PC + lowByte;
+    pull_from_stack(cpu, memory, &lowByte);
+    pull_from_stack(cpu, memory, &highByte);
+    cpu->PC = highByte << 8;
+    cpu->PC = cpu->PC + lowByte;
 }
 
 /*
@@ -860,19 +858,19 @@ void RTI(BYTE *memory) {
     I flag set.
     Interrupt Pointer ($FFFF and $FFFE) loaded into PC.
 */
-void BRK(BYTE *memory) {
-    setFlag(FLAG_B);
+void BRK(CPU *cpu, BYTE *memory) {
+    setFlag(cpu, FLAG_B);
     BYTE lowByte;
     BYTE highByte;
-    highByte = cpu.PC >> 8;
-    lowByte = cpu.PC;
-    push_to_stack(memory, highByte);
-    push_to_stack(memory, lowByte);
-    push_to_stack(memory, cpu.P);
+    highByte = cpu->PC >> 8;
+    lowByte = cpu->PC;
+    push_to_stack(cpu, memory, highByte);
+    push_to_stack(cpu, memory, lowByte);
+    push_to_stack(cpu, memory, cpu->P);
 
-    setFlag(FLAG_I);
+    setFlag(cpu, FLAG_I);
     //Interrupt pointer $FFFE and $FFFF loaded into PC
-    cpu.PC = (memory[IRQ_HIGH] << 8) + memory[IRQ_LOW];
+    cpu->PC = (memory[IRQ_HIGH] << 8) + memory[IRQ_LOW];
 }
 
 /*
