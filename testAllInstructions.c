@@ -3,6 +3,14 @@
 #include "testAll.h"
 
 BYTE memory[0xFFFF];
+CPU cpu = {0x0000u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u};
+
+void setup(void) {
+    power_cpu(&cpu);
+}
+void teardown(void) {
+    ;
+}
 
 int main() {
     SRunner *sr;

@@ -4,26 +4,24 @@
 #include "testAll.h"
 
 START_TEST(test_JMP) {
-    power_cpu();
     cpu.PC = 0xFF00;
     u_int16_t operand = 0xAF03;
     BYTE Low = 0x03;
     BYTE High = 0xAF;
-    JMP(Low, High);
+    JMP(&cpu, Low, High);
 
     ck_assert_msg(cpu.PC == operand, "incorrect PC value");
 }
 END_TEST
 
 START_TEST(test_JSR) {
-    power_cpu();
     cpu.PC = 0xE34D;
     u_int16_t operand = 0xE102;
     BYTE Low = 0x02;
     BYTE High = 0xE1;
     //set up to reflect incrementing of PC by 2 on any instruction executing
     cpu.PC += 2;
-    JSR(memory, Low, High);
+    JSR(&cpu, memory, Low, High);
     ck_assert_msg(cpu.PC == operand, "incorrect PC value");
     ck_assert_msg(memory[0x01FF] == 0xE3, "high byte of PC incorrectly stored");
     ck_assert_msg(memory[0x01FE] == 0x4F, "low byte of PC incorrectly stored");
@@ -32,14 +30,13 @@ START_TEST(test_JSR) {
 END_TEST
 
 START_TEST(test_RTS) {
-    power_cpu();
     BYTE high = 0x7C;
     BYTE low = 0x08;
-    push_to_stack(memory, high);
-    push_to_stack(memory, low);
+    push_to_stack(&cpu, memory, high);
+    push_to_stack(&cpu, memory, low);
     uint16_t expectedPC = 0x7C09;
 
-    RTS(memory);
+    RTS(&cpu, memory);
     ck_assert_msg(cpu.PC == expectedPC, "incorrect PC value");
     ck_assert_msg(cpu.S == 0xFF, "incorrect Stack Pointer value");    
 }
@@ -56,6 +53,7 @@ Suite *Jump_suite(void) {
     tcase_add_test(tc_core, test_JMP);
     tcase_add_test(tc_core, test_JSR);
     tcase_add_test(tc_core, test_RTS);
+    tcase_add_checked_fixture(tc_core, setup, teardown);
     
     suite_add_tcase(s, tc_core);
 

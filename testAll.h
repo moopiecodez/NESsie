@@ -2,7 +2,12 @@
 #include <stdint.h>
 #include "cpu.h"
 
+extern CPU cpu;
 extern BYTE memory[];
+
+void setup(void);
+void teardown(void);
+
 Suite *Arithmetic_suite(void);
 Suite *Branch_suite(void);
 Suite *Flag_suite(void);

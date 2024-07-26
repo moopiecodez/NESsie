@@ -3,10 +3,9 @@
 #include "testAll.h"
 
 START_TEST(test_TAX) {
-    power_cpu();
     cpu.A = 0xCE;
 
-    TAX();
+    TAX(&cpu);
 
     ck_assert_msg(cpu.X == cpu.A, "value not transferred");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "zero flag incorrect");
@@ -15,10 +14,9 @@ START_TEST(test_TAX) {
 END_TEST
 
 START_TEST(test_TAY) {
-    power_cpu();
     cpu.A = 0x7E;
 
-    TAY();
+    TAY(&cpu);
 
     ck_assert_msg(cpu.Y == cpu.A, "value not transferred");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "zero flag incorrect");
@@ -27,10 +25,9 @@ START_TEST(test_TAY) {
 END_TEST
 
 START_TEST(test_TSX) {
-    power_cpu();
     cpu.S = 0xED;
 
-    TSX();
+    TSX(&cpu);
 
     ck_assert_msg(cpu.X == cpu.S, "value not transferred");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "zero flag incorrect");
@@ -39,10 +36,9 @@ START_TEST(test_TSX) {
 END_TEST
 
 START_TEST(test_TXA) {
-    power_cpu();
     cpu.X = 0x00;
 
-    TXA();
+    TXA(&cpu);
 
     ck_assert_msg(cpu.A == cpu.X, "value not transferred");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 1, "zero flag incorrect");
@@ -51,20 +47,18 @@ START_TEST(test_TXA) {
 END_TEST
 
 START_TEST(test_TXS) {
-    power_cpu();
     cpu.X = 0xCC;
 
-    TXS();
+    TXS(&cpu);
 
     ck_assert_msg(cpu.S == cpu.X, "value not transferred");
 }
 END_TEST
 
 START_TEST(test_TYA) {
-    power_cpu();
     cpu.Y = 0x2E;
 
-    TYA();
+    TYA(&cpu);
 
     ck_assert_msg(cpu.A == cpu.Y, "value not transferred");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "zero flag incorrect");
@@ -86,6 +80,7 @@ Suite *Transfer_suite(void) {
     tcase_add_test(tc_core, test_TXA);
     tcase_add_test(tc_core, test_TXS);
     tcase_add_test(tc_core, test_TYA);
+    tcase_add_checked_fixture(tc_core, setup, teardown);
 
     suite_add_tcase(s, tc_core);
 

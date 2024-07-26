@@ -3,7 +3,6 @@
 #include "testAll.h"
 
 START_TEST(test_Pwr) {
-    
     cpu.P = cpu.A = cpu.X = cpu.Y = 0x12u;
     BYTE expectedP, expectedA, expectedX, expectedY;
     expectedP = 0x04u;
@@ -11,7 +10,7 @@ START_TEST(test_Pwr) {
     uint16_t expectedPC = 0xFFFCu;
     BYTE expectedS = 0xFFu;    
 
-    power_cpu();
+    power_cpu(&cpu);
 
     ck_assert_msg(cpu.P == expectedP, "incorrect P register value");
     ck_assert_msg(cpu.A == expectedA, "incorrect A register value");

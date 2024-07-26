@@ -3,12 +3,11 @@
 #include "testAll.h"
 
 START_TEST(test_AND) {
-    power_cpu();
     memory[0xFFF1] = 0x60;
     cpu.A = 0x65;
     BYTE expected = 0x60;
 
-    AND(&memory[0xFFF1]);
+    AND(&cpu, &memory[0xFFF1]);
 
     ck_assert_msg(cpu.A == expected, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "Z flag incorrect");
@@ -17,12 +16,11 @@ START_TEST(test_AND) {
 END_TEST
 
 START_TEST(test_EOR) {
-    power_cpu();
     memory[0xFFF2] = 0x65;
     cpu.A = 0x60;
     BYTE expected = 0x05;
 
-    EOR(&memory[0xFFF2]);
+    EOR(&cpu, &memory[0xFFF2]);
     ck_assert_msg(cpu.A == expected, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "Z flag incorrect");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "N flag incorrect");
@@ -30,12 +28,11 @@ START_TEST(test_EOR) {
 END_TEST
 
 START_TEST(test_ORA) {
-    power_cpu();
     memory[0xFFF3] = 0x65;
     cpu.A = 0x60;
     BYTE expected = 0x65;
 
-    ORA(&memory[0xFFF3]);
+    ORA(&cpu, &memory[0xFFF3]);
     ck_assert_msg(cpu.A == expected, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "Z flag incorrect");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "N flag incorrect");
@@ -43,12 +40,11 @@ START_TEST(test_ORA) {
 END_TEST
 
 START_TEST(test_BIT) {
-    power_cpu();
     memory[0xFFF3] = 0x82;
     cpu.A = 0x60;
     BYTE expected = 0x60;
 
-    BIT(&memory[0xFFF3]);
+    BIT(&cpu, &memory[0xFFF3]);
 
     ck_assert_msg(cpu.A == expected, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 1, "Z flag incorrect");
@@ -69,6 +65,7 @@ Suite *Logical_suite(void) {
     tcase_add_test(tc_core, test_EOR);
     tcase_add_test(tc_core, test_ORA);
     tcase_add_test(tc_core, test_BIT);
+    tcase_add_checked_fixture(tc_core, setup, teardown);
 
     suite_add_tcase(s, tc_core);
 

@@ -3,11 +3,10 @@
 #include "testAll.h"
 
 START_TEST(test_CLC) {
-    power_cpu();
-    setFlag(FLAG_C);
+    setFlag(&cpu, FLAG_C);
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "initial C flag not set");
 
-    CLC();
+    CLC(&cpu);
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -19,11 +18,10 @@ START_TEST(test_CLC) {
 END_TEST
 
 START_TEST(test_CLD) {
-    power_cpu();
-    setFlag(FLAG_D);
+    setFlag(&cpu, FLAG_D);
     ck_assert_msg(getBit(cpu.P, FLAG_D) == 1, "initial D flag not set");
 
-    CLD();
+    CLD(&cpu);
 
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
@@ -36,10 +34,9 @@ START_TEST(test_CLD) {
 END_TEST
 
 START_TEST(test_CLI) {
-    power_cpu();
     ck_assert_msg(getBit(cpu.P, FLAG_I) == 1, "initial I flag not set");
 
-    CLI();
+    CLI(&cpu);
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -51,11 +48,10 @@ START_TEST(test_CLI) {
 END_TEST
 
 START_TEST(test_CLV) {
-    power_cpu();
-    setFlag(FLAG_V);
+    setFlag(&cpu, FLAG_V);
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 1, "initial V flag not set");
 
-    CLV();
+    CLV(&cpu);
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -67,10 +63,9 @@ START_TEST(test_CLV) {
 END_TEST
 
 START_TEST(test_SEC) {
-    power_cpu();
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "initial C flag incorrectly set");
 
-    SEC();
+    SEC(&cpu);
 
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
@@ -83,10 +78,9 @@ START_TEST(test_SEC) {
 END_TEST
 
 START_TEST(test_SED) {
-    power_cpu();
     ck_assert_msg(getBit(cpu.P, FLAG_D) == 0, "initial D flag incorrectly set");
 
-    SED();
+    SED(&cpu);
 
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
@@ -99,11 +93,10 @@ START_TEST(test_SED) {
 END_TEST
 
 START_TEST(test_SEI) {
-    power_cpu();
-    resetFlag(FLAG_I);
+    resetFlag(&cpu, FLAG_I);
     ck_assert_msg(getBit(cpu.P, FLAG_I) == 0, "initial I flag incorrectly set");
 
-    SEI();
+    SEI(&cpu);
 
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
@@ -130,6 +123,7 @@ Suite *Flag_suite(void) {
     tcase_add_test(tc_core, test_SEC);
     tcase_add_test(tc_core, test_SED);
     tcase_add_test(tc_core, test_SEI);
+    tcase_add_checked_fixture(tc_core, setup, teardown);
 
     suite_add_tcase(s, tc_core);
 

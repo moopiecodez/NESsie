@@ -3,11 +3,10 @@
 #include "testAll.h"
 
 START_TEST(test_LDA) {
-    power_cpu();
     BYTE expectedA = 0x2C;
     memory[0xFFF1] = expectedA;
 
-    LDA(&memory[0xFFF1]);
+    LDA(&cpu, &memory[0xFFF1]);
 
     ck_assert_msg(cpu.A == expectedA, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
@@ -21,11 +20,10 @@ START_TEST(test_LDA) {
 END_TEST
 
 START_TEST(test_LDX) {
-    power_cpu();
     BYTE expectedX = 0x00; //zero
     memory[0xFFF2] = expectedX;
 
-    LDX(&memory[0xFFF2]);
+    LDX(&cpu, &memory[0xFFF2]);
 
     ck_assert_msg(cpu.X == expectedX, "incorrect X register value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
@@ -34,11 +32,10 @@ START_TEST(test_LDX) {
 END_TEST
 
 START_TEST(test_LDY) {
-    power_cpu();
     BYTE expectedY = 0x85; //negative
     memory[0xFFF3] = expectedY;
 
-    LDY(&memory[0xFFF3]);
+    LDY(&cpu, &memory[0xFFF3]);
     ck_assert_msg(cpu.Y == expectedY, "incorrect Y register value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) != 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
@@ -56,6 +53,7 @@ Suite *Load_suite(void) {
     tcase_add_test(tc_core, test_LDA);
     tcase_add_test(tc_core, test_LDX);
     tcase_add_test(tc_core, test_LDY);
+    tcase_add_checked_fixture(tc_core, setup, teardown);
 
     suite_add_tcase(s, tc_core);
 
