@@ -1,8 +1,12 @@
 #include "cpu.h"
 
-BYTE fetch(CPU *cpu, BYTE (*memory)[]) {
-    BYTE operand = (*memory)[cpu->PC];
+BYTE fetch(CPU *cpu, BYTE *memory) {
+    BYTE operand = memory[cpu->PC];
     return operand;
+}
+
+void incrementPC(CPU *cpu) {
+    cpu->PC++;
 }
 
 void power_cpu(CPU *cpu) {

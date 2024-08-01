@@ -32,7 +32,9 @@ typedef struct cpu_registers {
     BYTE S;         /* Stack Pointer/offset from $0100, initialised at $FF*/
 } CPU;
 
-BYTE fetch(CPU *cpu, BYTE (*memory)[]);
+BYTE fetch(CPU *cpu, BYTE *memory);
+void incrementPC(CPU *cpu);
+
 void power_cpu(CPU *cpu);
 
 void setFlag(CPU *cpu, int position);
@@ -110,6 +112,9 @@ void JMP(CPU *cpu, BYTE low, BYTE high);
 void JSR(CPU *cpu, BYTE *memory, BYTE low, BYTE high);
 void RTS(CPU *cpu, BYTE *memory);
 
-void BRK(CPU *cpu, BYTE *memor);
+void BRK(CPU *cpu, BYTE *memory);
 void NOP();
 void RTI(CPU *cpu, BYTE *memory);
+
+//addressing modes
+BYTE *A_addressing(CPU *cpu, BYTE *memory);
