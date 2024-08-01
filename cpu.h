@@ -118,3 +118,15 @@ void RTI(CPU *cpu, BYTE *memory);
 
 //addressing modes
 BYTE *A_addressing(CPU *cpu, BYTE *memory);
+BYTE *imm(CPU *cpu, BYTE *memory);
+BYTE *absolute(CPU *cpu, BYTE *memory);
+BYTE *zp(CPU *cpu, BYTE *memory);
+BYTE *zpX(CPU *cpu, BYTE *memory);
+BYTE *zpY(CPU *cpu, BYTE *memory);
+BYTE *absX(CPU *cpu, BYTE *memory);
+BYTE *absY(CPU *cpu, BYTE *memory);
+void imp(CPU *cpu);
+void rel(CPU *cpu, BYTE *memory);
+BYTE *indirectX(CPU *cpu, BYTE *memory);
+BYTE *indirectY(CPU *cpu, BYTE *memory);
+void absIndirect(CPU *cpu, BYTE *memory);
