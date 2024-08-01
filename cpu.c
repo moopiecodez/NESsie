@@ -1,5 +1,10 @@
 #include "cpu.h"
 
+BYTE fetch(CPU *cpu, BYTE (*memory)[]) {
+    BYTE operand = (*memory)[cpu->PC];
+    return operand;
+}
+
 void power_cpu(CPU *cpu) {
     cpu->P = cpu->A = cpu->X = cpu->Y = 0x00u;
     cpu->PC = 0xFFFCu;
@@ -568,7 +573,7 @@ void ADC(CPU *cpu, BYTE *memory) {
     }
     cpu->A = sum;
     //check if unsigned sum larger than 255 to determine if carry set
-    if((sum >> 9) & ~(~0 << 1)) {
+    if(sum > 0xFF) {
         setFlag(cpu, FLAG_C);
     } else {
         resetFlag(cpu, FLAG_C);

@@ -32,6 +32,7 @@ typedef struct cpu_registers {
     BYTE S;         /* Stack Pointer/offset from $0100, initialised at $FF*/
 } CPU;
 
+BYTE fetch(CPU *cpu, BYTE (*memory)[]);
 void power_cpu(CPU *cpu);
 
 void setFlag(CPU *cpu, int position);
