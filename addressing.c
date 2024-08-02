@@ -2,8 +2,6 @@
 #include <stdint.h>
 #include "cpu.h"
 
-#define ZERO_PAGE 0x0000
-
 /* 
     Addressing modes:
     Memory - immediate - 2 bytes second operand in second byte
@@ -40,6 +38,8 @@ BYTE *imm(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE byte = fetch(cpu, memory);
     incrementPC(cpu);
+    //note this is not pointer to operand's location in memory
+    //converted to pointer for function return type consistency
     BYTE *operand = &byte;
     return operand;
 }
@@ -75,7 +75,7 @@ BYTE *zp(CPU *cpu, BYTE *memory) {
 }
 
 /*
-    zp,x - indexed zero page addressing X
+    zp,X - indexed zero page addressing X
     Form of zero page addressing. Address calculated by adding second byte of
     instruction to contents of the X register. References a location on zero 
     page ($00).
@@ -91,7 +91,7 @@ BYTE *zpX(CPU *cpu, BYTE *memory) {
 }
 
 /*
-    zp,y - indexed zero page addressing Y
+    zp,Y - indexed zero page addressing Y
     Form of zero page addressing. Address calculated by adding second byte of
     instruction to contents of the Y register. References a location on zero 
     page ($00).
@@ -144,10 +144,14 @@ BYTE *absY(CPU *cpu, BYTE *memory) {
     Implied - aka inherent, implied addressing
     Address containing operand is implicitly stated in operation code of the
     instruction.
+    Second parameter added for consistency in function declarations.
+    Returns null pointer for consistency in function declarations.
 */
-void imp(CPU *cpu) {
+BYTE *imp(CPU *cpu, BYTE *memory) {
     //increment PC after fetching opcode
     incrementPC(cpu);
+    BYTE *address = NULL;
+    return address;
 }
 
 /*
@@ -155,13 +159,16 @@ void imp(CPU *cpu) {
     Only used in branch instructions.
     Second byte of the instruction is a signed offset added to lower bits of PC 
     when PC is set at next instruction.
+    Returns null pointer for consistency in function declarations.
 */
-void rel(CPU *cpu, BYTE *memory) {
+BYTE *rel(CPU *cpu, BYTE *memory) {
     //test to check that offset works correctly on unsigned register
     incrementPC(cpu);
     int8_t offset = (int8_t)fetch(cpu, memory);
     incrementPC(cpu);
     cpu->PC = cpu->PC + offset;
+    BYTE *address = NULL;
+    return address;
 }
 
 /*
@@ -201,7 +208,7 @@ BYTE *indirectY(CPU *cpu, BYTE *memory) {
     BYTE lowBits = memory[ZERO_PAGE + zpLocation];
     uint16_t sum = (uint16_t)lowBits + cpu->Y;
     BYTE carry = (sum >> 8) & FLAG_MASK;
-    lowBits = sum;
+    lowBits = (BYTE)sum;
     BYTE highBits = memory[ZERO_PAGE + zpLocation + 1];
     highBits += carry;
     uint16_t effectiveAddress = (highBits << 8) + lowBits;
