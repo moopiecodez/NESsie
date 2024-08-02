@@ -14,6 +14,10 @@
 //constant for base stack location in memory
 #define STACK_BASE 0x0100u
 
+//constant for zero page location
+#define ZERO_PAGE 0x0000
+
+
 //constants for Processor Status register flags position, 5 not used
 #define FLAG_N 7    /* N (negative flag) */
 #define FLAG_V 6    /* V (overflow flag) */
@@ -125,8 +129,8 @@ BYTE *zpX(CPU *cpu, BYTE *memory);
 BYTE *zpY(CPU *cpu, BYTE *memory);
 BYTE *absX(CPU *cpu, BYTE *memory);
 BYTE *absY(CPU *cpu, BYTE *memory);
-void imp(CPU *cpu);
-void rel(CPU *cpu, BYTE *memory);
+BYTE *imp(CPU *cpu, BYTE *memory);
+BYTE *rel(CPU *cpu, BYTE *memory);
 BYTE *indirectX(CPU *cpu, BYTE *memory);
 BYTE *indirectY(CPU *cpu, BYTE *memory);
 void absIndirect(CPU *cpu, BYTE *memory);
