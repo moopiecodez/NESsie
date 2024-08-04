@@ -1,60 +1,63 @@
 #Nessie makefile
+CC = gcc
+CFLAGS = -Wall
+TESTFLAGS = -lcheck -lm -lsubunit -pthread -lrt
 
 .PHONY: clean
 
 loadRom: loadROM.c
-	gcc loadROM.c -o $@ -Wall
+	$(CC) $(CFLAGS) loadROM.c -o $@ 
 
 testInstructions: testAllInstructions.o cpu.o
-	gcc testAllInstructions.o cpu.o testpowercpu.o testArithmetic.o testBranch.o testFlagChanges.o testINC-DEC.o testJump.o testLDA.o testLogical.o testShifts.o testStack.o testStore.o testSysFunctions.o testTransfer.o -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) testAllInstructions.o cpu.o testpowercpu.o testArithmetic.o testBranch.o testFlagChanges.o testINC-DEC.o testJump.o testLDA.o testLogical.o testShifts.o testStack.o testStore.o testSysFunctions.o testTransfer.o -o $@ $(TESTFLAGS)
 
 testAllInstructions.o: testAllInstructions.c testpowercpu.o testArithmetic.o testBranch.o testFlagChanges.o testINC-DEC.o testJump.o testLDA.o testLogical.o testShifts.o testStack.o testStore.o testSysFunctions.o testTransfer.o
-	gcc -c testAllInstructions.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testAllInstructions.c -o $@ 
 
 testpowercpu.o: testpowercpu.c
-	gcc -c testpowercpu.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testpowercpu.c -o $@ 
 
 testArithmetic.o: testArithmetic.c
-	gcc -c testArithmetic.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testArithmetic.c -o $@ 
 
 testBranch.o: testBranch.c
-	gcc -c testBranch.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testBranch.c -o $@ 
 
 testFetch.o: testFetch.c
-	gcc -c testFetch.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testFetch.c -o $@ 
 
 testFlagChanges.o: testFlagChanges.c
-	gcc -c testFlagChanges.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testFlagChanges.c -o $@  
 
 testINC-DEC.o: testINC-DEC.c
-	gcc -c testINC-DEC.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testINC-DEC.c -o $@  
 
 testJump.o: testJump.c
-	gcc -c testJump.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testJump.c -o $@  
 
 testLDA.o: testLDA.c
-	gcc -c testLDA.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testLDA.c -o $@  
 
 testLogical.o: testLogical.c
-	gcc -c testLogical.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testLogical.c -o $@  
 
 testShifts.o: testShifts.c
-	gcc -c testShifts.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testShifts.c -o $@  
 
 testStack.o: testStack.c
-	gcc -c testStack.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testStack.c -o $@  
 
 testStore.o: testStore.c
-	gcc -c testStore.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testStore.c -o $@  
 
 testSysFunctions.o: testSysFunctions.c
-	gcc -c testSysFunctions.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testSysFunctions.c -o $@  
 
 testTransfer.o: testTransfer.c
-	gcc -c testTransfer.c -o $@ -lcheck -lm -lsubunit -pthread -lrt -Wall
+	$(CC) $(CFLAGS) -c testTransfer.c -o $@  
 
 cpu.o: cpu.c
-	gcc -c cpu.c -o $@ -Wall
+	$(CC) $(CFLAGS) -c cpu.c -o $@ 
 
 clean:
 # '-' at start of line means continue beyond error
