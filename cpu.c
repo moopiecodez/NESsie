@@ -1,5 +1,15 @@
 #include "cpu.h"
 
+void clock(CPU *cpu, BYTE *memory, int cycles, int clock_counter) {
+    if(cycles == 0) {
+        BYTE opcode = fetch(cpu, memory);
+        //call opcode function
+        //get number of cycles for instruction somehow
+    }
+    clock_counter ++;
+    cycles--;
+}
+
 BYTE fetch(CPU *cpu, BYTE *memory) {
     BYTE operand = memory[cpu->PC];
     return operand;
