@@ -1,5 +1,9 @@
 #include "cpu.h"
-
+/*
+OPCODE op_00 = {BRK, imm};
+OPCODE instructions[0xFF] = {op_00};
+*/
+/*
 void oc_00(CPU *cpu, BYTE *memory) {
     imp();
     BRK(cpu, memory);
@@ -11,12 +15,22 @@ void oc_01(CPU *cpu, BYTE *memory) {
     ORA(cpu, data);
 }
 
+//ORA indirect,X
+void (*op_01[6])(CPU *, BYTE *) = {fetchOpcode, fetchPointerAddress, ReadAddressAddX, 
+                                    fetchEffectiveAddLow, fetchEffectiveAddHigh, readEffectiveAdd};
+
+//ORA ZP
+void (*op_05[4])(CPU *, BYTE *) = {fetchOpcode, fetchAddress, readEffectiveAddress};
+
 void oc_05(CPU *cpu, BYTE *memory) {
     //zp
     BYTE *data = zp(cpu, memory);
     ORA(cpu, data);
 }
 
+// ASL ZP
+
+void (*op_06[5])(CPU *, BYTE *) = {fetchOpcode, fetchAddress, readEffectiveAddress, writeValueAndOperate, writeNewValue}
 void oc_06(CPU *cpu, BYTE *memory) {
     //zp aka addr
     BYTE *data = zp(cpu, memory);
@@ -102,3 +116,4 @@ void oc_A4(CPU *cpu, BYTE *memory) {
 void oc_4C(CPU *cpu, BYTE *memory) {
     //JMP PC changes need to be different
 }
+*/

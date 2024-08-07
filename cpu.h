@@ -34,9 +34,25 @@ typedef struct cpu_registers {
     BYTE X;         /* Index Register X */
     BYTE Y;         /* Index Register Y */
     BYTE S;         /* Stack Pointer/offset from $0100, initialised at $FF*/
+    BYTE IR;        /* Instruction Register, holds opcode initialised to 0*/
+    BYTE PD;        /* Predecode Register holds data*/
 } CPU;
 
-BYTE fetch(CPU *cpu, BYTE *memory);
+typedef void instruction(CPU *, BYTE *);
+
+// typedef struct instruction_opcode {
+//     //instruction ins;
+//     //void (*instruction)(CPU *, BYTE *);
+//     //flexible array member
+//     //void (*addrmode[])(CPU *, BYTE *);
+// } OPCODE;
+
+// typedef OPCODE *instructions[];
+// instructions *get_instruction_set();
+
+// void fetchOpcode(CPU *cpu, BYTE *memory);
+// void fetchOperand(CPU *cpu, BYTE *memory);
+// void readThrow(CPU *cpu, BYTE *memory, OPCODE op);
 void incrementPC(CPU *cpu);
 
 void power_cpu(CPU *cpu);
@@ -45,82 +61,84 @@ void setFlag(CPU *cpu, int position);
 void resetFlag(CPU *cpu, int position);
 BYTE getBit(BYTE source, int position);
 
-void increment(CPU *cpu, BYTE *memory);
-void INC(CPU *cpu, BYTE *memory);
-void INX(CPU *cpu);
-void INY(CPU *cpu);
-void decrement(CPU *cpu, BYTE *memory);
-void DEC(CPU *cpu, BYTE *memory);
-void DEX(CPU *cpu);
-void DEY(CPU *cpu);
+// void increment(CPU *cpu, BYTE *memory);
 
-void LDA(CPU *cpu, BYTE *memory);
-void LDX(CPU *cpu, BYTE *memory);
-void LDY(CPU *cpu, BYTE *memory);
+// instruction INC;
+// instruction INX;
+// instruction INY;
+// void decrement(CPU *cpu, BYTE *memory);
+// instruction DEC;
+// instruction DEX;
+// instruction DEY;
 
-void ASL(CPU *cpu, BYTE *memory);
-void LSR(CPU *cpu, BYTE *memory);
-void ROL(CPU *cpu, BYTE *memory);
-void ROR(CPU *cpu, BYTE *memory);
+instruction LDA;
+// instruction LDX;
+// instruction LDY;
 
-void STA(CPU *cpu, BYTE *memory);
-void STX(CPU *cpu, BYTE *memory);
-void STY(CPU *cpu, BYTE *memory);
+// instruction ASL;
+// instruction LSR;
+// instruction ROL;
+// instruction ROR;
 
-void TAX(CPU *cpu);
-void TAY(CPU *cpu);
-void TSX(CPU *cpu);
-void TXA(CPU *cpu);
-void TXS(CPU *cpu);
-void TYA(CPU *cpu);
+// instruction STA;
+// instruction STX;
+// instruction STY;
 
-void AND(CPU *cpu, BYTE *memory);
-void EOR(CPU *cpu, BYTE *memory);
-void ORA(CPU *cpu, BYTE *memory);
-void BIT(CPU *cpu, BYTE *memory);
+// instruction TAX;
+// instruction TAY;
+// instruction TSX;
+// instruction TXA;
+// instruction TXS;
+// instruction TYA;
 
-void push_to_stack(CPU *cpu, BYTE *memory, BYTE reg);
-void PHA(CPU *cpu, BYTE *memory);
-void PHP(CPU *cpu, BYTE *memory);
+// instruction AND;
+// instruction EOR;
+// instruction ORA;
+// instruction BIT;
 
-void pull_from_stack(CPU *cpu, BYTE *memory, BYTE *reg);
-void PLA(CPU *cpu, BYTE *memory);
-void PLP(CPU *cpu, BYTE *memory);
+// void push_to_stack(CPU *cpu, BYTE *memory, BYTE reg);
+// instruction PHA;
+// instruction PHP;
 
-void ADC(CPU *cpu, BYTE *memory);
-void SBC(CPU *cpu, BYTE *memory);
+// void pull_from_stack(CPU *cpu, BYTE *memory, BYTE *reg);
+// instruction PLA;
+// instruction PLP;
 
-void set_flags_on_compare(CPU *cpu, BYTE reg, BYTE *memory);
-void CMP(CPU *cpu, BYTE *memory);
-void CPX(CPU *cpu, BYTE *memory);
-void CPY(CPU *cpu, BYTE *memory);
+// instruction ADC;
+// instruction SBC;
 
-void CLC(CPU *cpu);
-void CLD(CPU *cpu);
-void CLI(CPU *cpu);
-void CLV(CPU *cpu);
-void SEC(CPU *cpu);
-void SED(CPU *cpu);
-void SEI(CPU *cpu);
+// void set_flags_on_compare(CPU *cpu, BYTE reg, BYTE *memory);
+// instruction CMP;
+// instruction CPX;
+// instruction CPY;
 
-void BCC(CPU *cpu, BYTE displacement);
-void BCS(CPU *cpu, BYTE displacement);
-void BEQ(CPU *cpu, BYTE displacement);
-void BMI(CPU *cpu, BYTE displacement);
-void BNE(CPU *cpu, BYTE displacement);
-void BPL(CPU *cpu, BYTE displacement);
-void BVC(CPU *cpu, BYTE displacement);
-void BVS(CPU *cpu, BYTE displacement);
+// instruction CLC;
+// instruction CLD;
+// instruction CLI;
+// instruction CLV;
+// instruction SEC;
+// instruction SED;
+// instruction SEI;
 
-void JMP(CPU *cpu, BYTE low, BYTE high);
-void JSR(CPU *cpu, BYTE *memory, BYTE low, BYTE high);
-void RTS(CPU *cpu, BYTE *memory);
+// instruction BCC;
+// instruction BCS;
+// instruction BEQ;
+// instruction BMI;
+// instruction BNE;
+// instruction BPL;
+// instruction BVC;
+// instruction BVS;
 
-void BRK(CPU *cpu, BYTE *memory);
-void NOP();
-void RTI(CPU *cpu, BYTE *memory);
+// instruction JMP;
+// instruction JSR;
+// instruction RTS;
+
+// instruction BRK;
+// instruction NOP;
+// instruction RTI;
 
 //addressing modes
+/*
 BYTE *A_addressing(CPU *cpu, BYTE *memory);
 BYTE *imm(CPU *cpu, BYTE *memory);
 BYTE *absolute(CPU *cpu, BYTE *memory);
@@ -134,3 +152,4 @@ BYTE *rel(CPU *cpu, BYTE *memory);
 BYTE *indirectX(CPU *cpu, BYTE *memory);
 BYTE *indirectY(CPU *cpu, BYTE *memory);
 void absIndirect(CPU *cpu, BYTE *memory);
+*/

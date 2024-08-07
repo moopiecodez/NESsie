@@ -19,36 +19,29 @@
         16 bit address address which is target
 
 */
-
+/*
+OPCODE op_0A = {ASL, A};
+OPCODE instructions[0xFF] = {op_0A};
+*/
 /*
     Accumulator - acts on the accumulator. One byte instruction
 */
-BYTE *A_addressing(CPU *cpu, BYTE *memory) {
-    //memory not used but done for consistency
-    incrementPC(cpu);
-    return &cpu->A;
-}
+//void (*A[2])(CPU *, BYTE *) = {fetchOpcode, readThrow};
+//first cycle is fetch opcode, increment PC
 
 /*
     # - Immediate addressing: operand is contained in the second byte 
     of the instruction. No additional memory addressing required.
 */
-BYTE *imm(CPU *cpu, BYTE *memory) {
-    //do stuff to extract constant;
-    incrementPC(cpu);
-    BYTE byte = fetch(cpu, memory);
-    incrementPC(cpu);
-    //note this is not pointer to operand's location in memory
-    //converted to pointer for function return type consistency
-    BYTE *operand = &byte;
-    return operand;
-}
+void (*imm[2])(CPU *, BYTE *) = {fetchOpcode, fetchOperand};
 
 /*
     Absolute - load contents of an absolute address
     Second Byte specifies low order bits and third specifies high order bits.
     Function returns pointer to absolute address
 */
+//void (*absolute[]);
+/*
 BYTE *absolute(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE lowBits = fetch(cpu, memory);
@@ -59,6 +52,7 @@ BYTE *absolute(CPU *cpu, BYTE *memory) {
     BYTE *address = &memory[effectiveAddress];
     return address;
 }
+*/
 
 /*
     Zero page - second byte contains lower order bits of address on zero page.
@@ -66,6 +60,7 @@ BYTE *absolute(CPU *cpu, BYTE *memory) {
     between $0000-00FF.
     Returns a pointer to the effective address.
 */
+/*
 BYTE *zp(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE lowBits = fetch(cpu, memory);
@@ -73,7 +68,7 @@ BYTE *zp(CPU *cpu, BYTE *memory) {
     BYTE *address = &memory[ZERO_PAGE + lowBits];
     return address;
 }
-
+*/
 /*
     zp,X - indexed zero page addressing X
     Form of zero page addressing. Address calculated by adding second byte of
@@ -81,6 +76,7 @@ BYTE *zp(CPU *cpu, BYTE *memory) {
     page ($00).
     Crossing of page boundaries does not occur.
 */
+/*
 BYTE *zpX(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE lowBits = fetch(cpu, memory);
@@ -89,7 +85,7 @@ BYTE *zpX(CPU *cpu, BYTE *memory) {
     BYTE *address = &memory[ZERO_PAGE + lowBits];
     return address;
 }
-
+*/
 /*
     zp,Y - indexed zero page addressing Y
     Form of zero page addressing. Address calculated by adding second byte of
@@ -97,6 +93,7 @@ BYTE *zpX(CPU *cpu, BYTE *memory) {
     page ($00).
     Crossing of page boundaries does not occur.
 */
+/*
 BYTE *zpY(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE lowBits = fetch(cpu, memory);
@@ -105,12 +102,13 @@ BYTE *zpY(CPU *cpu, BYTE *memory) {
     BYTE *address = &memory[ZERO_PAGE + lowBits];
     return address;
 }
-
+*/
 /*
     a,x - indexed absolute addressing X
     Effective address formed by adding contents of X to address contained in
     second and third bytes of the instruction.
 */
+/*
 BYTE *absX(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE lowBits = fetch(cpu, memory);
@@ -122,12 +120,13 @@ BYTE *absX(CPU *cpu, BYTE *memory) {
     BYTE *address = &memory[effectiveAddress];
     return address;
 }
-
+*/
 /*
     a,y - indexed absolute addressing Y
     Effective address formed by adding contents of Y to address contained in
     second and third bytes of the instruction.
 */
+/*
 BYTE *absY(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE lowBits = fetch(cpu, memory);
@@ -139,6 +138,7 @@ BYTE *absY(CPU *cpu, BYTE *memory) {
     BYTE *address = &memory[effectiveAddress];
     return address;
 }
+*/
 
 /*
     Implied - aka inherent, implied addressing
@@ -147,12 +147,14 @@ BYTE *absY(CPU *cpu, BYTE *memory) {
     Second parameter added for consistency in function declarations.
     Returns null pointer for consistency in function declarations.
 */
+/*
 BYTE *imp(CPU *cpu, BYTE *memory) {
     //increment PC after fetching opcode
     incrementPC(cpu);
     BYTE *address = NULL;
     return address;
 }
+*/
 
 /*
     Relative - label relative addressing
@@ -161,6 +163,7 @@ BYTE *imp(CPU *cpu, BYTE *memory) {
     when PC is set at next instruction.
     Returns null pointer for consistency in function declarations.
 */
+/*
 BYTE *rel(CPU *cpu, BYTE *memory) {
     //test to check that offset works correctly on unsigned register
     incrementPC(cpu);
@@ -170,6 +173,7 @@ BYTE *rel(CPU *cpu, BYTE *memory) {
     BYTE *address = NULL;
     return address;
 }
+*/
 
 /*
     (zp,X) - Indexed indirect addressing
@@ -181,6 +185,7 @@ BYTE *rel(CPU *cpu, BYTE *memory) {
     address. Both memory locations specifying high and low order eight bits must
     be in page zero.
 */
+/*
 BYTE *indirectX(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE zpLocation = fetch(cpu, memory);
@@ -193,6 +198,8 @@ BYTE *indirectX(CPU *cpu, BYTE *memory) {
     return address;
 }
 
+*/
+
 /*
     (zp),Y - Indirect indexed addressing
     Second byte of instruction points to memory location in page zero. The
@@ -201,6 +208,7 @@ BYTE *indirectX(CPU *cpu, BYTE *memory) {
     Carry from the addition is added to contents of the next zero page memory
     location. The result is the high order eight bits of effective address.
 */
+/*
 BYTE *indirectY(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE zpLocation = fetch(cpu, memory);
@@ -215,7 +223,7 @@ BYTE *indirectY(CPU *cpu, BYTE *memory) {
     BYTE *address = &memory[effectiveAddress];
     return address;
 }
-
+*/
 /*
     Absolute Indirect
     Second byte of instruction contains low order bits to memory location.
@@ -224,6 +232,7 @@ BYTE *indirectY(CPU *cpu, BYTE *memory) {
     Memory location +1 contains high order bits of effective address.
     Effective address loaded into PC.
 */
+/*
 void absIndirect(CPU *cpu, BYTE *memory) {
     incrementPC(cpu);
     BYTE addressLowBits = fetch(cpu, memory);
@@ -236,5 +245,6 @@ void absIndirect(CPU *cpu, BYTE *memory) {
     uint16_t PCupdate = (highBits << 8) + lowBits;
     cpu->PC = PCupdate;
 }
+*/
 
 

@@ -9,7 +9,14 @@
 BYTE memory[0xFFFF];
 
 int main(void) {
-    printf("setting up new main function for nessie");
+    printf("setting up new main function for nessie\n");
+    CPU cpu;
+    power_cpu(&cpu);
+    BYTE data = 0x12;
+    printf("Accumulator: %x\n", cpu.A);
+    LDA(&cpu, &data);
+    printf("Accumulator: %x\n", cpu.A);
+    
     
     return 0;
 }
