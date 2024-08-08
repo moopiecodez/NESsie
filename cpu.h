@@ -38,7 +38,28 @@ typedef struct cpu_registers {
     BYTE PD;        /* Predecode Register holds data*/
 } CPU;
 
-typedef void instruction(CPU *, BYTE *);
+typedef void instruction(CPU *, BYTE);
+instruction BRK;
+instruction LDA;
+
+
+void incrementPC(CPU *cpu);
+
+typedef void addr_mode_step(CPU *, BYTE *, instruction *);
+addr_mode_step fetch_opcode;
+addr_mode_step fetch_throw;
+addr_mode_step imm_fetch_operand;
+
+typedef addr_mode_step *addr_mode[];
+static addr_mode immediate = {
+    fetch_opcode,
+    imm_fetch_operand
+};
+
+static addr_mode implied = {
+    fetch_opcode,
+    fetch_throw
+};
 
 // typedef struct instruction_opcode {
 //     //instruction ins;
@@ -50,10 +71,7 @@ typedef void instruction(CPU *, BYTE *);
 // typedef OPCODE *instructions[];
 // instructions *get_instruction_set();
 
-// void fetchOpcode(CPU *cpu, BYTE *memory);
-// void fetchOperand(CPU *cpu, BYTE *memory);
-// void readThrow(CPU *cpu, BYTE *memory, OPCODE op);
-void incrementPC(CPU *cpu);
+
 
 void power_cpu(CPU *cpu);
 
@@ -71,7 +89,6 @@ BYTE getBit(BYTE source, int position);
 // instruction DEX;
 // instruction DEY;
 
-instruction LDA;
 // instruction LDX;
 // instruction LDY;
 

@@ -1,5 +1,58 @@
 #include "cpu.h"
 
+/*
+    Fetches opcode and loads it into Instruction Register.
+    Increments Program Counter.
+*/
+void fetch_opcode(CPU *cpu, BYTE *memory, instruction *ins) {
+    cpu->IR = memory[cpu->PC];
+    incrementPC(cpu);
+}
+
+/*
+    Reads next byte and throws it away.
+    Used for implied and accumulator addressing.
+    Increments Program Counter.
+*/
+void fetch_throw(CPU *cpu, BYTE *memory, instruction *ins) {
+    //emulate reading memory but doing nothing with it
+    memory[cpu->PC];
+    incrementPC(cpu);
+}
+
+/*
+    Fetches operand and holds it in CPU predecode register.
+    Increments Program Counter.
+*/
+void imm_fetch_operand(CPU *cpu, BYTE *memory, instruction *ins) {
+    BYTE data = memory[cpu->PC];
+    incrementPC(cpu);
+    ins(cpu, data);
+}
+
+/*
+    BRK - Break
+    Assumes Opcode process has already incremented PC by 2.
+    B flag set.
+    PC and P pushed to stack.
+    I flag set.
+    Interrupt Pointer ($FFFF and $FFFE) loaded into PC.
+*/
+void BRK(CPU *cpu, BYTE memory) {
+    // setFlag(cpu, FLAG_B);
+    // BYTE lowByte;
+    // BYTE highByte;
+    // highByte = cpu->PC >> 8;
+    // lowByte = cpu->PC;
+    // push_to_stack(cpu, memory, highByte);
+    // push_to_stack(cpu, memory, lowByte);
+    // push_to_stack(cpu, memory, cpu->P);
+
+    // setFlag(cpu, FLAG_I);
+    // //Interrupt pointer $FFFE and $FFFF loaded into PC
+    // cpu->PC = (memory[IRQ_HIGH] << 8) + memory[IRQ_LOW];
+}
+
 //OPCODE op_0A = {ASL};
 
 //have to point to address to ensure constant?
@@ -10,34 +63,11 @@ instructions * get_instruction_set() {
 }
 */
 
-/*
-    Fetches opcode and loads it into Instruction Register.
-    Increments Program Counter.
-*/
-// void fetchOpcode(CPU *cpu, BYTE *memory) {
-//     BYTE opcode = memory[cpu->PC];
-//     cpu->IR = opcode;
-//     incrementPC(cpu);
-// }
 
-/*
-    Fetches operand and holds it in CPU predecode register.
-    Increments Program Counter.
-*/
-// void fetchOperand(CPU *cpu, BYTE *memory) {
-//     BYTE opcode = memory[cpu->PC];
-//     cpu->PD = opcode;
-//     incrementPC(cpu);
-// }
 
-/*
-    Reads next byte and throws it away.
-    Used for implied and accumulator addressing.
-    Increments Program Counter.
-*/
-// void readThrow(CPU *cpu, BYTE *memory, OPCODE op) {
-//     incrementPC(cpu);
-// }
+
+
+
 
 void incrementPC(CPU *cpu) {
     cpu->PC++;
@@ -145,14 +175,14 @@ void increment(CPU *cpu, BYTE *memory) {
     LDA - load a byte of memory into accumulator
     Z and N flags set depending on result.
 */
-void LDA(CPU *cpu, BYTE *memory) {
-    cpu->A = *memory;
-    if (*memory == 0) {
+void LDA(CPU *cpu, BYTE memory) {
+    cpu->A = memory;
+    if (memory == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
         resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(*memory, FLAG_N) != 0){
+    if (getBit(memory, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
         resetFlag(cpu, FLAG_N);
@@ -895,29 +925,6 @@ void LDA(CPU *cpu, BYTE *memory) {
 //     pull_from_stack(cpu, memory, &highByte);
 //     cpu->PC = highByte << 8;
 //     cpu->PC = cpu->PC + lowByte;
-// }
-
-// /*
-//     BRK - Break
-//     Assumes Opcode process has already incremented PC by 2.
-//     B flag set.
-//     PC and P pushed to stack.
-//     I flag set.
-//     Interrupt Pointer ($FFFF and $FFFE) loaded into PC.
-// */
-// void BRK(CPU *cpu, BYTE *memory) {
-//     setFlag(cpu, FLAG_B);
-//     BYTE lowByte;
-//     BYTE highByte;
-//     highByte = cpu->PC >> 8;
-//     lowByte = cpu->PC;
-//     push_to_stack(cpu, memory, highByte);
-//     push_to_stack(cpu, memory, lowByte);
-//     push_to_stack(cpu, memory, cpu->P);
-
-//     setFlag(cpu, FLAG_I);
-//     //Interrupt pointer $FFFE and $FFFF loaded into PC
-//     cpu->PC = (memory[IRQ_HIGH] << 8) + memory[IRQ_LOW];
 // }
 
 // /*
