@@ -41,13 +41,20 @@ typedef struct cpu_registers {
 typedef void Instruction(CPU *, BYTE);
 Instruction BRK;
 Instruction LDA;
+Instruction CLC;
 
 void incrementPC(CPU *cpu);
 
 typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
 addr_mode_step fetch_opcode;
 addr_mode_step fetch_throw;
+addr_mode_step fetch_throw_brk;
 addr_mode_step imm_fetch_operand;
+addr_mode_step stack_push_PCH;
+addr_mode_step stack_push_PCL;
+addr_mode_step stack_push_P;
+addr_mode_step fetch_PCL;
+addr_mode_step fetch_PCH;
 
 typedef addr_mode_step *addr_mode[];
 static addr_mode immediate = {
@@ -55,8 +62,19 @@ static addr_mode immediate = {
     imm_fetch_operand
 };
 
+static addr_mode implied_brk = {
+    fetch_opcode,
+    fetch_throw_brk,
+    stack_push_PCH,
+    stack_push_PCL,
+    stack_push_P,
+    fetch_PCL,
+    fetch_PCH
+};
+
 static addr_mode implied = {
     fetch_opcode,
+    //unlike in BRK, PC not incremented
     fetch_throw
 };
 
@@ -137,7 +155,6 @@ BYTE getBit(BYTE source, int position);
 // instruction CPX;
 // instruction CPY;
 
-// instruction CLC;
 // instruction CLD;
 // instruction CLI;
 // instruction CLV;

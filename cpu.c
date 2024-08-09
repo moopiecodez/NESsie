@@ -1,8 +1,9 @@
 #include "cpu.h"
 
 Operation operations[] = {
-    { BRK, &implied },
-    { LDA, &immediate }
+    { BRK, &implied_brk },
+    { LDA, &immediate },
+    { CLC, &implied }
 };
 
 Operation decode(BYTE op_code) {
@@ -22,12 +23,29 @@ void fetch_opcode(CPU *cpu, BYTE *memory, Instruction *ins) {
 /*
     Reads next byte and throws it away.
     Used for implied and accumulator addressing.
-    Increments Program Counter.
+    Does not increment Program Counter.
+    Note BRK would increment PC
 */
 void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
     //emulate reading memory but doing nothing with it
     memory[cpu->PC];
+    //implied addressing does not take an operand
+    BYTE data = 0;
+    ins(cpu, data);
+}
+
+/*
+    Reads next byte and throws it away.
+    Used for implied accumulator addressing BRK instruction.
+    Increments Program Counter.
+*/
+void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
+    //emulate reading memory but doing nothing with it
+    memory[cpu->PC];
     incrementPC(cpu);
+    //implied addressing does not take an operand
+    BYTE data = 0;
+    ins(cpu, data);
 }
 
 /*
@@ -40,6 +58,35 @@ void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
     ins(cpu, data);
 }
 
+void stack_push_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
+    BYTE PCH = cpu->PC >> 8;
+    memory[STACK_BASE + cpu->S] = PCH;
+    cpu->S--;
+}
+
+void stack_push_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
+    BYTE PCL = cpu->PC;
+    memory[STACK_BASE + cpu->S] = PCL;
+    cpu->S--;
+}
+
+void stack_push_P(CPU *cpu, BYTE *memory, Instruction *ins) {
+    setFlag(cpu, FLAG_B);
+    char string[8];
+    memory[STACK_BASE + cpu->S] = cpu->P;
+    cpu->S--;
+    //check which cycle this is set
+    setFlag(cpu, FLAG_I);
+}
+
+void fetch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->PC = memory[IRQ_LOW];
+}
+
+void fetch_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->PC += (memory[IRQ_HIGH] << 8);
+}
+
 /*
     BRK - Break
     Assumes Opcode process has already incremented PC by 2.
@@ -49,7 +96,7 @@ void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
     Interrupt Pointer ($FFFF and $FFFE) loaded into PC.
 */
 void BRK(CPU *cpu, BYTE memory) {
-    // setFlag(cpu, FLAG_B);
+//     setFlag(cpu, FLAG_B);
     // BYTE lowByte;
     // BYTE highByte;
     // highByte = cpu->PC >> 8;
@@ -63,15 +110,13 @@ void BRK(CPU *cpu, BYTE memory) {
     // cpu->PC = (memory[IRQ_HIGH] << 8) + memory[IRQ_LOW];
 }
 
-//OPCODE op_0A = {ASL};
-
-//have to point to address to ensure constant?
 /*
-instructions * get_instruction_set() {
-    instructions instruction_set = {&op_0A};
-    return instruction_set;
-}
+    Clear carry flag
+    Sets C flag to 0
 */
+void CLC(CPU *cpu, BYTE memory) {
+    resetFlag(cpu, FLAG_C);
+}
 
 void incrementPC(CPU *cpu) {
     cpu->PC++;
@@ -562,16 +607,6 @@ void LDA(CPU *cpu, BYTE memory) {
 // }
 
 // /*
-//     Helper function - pushes register to stack and decrements Stack Pointer
-//     by 1 to next position on Stack
-// */
-// void push_to_stack(CPU *cpu, BYTE *memory, BYTE reg) {
-//     memory[STACK_BASE + cpu->S] = reg;
-//     cpu->S--;
-// }
-
-
-// /*
 //     Push - Accumulator
 //     Stores contents of the Accumulator on top of the stack.
 //     Then decrements Stack Pointer by 1.
@@ -738,13 +773,7 @@ void LDA(CPU *cpu, BYTE memory) {
 //     set_flags_on_compare(cpu, cpu->Y, memory);
 // }
 
-// /*
-//     Clear carry flag
-//     Sets C flag to 0
-// */
-// void CLC(CPU *cpu, BYTE *memory) {
-//     resetFlag(cpu, FLAG_C);
-// }
+
 
 // /*
 //     Clear decimal mode
