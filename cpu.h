@@ -38,14 +38,13 @@ typedef struct cpu_registers {
     BYTE PD;        /* Predecode Register holds data*/
 } CPU;
 
-typedef void instruction(CPU *, BYTE);
-instruction BRK;
-instruction LDA;
-
+typedef void Instruction(CPU *, BYTE);
+Instruction BRK;
+Instruction LDA;
 
 void incrementPC(CPU *cpu);
 
-typedef void addr_mode_step(CPU *, BYTE *, instruction *);
+typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
 addr_mode_step fetch_opcode;
 addr_mode_step fetch_throw;
 addr_mode_step imm_fetch_operand;
@@ -60,6 +59,15 @@ static addr_mode implied = {
     fetch_opcode,
     fetch_throw
 };
+
+struct op {
+    Instruction *ins;
+    addr_mode *mode;
+};
+
+typedef struct op Operation;
+
+Operation decode(BYTE op_code);
 
 // typedef struct instruction_opcode {
 //     //instruction ins;

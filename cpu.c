@@ -1,10 +1,20 @@
 #include "cpu.h"
 
+Operation operations[] = {
+    { BRK, &implied },
+    { LDA, &immediate }
+};
+
+Operation decode(BYTE op_code) {
+    Operation operation = operations[op_code];
+    return operation;
+}
+
 /*
     Fetches opcode and loads it into Instruction Register.
     Increments Program Counter.
 */
-void fetch_opcode(CPU *cpu, BYTE *memory, instruction *ins) {
+void fetch_opcode(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->IR = memory[cpu->PC];
     incrementPC(cpu);
 }
@@ -14,7 +24,7 @@ void fetch_opcode(CPU *cpu, BYTE *memory, instruction *ins) {
     Used for implied and accumulator addressing.
     Increments Program Counter.
 */
-void fetch_throw(CPU *cpu, BYTE *memory, instruction *ins) {
+void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
     //emulate reading memory but doing nothing with it
     memory[cpu->PC];
     incrementPC(cpu);
@@ -24,7 +34,7 @@ void fetch_throw(CPU *cpu, BYTE *memory, instruction *ins) {
     Fetches operand and holds it in CPU predecode register.
     Increments Program Counter.
 */
-void imm_fetch_operand(CPU *cpu, BYTE *memory, instruction *ins) {
+void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
     BYTE data = memory[cpu->PC];
     incrementPC(cpu);
     ins(cpu, data);
@@ -62,12 +72,6 @@ instructions * get_instruction_set() {
     return instruction_set;
 }
 */
-
-
-
-
-
-
 
 void incrementPC(CPU *cpu) {
     cpu->PC++;
