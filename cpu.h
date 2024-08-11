@@ -35,13 +35,19 @@ typedef struct cpu_registers {
     BYTE Y;         /* Index Register Y */
     BYTE S;         /* Stack Pointer/offset from $0100, initialised at $FF*/
     BYTE IR;        /* Instruction Register, holds opcode initialised to 0*/
-    BYTE PD;        /* Predecode Register holds data*/
+    BYTE DB;        /* Data Bus*/
+    uint16_t AB;    /* Address Bus*/
+    BYTE ABL;       /* Address Bus Low Register*/ //check if ADL or ABL
+    BYTE ABH;       /* Address Bus High Byte*/
+    BYTE T;         /* Instruction step number*/
 } CPU;
 
 typedef void Instruction(CPU *, BYTE);
 Instruction BRK;
 Instruction LDA;
+Instruction LDX;
 Instruction CLC;
+
 
 void incrementPC(CPU *cpu);
 
@@ -55,8 +61,13 @@ addr_mode_step stack_push_PCL;
 addr_mode_step stack_push_P;
 addr_mode_step fetch_PCL;
 addr_mode_step fetch_PCH;
+addr_mode_step fetch_ADL;
+addr_mode_step fetch_ADH;
+addr_mode_step read_addr_exe;
+addr_mode_step read_addr;
 
 typedef addr_mode_step *addr_mode[];
+//accumulator addressing is the same cycle wise
 static addr_mode immediate = {
     fetch_opcode,
     imm_fetch_operand
@@ -78,14 +89,38 @@ static addr_mode implied = {
     fetch_throw
 };
 
+static addr_mode absolute_r = {
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH,
+    read_addr_exe
+};
+
+static addr_mode absolute_rmw = {
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH,
+    read_addr, //problem is this has ins() and here ins() done next step
+    //modify, //zimmers describes as write value back and then do operation
+    //write_new_value
+};
+
+static addr_mode absolute_w = {
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH,
+    //write_register
+};
+
 struct op {
+    int steps;
     Instruction *ins;
     addr_mode *mode;
 };
 
 typedef struct op Operation;
 
-Operation decode(BYTE op_code);
+Operation decode(CPU *cpu);
 
 // typedef struct instruction_opcode {
 //     //instruction ins;
@@ -115,7 +150,6 @@ BYTE getBit(BYTE source, int position);
 // instruction DEX;
 // instruction DEY;
 
-// instruction LDX;
 // instruction LDY;
 
 // instruction ASL;

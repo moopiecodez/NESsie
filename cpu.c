@@ -1,13 +1,17 @@
 #include "cpu.h"
 
 Operation operations[] = {
-    { BRK, &implied_brk },
-    { LDA, &immediate },
-    { CLC, &implied }
+    { 7, BRK, &implied_brk },
+    { 2, LDA, &immediate },
+    { 2, CLC, &implied },
+    { 4, LDX, &absolute_r}
 };
 
-Operation decode(BYTE op_code) {
-    Operation operation = operations[op_code];
+Operation decode(CPU *cpu) {
+    Operation operation = operations[cpu->IR];
+    if(cpu->T >= operation.steps) {
+        cpu->T = 0;
+    }
     return operation;
 }
 
@@ -87,6 +91,25 @@ void fetch_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->PC += (memory[IRQ_HIGH] << 8);
 }
 
+void fetch_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->AB = memory[cpu->PC];
+    incrementPC(cpu);
+};
+
+void fetch_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->AB += (memory[cpu->PC] << 8);
+    incrementPC(cpu);
+};
+
+void read_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
+    BYTE data = memory[cpu->AB];
+    ins(cpu, data);
+};
+
+void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
+    BYTE data = memory[cpu->AB];
+};
+
 /*
     BRK - Break
     Assumes Opcode process has already incremented PC by 2.
@@ -127,7 +150,7 @@ void power_cpu(CPU *cpu) {
     cpu->PC = 0xFFFCu;
     cpu->S = 0xFFu;
     cpu->IR = 0x00u;
-    cpu->PD = 0x00u;
+    cpu->DB = 0x00u;
     setFlag(cpu, FLAG_I);
     //clear internal RAM except high scores $0000-$07FF
 }
@@ -238,23 +261,23 @@ void LDA(CPU *cpu, BYTE memory) {
     }
 }
 
-// /*
-//     LDX - load a byte of memory into X register
-//     Z and N flags set depending on result.
-// */
-// void LDX(CPU *cpu, BYTE *memory) {
-//     cpu->X = *memory;
-//     if (*memory == 0) {
-//         setFlag(cpu, FLAG_Z);
-//     } else {
-//         resetFlag(cpu, FLAG_Z);
-//     }
-//     if (getBit(*memory, FLAG_N) != 0){
-//         setFlag(cpu, FLAG_N);
-//     } else {
-//         resetFlag(cpu, FLAG_N);
-//     }
-// }
+/*
+    LDX - load a byte of memory into X register
+    Z and N flags set depending on result.
+*/
+void LDX(CPU *cpu, BYTE memory) {
+    cpu->X = memory;
+    if (memory == 0) {
+        setFlag(cpu, FLAG_Z);
+    } else {
+        resetFlag(cpu, FLAG_Z);
+    }
+    if (getBit(memory, FLAG_N) != 0){
+        setFlag(cpu, FLAG_N);
+    } else {
+        resetFlag(cpu, FLAG_N);
+    }
+}
 
 // /*
 //     LDY - load a byte of memory into Y register

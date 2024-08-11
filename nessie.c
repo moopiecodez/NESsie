@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stddef.h>
 #include "cpu.h"
 
 /*
@@ -8,15 +9,15 @@
 */
 // BYTE memory[0xFFFF];
 BYTE memory[0xFFFF] = {
-    0x01, 0x12
+    0x01, 0x12, 0x02, 0x01, 0x2C, 0x03, 0x01, 0x00
 };
 
 void print_cpu(CPU *cpu) {
-    char string[8];
+    char flags[8];
     for (int i = 7; i >= 0; i--) {
-        string[7-i] = cpu->P & (1<<i) ? '1' : '0';
+        flags[7-i] = cpu->P & (1<<i) ? '1' : '0';
     }
-    printf("A: %02x, PC: %04x, IR: %02x, P:%s\n", cpu->A, cpu->PC, cpu->IR, string);
+    printf("A: %02x, X: %02x PC: %04x, IR: %02x, P: %s, T: %u\n", cpu->A, cpu->X, cpu->PC, cpu->IR, flags, cpu->T);
 }
 
 int main(void) {
@@ -37,11 +38,12 @@ int main(void) {
 
     print_cpu(&cpu);
     //--------------------------------------------------
-    for (int step_num = 0; step_num < 2; step_num++) {
-        operation = decode(cpu.IR);
-        (*operation.mode)[step_num](&cpu, memory, operation.ins);
+    for (int step_num = 0; step_num < 12; step_num++) {
+        operation = decode(&cpu);
+        (*operation.mode)[cpu.T](&cpu, memory, operation.ins);
+        cpu.T++;
         print_cpu(&cpu);
     }
-    //how to get to next IR
+
     return 0;
 }
