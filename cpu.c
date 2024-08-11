@@ -1,15 +1,67 @@
 #include "cpu.h"
+#include <stdio.h>
+/*
+macros mean that calling:
+    addressingmode(addr_x, {fetch_opcode, ...});
+expands to:
+    addr_mode_step *addr_x_[] = {
+        fetch_opcode,
+        ...
+    };
+    AddressingMode addr_x = {
+        (int)(sizeof addr_x_ / sizeof addr_x_[0]),
+        addr_x_
+    };
+*/
+#define len(X) (int)(sizeof X / sizeof X[0])
+#define passarray(...) __VA_ARGS__
+#define addressingmode_(X, Y, Z) addr_mode_step *Y[] = Z; AddressingMode X = {len(Y), Y}
+#define addressingmode(name, array) addressingmode_(name, name##_, passarray(array))
+
+//accumulator addressing is the same cycle wise
+
+
+addressingmode(addr_brk, passarray({
+    fetch_opcode,
+    fetch_throw_brk,
+    stack_push_PCH,
+    stack_push_PCL,
+    stack_push_P,
+    fetch_PCL,
+    fetch_PCH
+}));
+
+addressingmode(addr_immediate, passarray({
+    fetch_opcode,
+    imm_fetch_operand
+}));
+
+/*
+    Same cycle functions for Accumulator addressing
+*/
+addressingmode(addr_implied, passarray({
+    fetch_opcode,
+    fetch_throw     //unlike in BRK, PC not incremented
+}));
+
+addressingmode(addr_absolute_r, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH,
+    read_addr_exe   //executes operation
+}));
 
 Operation operations[] = {
-    { 7, BRK, &implied_brk },
-    { 2, LDA, &immediate },
-    { 2, CLC, &implied },
-    { 4, LDX, &absolute_r}
+    { BRK, &addr_brk },
+    { LDA, &addr_immediate},
+    { CLC, &addr_implied },
+    { LDX, &addr_absolute_r}
 };
+
 
 Operation decode(CPU *cpu) {
     Operation operation = operations[cpu->IR];
-    if(cpu->T >= operation.steps) {
+    if(cpu->T >= operation.mode->numsteps) {
         cpu->T = 0;
     }
     return operation;
@@ -76,15 +128,14 @@ void stack_push_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
 
 void stack_push_P(CPU *cpu, BYTE *memory, Instruction *ins) {
     setFlag(cpu, FLAG_B);
-    char string[8];
     memory[STACK_BASE + cpu->S] = cpu->P;
     cpu->S--;
-    //check which cycle this is set
-    setFlag(cpu, FLAG_I);
 }
 
 void fetch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->PC = memory[IRQ_LOW];
+    //check which cycle this is set
+    setFlag(cpu, FLAG_I);
 }
 
 void fetch_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
@@ -94,21 +145,21 @@ void fetch_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
 void fetch_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->AB = memory[cpu->PC];
     incrementPC(cpu);
-};
+}
 
 void fetch_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->AB += (memory[cpu->PC] << 8);
     incrementPC(cpu);
-};
+}
 
 void read_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
     BYTE data = memory[cpu->AB];
     ins(cpu, data);
-};
+}
 
 void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
     BYTE data = memory[cpu->AB];
-};
+}
 
 /*
     BRK - Break
@@ -119,18 +170,8 @@ void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
     Interrupt Pointer ($FFFF and $FFFE) loaded into PC.
 */
 void BRK(CPU *cpu, BYTE memory) {
-//     setFlag(cpu, FLAG_B);
-    // BYTE lowByte;
-    // BYTE highByte;
-    // highByte = cpu->PC >> 8;
-    // lowByte = cpu->PC;
-    // push_to_stack(cpu, memory, highByte);
-    // push_to_stack(cpu, memory, lowByte);
-    // push_to_stack(cpu, memory, cpu->P);
-
-    // setFlag(cpu, FLAG_I);
-    // //Interrupt pointer $FFFE and $FFFF loaded into PC
-    // cpu->PC = (memory[IRQ_HIGH] << 8) + memory[IRQ_LOW];
+//  setFlag(cpu, FLAG_B);
+//  setFlag(cpu, FLAG_I);
 }
 
 /*

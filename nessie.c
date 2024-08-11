@@ -25,7 +25,6 @@ int main(void) {
 
     CPU cpu;
     Operation operation;
-    addr_mode_step *step;
     cpu.A  = 0x00;
     cpu.PC = 0x0000;
     cpu.IR = 0x00;
@@ -40,7 +39,7 @@ int main(void) {
     //--------------------------------------------------
     for (int step_num = 0; step_num < 12; step_num++) {
         operation = decode(&cpu);
-        (*operation.mode)[cpu.T](&cpu, memory, operation.ins);
+        operation.mode->step[cpu.T](&cpu, memory, operation.ins);
         cpu.T++;
         print_cpu(&cpu);
     }

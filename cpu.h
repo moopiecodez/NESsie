@@ -66,73 +66,33 @@ addr_mode_step fetch_ADH;
 addr_mode_step read_addr_exe;
 addr_mode_step read_addr;
 
-typedef addr_mode_step *addr_mode[];
-//accumulator addressing is the same cycle wise
-static addr_mode immediate = {
-    fetch_opcode,
-    imm_fetch_operand
-};
+typedef struct addr_mode {
+    int numsteps;
+    addr_mode_step **step;
+} AddressingMode;
 
-static addr_mode implied_brk = {
-    fetch_opcode,
-    fetch_throw_brk,
-    stack_push_PCH,
-    stack_push_PCL,
-    stack_push_P,
-    fetch_PCL,
-    fetch_PCH
-};
-
-static addr_mode implied = {
-    fetch_opcode,
-    //unlike in BRK, PC not incremented
-    fetch_throw
-};
-
-static addr_mode absolute_r = {
-    fetch_opcode,
-    fetch_ADL,
-    fetch_ADH,
-    read_addr_exe
-};
-
-static addr_mode absolute_rmw = {
-    fetch_opcode,
-    fetch_ADL,
-    fetch_ADH,
-    read_addr, //problem is this has ins() and here ins() done next step
-    //modify, //zimmers describes as write value back and then do operation
-    //write_new_value
-};
-
-static addr_mode absolute_w = {
-    fetch_opcode,
-    fetch_ADL,
-    fetch_ADH,
-    //write_register
-};
-
-struct op {
-    int steps;
+typedef struct op {
     Instruction *ins;
-    addr_mode *mode;
-};
-
-typedef struct op Operation;
+    AddressingMode *mode;
+} Operation;
 
 Operation decode(CPU *cpu);
 
-// typedef struct instruction_opcode {
-//     //instruction ins;
-//     //void (*instruction)(CPU *, BYTE *);
-//     //flexible array member
-//     //void (*addrmode[])(CPU *, BYTE *);
-// } OPCODE;
+// static addr_mode absolute_rmw = {
+//     fetch_opcode,
+//     fetch_ADL,
+//     fetch_ADH,
+//     read_addr, //problem is this has ins() and here ins() done next step
+//     //modify, //zimmers describes as write value back and then do operation
+//     //write_new_value
+// };
 
-// typedef OPCODE *instructions[];
-// instructions *get_instruction_set();
-
-
+// static addr_mode absolute_w = {
+//     fetch_opcode,
+//     fetch_ADL,
+//     fetch_ADH,
+//     //write_register
+// };
 
 void power_cpu(CPU *cpu);
 
@@ -215,15 +175,12 @@ BYTE getBit(BYTE source, int position);
 
 //addressing modes
 /*
-BYTE *A_addressing(CPU *cpu, BYTE *memory);
-BYTE *imm(CPU *cpu, BYTE *memory);
 BYTE *absolute(CPU *cpu, BYTE *memory);
 BYTE *zp(CPU *cpu, BYTE *memory);
 BYTE *zpX(CPU *cpu, BYTE *memory);
 BYTE *zpY(CPU *cpu, BYTE *memory);
 BYTE *absX(CPU *cpu, BYTE *memory);
 BYTE *absY(CPU *cpu, BYTE *memory);
-BYTE *imp(CPU *cpu, BYTE *memory);
 BYTE *rel(CPU *cpu, BYTE *memory);
 BYTE *indirectX(CPU *cpu, BYTE *memory);
 BYTE *indirectY(CPU *cpu, BYTE *memory);
