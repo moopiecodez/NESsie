@@ -8,6 +8,9 @@ TESTSUITES = testpowercpu.o	testArithmetic.o testBranch.o testFlagChanges.o\
 
 .PHONY: clean
 
+nessie: nessie.c cpu.c
+	$(CC) $(CFLAGS) nessie.c cpu.c -o $@
+
 loadRom: loadROM.c
 	$(CC) $(CFLAGS) loadROM.c -o $@
 
@@ -21,4 +24,4 @@ $(TESTSUITES) cpu.o: %.o: %.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	rm -f testInstructions loadRom *.o
+	rm -f testInstructions loadRom nessie *.o
