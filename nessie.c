@@ -9,7 +9,7 @@
 */
 // BYTE memory[0xFFFF];
 BYTE memory[0xFFFF] = {
-    0x01, 0x12, 0x02, 0x01, 0x2C, 0x03, 0x01, 0x00
+    0x04, 0x0C, 0x00, 0x07, 0x0D, 0x00, 0x01, 0x00, 0x03, 0x44, 0x01, 0x05, 0x24, 0x18, 0xCC, 0x1E
 };
 
 void print_cpu(CPU *cpu) {
@@ -17,7 +17,9 @@ void print_cpu(CPU *cpu) {
     for (int i = 7; i >= 0; i--) {
         flags[7-i] = cpu->P & (1<<i) ? '1' : '0';
     }
-    printf("A: %02x, X: %02x PC: %04x, IR: %02x, P: %s, T: %u\n", cpu->A, cpu->X, cpu->PC, cpu->IR, flags, cpu->T);
+    printf("A: %02x, X: %02x, Y: %02x, PC: %04x, IR: %02x, AB: %04x, DB: %02x, P: %s, T: %u\n", 
+            cpu->A, cpu->X, cpu->Y, cpu->PC, 
+            cpu->IR, cpu->AB, cpu->DB, flags, cpu->T);
 }
 
 int main(void) {
@@ -43,6 +45,9 @@ int main(void) {
         cpu.T++;
         print_cpu(&cpu);
     }
+    cpu.DB = 0x18;
+    LSR(&cpu);
+    printf("DB: %02x\n", cpu.DB);
 
     return 0;
 }

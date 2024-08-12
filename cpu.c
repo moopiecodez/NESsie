@@ -51,11 +51,65 @@ addressingmode(addr_absolute_r, passarray({
     read_addr_exe   //executes operation
 }));
 
+addressingmode(addr_absolute_rmw, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH,
+    read_addr,
+    modify, //zimmers describes as write value back and then do operation
+    write_addr
+}));
+
+addressingmode(addr_absolute_w, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH,
+    write_register
+}));
+
+addressingmode(addr_zeropage_r, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_addr_exe   //executes operation
+}));
+
+addressingmode(addr_zeropage_rmw, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_addr,
+    modify,
+    write_addr
+}));
+
+addressingmode(addr_zeropage_w, passarray({
+    fetch_opcode,
+    fetch_address,
+    write_register
+}));
+
+addressingmode(addr_zpindex_X_r, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_addr_add_X,
+    read_addr
+}));
+
+addressingmode(addr_zpindex_Y_r, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_addr_add_Y,
+    read_addr
+}));
+
 Operation operations[] = {
     { BRK, &addr_brk },
     { LDA, &addr_immediate},
     { CLC, &addr_implied },
-    { LDX, &addr_absolute_r}
+    { LDX, &addr_absolute_r},
+    { ASL, &addr_absolute_rmw},
+    { STA, &addr_absolute_w},
+    { LDY, &addr_zeropage_r},
+    { LSR, &addr_zeropage_rmw}
 };
 
 
@@ -72,7 +126,11 @@ Operation decode(CPU *cpu) {
     Increments Program Counter.
 */
 void fetch_opcode(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->IR = memory[cpu->PC];
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB];
+    // cpu->DB = memory[cpu->PC];
+    cpu->PD = cpu->DB;
+    cpu->IR = cpu->PD;
     incrementPC(cpu);
 }
 
@@ -84,10 +142,11 @@ void fetch_opcode(CPU *cpu, BYTE *memory, Instruction *ins) {
 */
 void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
     //emulate reading memory but doing nothing with it
-    memory[cpu->PC];
-    //implied addressing does not take an operand
-    BYTE data = 0;
-    ins(cpu, data);
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB];
+    cpu->PD = cpu->DB;
+    // memory[cpu->PC];
+    ins(cpu);
 }
 
 /*
@@ -101,7 +160,7 @@ void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
     incrementPC(cpu);
     //implied addressing does not take an operand
     BYTE data = 0;
-    ins(cpu, data);
+    ins(cpu);
 }
 
 /*
@@ -109,37 +168,55 @@ void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
     Increments Program Counter.
 */
 void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
-    BYTE data = memory[cpu->PC];
+    // cpu->AB = cpu->PC;
+    // cpu->DB = memory[cpu->AB];
+    // BYTE data = cpu->DB;
+    cpu->DB = memory[cpu->PC];
     incrementPC(cpu);
-    ins(cpu, data);
+    ins(cpu);
 }
 
 void stack_push_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
-    BYTE PCH = cpu->PC >> 8;
-    memory[STACK_BASE + cpu->S] = PCH;
+    // BYTE PCH = cpu->PC >> 8;
+    cpu->DB = cpu->PC >> 8;
+    memory[STACK_BASE + cpu->S] = cpu->DB;
+    // cpu->AB = STACK_BASE + cpu->S;
+    // memory[cpu->AB] = cpu->DB;
     cpu->S--;
 }
 
 void stack_push_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
-    BYTE PCL = cpu->PC;
-    memory[STACK_BASE + cpu->S] = PCL;
+    // BYTE PCL = cpu->PC;
+    cpu->DB = cpu->PC;
+    memory[STACK_BASE + cpu->S] = cpu->DB;
+    // cpu->AB = STACK_BASE + cpu->S;
+    // memory[cpu->AB] = cpu->DB;
     cpu->S--;
 }
 
 void stack_push_P(CPU *cpu, BYTE *memory, Instruction *ins) {
     setFlag(cpu, FLAG_B);
     memory[STACK_BASE + cpu->S] = cpu->P;
+    // cpu->DB = cpu->P;
+    // cpu->AB = STACK_BASE + cpu->S;
+    // memory[cpu->AB] = cpu->DB;
     cpu->S--;
 }
 
 void fetch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->PC = memory[IRQ_LOW];
+    // cpu->AB = IRQ_LOW;
+    // cpu->DB = memory[cpu->AB];
+    // cpu->PC = cpu->DB;
     //check which cycle this is set
     setFlag(cpu, FLAG_I);
 }
 
 void fetch_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->PC += (memory[IRQ_HIGH] << 8);
+    // cpu->AB = IRQ_HIGH;
+    // cpu->DB = memory[cpu->AB];
+    // cpu->PC += cpu->DB << 8;
 }
 
 void fetch_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
@@ -152,13 +229,45 @@ void fetch_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
     incrementPC(cpu);
 }
 
+void fetch_address(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->AB = memory[cpu->PC]; //check correctly gets address in zp
+    incrementPC(cpu);
+}
+
 void read_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
-    BYTE data = memory[cpu->AB];
-    ins(cpu, data);
+    // BYTE data = memory[cpu->AB];
+    cpu->DB = memory[cpu->AB]; //read to data bus
+    ins(cpu);
 }
 
 void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
-    BYTE data = memory[cpu->AB];
+    // BYTE data = memory[cpu->AB];
+    cpu->DB = memory[cpu->AB];
+}
+
+void modify(CPU *cpu, BYTE *memory, Instruction *ins) {
+    //memory[cpu->AB] = cpu->DB writes unmodified value again first
+    ins(cpu); 
+    
+}
+
+void write_addr(CPU *cpu, BYTE *memory, Instruction *ins) {
+    memory[cpu->AB] = cpu->DB; //write modified value
+}
+
+void write_register(CPU *cpu, BYTE *memory, Instruction *ins) {
+    ins(cpu);
+    memory[cpu->AB] = cpu->DB; //write register value returned by instruction
+}
+
+void read_addr_add_X(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->DB = memory[cpu->AB] + cpu->X;
+    cpu->AB = cpu->DB;
+}
+
+void read_addr_add_Y(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->DB = memory[cpu->AB] + cpu->Y;
+    cpu->AB = cpu->DB;
 }
 
 /*
@@ -169,7 +278,7 @@ void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
     I flag set.
     Interrupt Pointer ($FFFF and $FFFE) loaded into PC.
 */
-void BRK(CPU *cpu, BYTE memory) {
+void BRK(CPU *cpu) {
 //  setFlag(cpu, FLAG_B);
 //  setFlag(cpu, FLAG_I);
 }
@@ -178,7 +287,7 @@ void BRK(CPU *cpu, BYTE memory) {
     Clear carry flag
     Sets C flag to 0
 */
-void CLC(CPU *cpu, BYTE memory) {
+void CLC(CPU *cpu) {
     resetFlag(cpu, FLAG_C);
 }
 
@@ -288,14 +397,14 @@ void increment(CPU *cpu, BYTE *memory) {
     LDA - load a byte of memory into accumulator
     Z and N flags set depending on result.
 */
-void LDA(CPU *cpu, BYTE memory) {
-    cpu->A = memory;
-    if (memory == 0) {
+void LDA(CPU *cpu) {
+    cpu->A = cpu->DB;
+    if (cpu->DB == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
         resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(memory, FLAG_N) != 0){
+    if (getBit(cpu->DB, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
         resetFlag(cpu, FLAG_N);
@@ -306,88 +415,88 @@ void LDA(CPU *cpu, BYTE memory) {
     LDX - load a byte of memory into X register
     Z and N flags set depending on result.
 */
-void LDX(CPU *cpu, BYTE memory) {
-    cpu->X = memory;
-    if (memory == 0) {
+void LDX(CPU *cpu) {
+    cpu->X = cpu->DB;
+    if (cpu->DB == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
         resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(memory, FLAG_N) != 0){
+    if (getBit(cpu->DB, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
         resetFlag(cpu, FLAG_N);
     }
 }
 
-// /*
-//     LDY - load a byte of memory into Y register
-//     Z and N flags set depending on result.
-// */
-// void LDY(CPU *cpu, BYTE *memory) {
-//     cpu->Y = *memory;
-//     if (*memory == 0) {
-//         setFlag(cpu, FLAG_Z);
-//     } else {
-//         resetFlag(cpu, FLAG_Z);
-//     }
-//     if (getBit(*memory, FLAG_N) != 0){
-//         setFlag(cpu, FLAG_N);
-//     } else {
-//         resetFlag(cpu, FLAG_N);
-//     }
-// }
+/*
+    LDY - load a byte of memory into Y register
+    Z and N flags set depending on result.
+*/
+void LDY(CPU *cpu) {
+    cpu->Y = cpu->DB;
+    if (cpu->DB == 0) {
+        setFlag(cpu, FLAG_Z);
+    } else {
+        resetFlag(cpu, FLAG_Z);
+    }
+    if (getBit(cpu->DB, FLAG_N) != 0){
+        setFlag(cpu, FLAG_N);
+    } else {
+        resetFlag(cpu, FLAG_N);
+    }
+}
 
-// /*
-//     ASL - Arithmetic Shift Left
-//     Shifts bits in A or memory left by one place.
-//     Carry flag set to contents of old 7 bit.
-//     Sets Zero and Negative flag based on result.
-// */
-// void ASL(CPU *cpu, BYTE *memory) {
-//     if (getBit(*memory, 7) != 0) {
-//         setFlag(cpu, FLAG_C);
-//     } else {
-//         resetFlag(cpu, FLAG_C);
-//     }
-//     *memory = *memory << 1;
-//     if (*memory == 0) {
-//         setFlag(cpu, FLAG_Z);
-//     } else {
-//         resetFlag(cpu, FLAG_Z);
-//     }
-//     if (getBit(*memory, FLAG_N) != 0) {
-//         setFlag(cpu, FLAG_N);
-//     } else {
-//         resetFlag(cpu, FLAG_N);
-//     }
-// }
+/*
+    ASL - Arithmetic Shift Left
+    Shifts bits in A or memory left by one place.
+    Carry flag set to contents of old 7 bit.
+    Sets Zero and Negative flag based on result.
+*/
+void ASL(CPU *cpu) {
+    if (getBit(cpu->DB, 7) != 0) {
+        setFlag(cpu, FLAG_C);
+    } else {
+        resetFlag(cpu, FLAG_C);
+    }
+    cpu->DB = cpu->DB << 1;
+    if (cpu->DB == 0) {
+        setFlag(cpu, FLAG_Z);
+    } else {
+        resetFlag(cpu, FLAG_Z);
+    }
+    if (getBit(cpu->DB, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
+    } else {
+        resetFlag(cpu, FLAG_N);
+    }
+}
 
-// /*
-//     LSR - logical shift right
-//     Shifts bits in A or memory right by one place. 
-//     Carry flag set to contents of old 0 bit.
-//     Sets Zero and Negative flag based on result.
-// */
-// void LSR(CPU *cpu, BYTE *memory) {
-//     if (getBit(*memory, 0) != 0) {
-//         setFlag(cpu, FLAG_C);
-//     } else {
-//         resetFlag(cpu, FLAG_C);
-//     }
-//     *memory = *memory >> 1;
-//     if (*memory == 0) {
-//         setFlag(cpu, FLAG_Z);
-//     } else {
-//         resetFlag(cpu, FLAG_Z);
-//     }
-//     if (getBit(*memory, FLAG_N) != 0){
-//         setFlag(cpu, FLAG_N);
-//     } else {
-//         resetFlag(cpu, FLAG_N);
-//     }
+/*
+    LSR - logical shift right
+    Shifts bits in A or memory right by one place. 
+    Carry flag set to contents of old 0 bit.
+    Sets Zero and Negative flag based on result.
+*/
+void LSR(CPU *cpu) {
+    if (getBit(cpu->DB, 0) != 0) {
+        setFlag(cpu, FLAG_C);
+    } else {
+        resetFlag(cpu, FLAG_C);
+    }
+    cpu->DB = cpu->DB >> 1;
+    if (cpu->DB == 0) {
+        setFlag(cpu, FLAG_Z);
+    } else {
+        resetFlag(cpu, FLAG_Z);
+    }
+    if (getBit(cpu->DB, FLAG_N) != 0){
+        setFlag(cpu, FLAG_N);
+    } else {
+        resetFlag(cpu, FLAG_N);
+    }
 
-// }
+}
 
 // /*
 //     ROL - Rotate Left
@@ -457,29 +566,29 @@ void LDX(CPU *cpu, BYTE memory) {
 //     }
 // }
 
-// /*
-//     STA - Store Accumulator
-//     Store contents of A into memory.
-// */
-// void STA(CPU *cpu, BYTE *memory) {
-//     *memory = cpu->A;
-// }
+/*
+    STA - Store Accumulator
+    Put contents of A onto DB to store into memory.
+*/
+void STA(CPU *cpu) {
+    cpu->DB = cpu->A;
+}
 
-// /*
-//     STX - Store X Register
-//     Store contents of X into memory.
-// */
-// void STX(CPU *cpu, BYTE *memory) {
-//     *memory = cpu->X;
-// }
+/*
+    STX - Store X Register
+    Put contents of X onto DB to store into memory.
+*/
+void STX(CPU *cpu) {
+    cpu->DB = cpu->X;
+}
 
-// /*
-//     STY - Store Y Register
-//     Store contents of Y into memory.
-// */
-// void STY(CPU *cpu, BYTE *memory) {
-//     *memory = cpu->Y;
-// }
+/*
+    STY - Store Y Register
+    Put contents of Y onto DB to store into memory.
+*/
+void STY(CPU *cpu) {
+    cpu->DB = cpu->Y;
+}
 
 // /*
 //     TAX - Transfer Accumulator to X

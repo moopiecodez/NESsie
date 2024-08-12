@@ -37,15 +37,26 @@ typedef struct cpu_registers {
     BYTE IR;        /* Instruction Register, holds opcode initialised to 0*/
     BYTE DB;        /* Data Bus*/
     uint16_t AB;    /* Address Bus*/
-    BYTE ABL;       /* Address Bus Low Register*/ //check if ADL or ABL
-    BYTE ABH;       /* Address Bus High Byte*/
     BYTE T;         /* Instruction step number*/
+    BYTE PD;        /*Predecode register loaded with each read bus cycle*/
 } CPU;
 
-typedef void Instruction(CPU *, BYTE);
+typedef void Instruction(CPU *);
 Instruction BRK;
+//Read instructions:
 Instruction LDA;
 Instruction LDX;
+Instruction LDY;
+
+//RMW instructions:
+Instruction ASL;
+Instruction LSR;
+
+// Write instructions:
+Instruction STX;
+Instruction STA;
+Instruction STY;
+
 Instruction CLC;
 
 
@@ -63,8 +74,14 @@ addr_mode_step fetch_PCL;
 addr_mode_step fetch_PCH;
 addr_mode_step fetch_ADL;
 addr_mode_step fetch_ADH;
+addr_mode_step fetch_address;
 addr_mode_step read_addr_exe;
 addr_mode_step read_addr;
+addr_mode_step modify;
+addr_mode_step write_addr;
+addr_mode_step write_register;
+addr_mode_step read_addr_add_X;
+addr_mode_step read_addr_add_Y;
 
 typedef struct addr_mode {
     int numsteps;
@@ -77,22 +94,6 @@ typedef struct op {
 } Operation;
 
 Operation decode(CPU *cpu);
-
-// static addr_mode absolute_rmw = {
-//     fetch_opcode,
-//     fetch_ADL,
-//     fetch_ADH,
-//     read_addr, //problem is this has ins() and here ins() done next step
-//     //modify, //zimmers describes as write value back and then do operation
-//     //write_new_value
-// };
-
-// static addr_mode absolute_w = {
-//     fetch_opcode,
-//     fetch_ADL,
-//     fetch_ADH,
-//     //write_register
-// };
 
 void power_cpu(CPU *cpu);
 
@@ -110,16 +111,10 @@ BYTE getBit(BYTE source, int position);
 // instruction DEX;
 // instruction DEY;
 
-// instruction LDY;
-
-// instruction ASL;
-// instruction LSR;
 // instruction ROL;
 // instruction ROR;
 
-// instruction STA;
-// instruction STX;
-// instruction STY;
+
 
 // instruction TAX;
 // instruction TAY;
