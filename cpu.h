@@ -38,7 +38,9 @@ typedef struct cpu_registers {
     BYTE DB;        /* Data Bus*/
     uint16_t AB;    /* Address Bus*/
     BYTE T;         /* Instruction step number*/
-    BYTE PD;        /*Predecode register loaded with each read bus cycle*/
+    BYTE DL;        /*Input Data Latch duplicated in Predecode register loaded with each read bus cycle*/
+    BYTE ALU;       /*Arithmetic Logic Unit*/
+    BYTE ACR_FLAG;  /*ALU carry register used as a flag if ALU operation resulted in a carry*/
 } CPU;
 
 typedef void Instruction(CPU *);
@@ -82,6 +84,10 @@ addr_mode_step write_addr;
 addr_mode_step write_register;
 addr_mode_step read_addr_add_X;
 addr_mode_step read_addr_add_Y;
+addr_mode_step fetch_ADH_add_X;
+addr_mode_step fetch_ADH_add_Y;
+addr_mode_step read_addr_fixADH_X;
+addr_mode_step read_addr_fixADH_Y;
 
 typedef struct addr_mode {
     int numsteps;

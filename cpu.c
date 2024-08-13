@@ -18,8 +18,6 @@ expands to:
 #define addressingmode_(X, Y, Z) addr_mode_step *Y[] = Z; AddressingMode X = {len(Y), Y}
 #define addressingmode(name, array) addressingmode_(name, name##_, passarray(array))
 
-//accumulator addressing is the same cycle wise
-
 
 addressingmode(addr_brk, passarray({
     fetch_opcode,
@@ -101,6 +99,54 @@ addressingmode(addr_zpindex_Y_r, passarray({
     read_addr
 }));
 
+addressingmode(addr_zpindex_X_rmw, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_addr_add_X,
+    read_addr,
+    modify,
+    write_addr
+}));
+
+addressingmode(addr_zpindex_Y_rmw, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_addr_add_Y,
+    read_addr,
+    modify,
+    write_addr
+}));
+
+addressingmode(addr_zpindex_X_w, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_addr_add_X,
+    write_register
+}));
+
+addressingmode(addr_zpindex_Y_w, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_addr_add_Y,
+    write_register
+}));
+
+addressingmode(addr_absolute_X_r, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH_add_X,
+    read_addr_fixADH_X, //option to re-read if page boundary crossed
+    read_addr_exe
+}));
+
+addressingmode(addr_absolute_Y_r, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH_add_Y,
+    read_addr_fixADH_Y,  //option to re-read if page boundary crossed
+    read_addr_exe
+}));
+
 Operation operations[] = {
     { BRK, &addr_brk },
     { LDA, &addr_immediate},
@@ -129,8 +175,8 @@ void fetch_opcode(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
     // cpu->DB = memory[cpu->PC];
-    cpu->PD = cpu->DB;
-    cpu->IR = cpu->PD;
+    cpu->DL = cpu->DB;
+    cpu->IR = cpu->DL;
     incrementPC(cpu);
 }
 
@@ -144,7 +190,7 @@ void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
     //emulate reading memory but doing nothing with it
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
-    cpu->PD = cpu->DB;
+    cpu->DL = cpu->DB;
     // memory[cpu->PC];
     ins(cpu);
 }
@@ -156,10 +202,12 @@ void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
 */
 void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
     //emulate reading memory but doing nothing with it
-    memory[cpu->PC];
+    // memory[cpu->PC];
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
     incrementPC(cpu);
     //implied addressing does not take an operand
-    BYTE data = 0;
     ins(cpu);
 }
 
@@ -168,10 +216,11 @@ void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
     Increments Program Counter.
 */
 void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
-    // cpu->AB = cpu->PC;
-    // cpu->DB = memory[cpu->AB];
-    // BYTE data = cpu->DB;
-    cpu->DB = memory[cpu->PC];
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB];
+    BYTE data = cpu->DB;
+    cpu->DL = cpu->DB;
+    // cpu->DB = memory[cpu->PC];
     incrementPC(cpu);
     ins(cpu);
 }
@@ -179,16 +228,19 @@ void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
 void stack_push_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
     // BYTE PCH = cpu->PC >> 8;
     cpu->DB = cpu->PC >> 8;
-    memory[STACK_BASE + cpu->S] = cpu->DB;
-    // cpu->AB = STACK_BASE + cpu->S;
-    // memory[cpu->AB] = cpu->DB;
+    cpu->DL = cpu->DB;
+    // memory[STACK_BASE + cpu->S] = cpu->DB;
+    cpu->AB = STACK_BASE + cpu->S;
+    memory[cpu->AB] = cpu->DL;
     cpu->S--;
 }
 
 void stack_push_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
     // BYTE PCL = cpu->PC;
     cpu->DB = cpu->PC;
-    memory[STACK_BASE + cpu->S] = cpu->DB;
+    cpu->DL = cpu->DB;
+    cpu->AB = STACK_BASE + cpu->S;
+    memory[cpu->AB] = cpu->DL;
     // cpu->AB = STACK_BASE + cpu->S;
     // memory[cpu->AB] = cpu->DB;
     cpu->S--;
@@ -196,7 +248,10 @@ void stack_push_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
 
 void stack_push_P(CPU *cpu, BYTE *memory, Instruction *ins) {
     setFlag(cpu, FLAG_B);
-    memory[STACK_BASE + cpu->S] = cpu->P;
+    cpu->DB = cpu->P;
+    cpu->DL = cpu->DB;
+    cpu->AB = STACK_BASE + cpu->S;
+    memory[cpu->AB] = cpu->DL;
     // cpu->DB = cpu->P;
     // cpu->AB = STACK_BASE + cpu->S;
     // memory[cpu->AB] = cpu->DB;
@@ -204,45 +259,57 @@ void stack_push_P(CPU *cpu, BYTE *memory, Instruction *ins) {
 }
 
 void fetch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->PC = memory[IRQ_LOW];
-    // cpu->AB = IRQ_LOW;
-    // cpu->DB = memory[cpu->AB];
-    // cpu->PC = cpu->DB;
+    // cpu->PC = memory[IRQ_LOW];
+    cpu->AB = IRQ_LOW;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
+    cpu->PC = cpu->DL;
     //check which cycle this is set
     setFlag(cpu, FLAG_I);
 }
 
 void fetch_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->PC += (memory[IRQ_HIGH] << 8);
-    // cpu->AB = IRQ_HIGH;
-    // cpu->DB = memory[cpu->AB];
-    // cpu->PC += cpu->DB << 8;
+    // cpu->PC += (memory[IRQ_HIGH] << 8);
+    cpu->AB = IRQ_HIGH;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
+    cpu->PC += cpu->DL << 8;
 }
 
 void fetch_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = memory[cpu->PC];
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
     incrementPC(cpu);
 }
 
 void fetch_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB += (memory[cpu->PC] << 8);
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB];
+    cpu->AB = (cpu->DB << 8) + cpu->DL; //start of cycle cpu->PD is ADL
+    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->PD is ADH
     incrementPC(cpu);
 }
 
 void fetch_address(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = memory[cpu->PC]; //check correctly gets address in zp
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
+    cpu->AB = cpu->DL;
     incrementPC(cpu);
 }
 
 void read_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
     // BYTE data = memory[cpu->AB];
-    cpu->DB = memory[cpu->AB]; //read to data bus
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
     ins(cpu);
 }
 
 void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
     // BYTE data = memory[cpu->AB];
     cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
 }
 
 void modify(CPU *cpu, BYTE *memory, Instruction *ins) {
@@ -252,24 +319,77 @@ void modify(CPU *cpu, BYTE *memory, Instruction *ins) {
 }
 
 void write_addr(CPU *cpu, BYTE *memory, Instruction *ins) {
-    memory[cpu->AB] = cpu->DB; //write modified value
+    cpu->DB = cpu->ALU;
+    cpu->DL = cpu->DB;
+    memory[cpu->AB] = cpu->DL; //write modified value
 }
 
 void write_register(CPU *cpu, BYTE *memory, Instruction *ins) {
     ins(cpu);
-    memory[cpu->AB] = cpu->DB; //write register value returned by instruction
+    cpu->DL = cpu->DB;
+    memory[cpu->AB] = cpu->DL; //write register value returned by instruction
 }
 
 void read_addr_add_X(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->DB = memory[cpu->AB] + cpu->X;
-    cpu->AB = cpu->DB;
+    cpu->DB = cpu->X;
+    cpu->ALU = cpu->DL + cpu->DB; //page boundary crossings not handled
+    cpu->DL = cpu->DB;
+    cpu->AB = cpu->ALU; //check this is happening at right point
 }
 
 void read_addr_add_Y(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->DB = memory[cpu->AB] + cpu->Y;
-    cpu->AB = cpu->DB;
+    cpu->DB = cpu->Y;
+    cpu->ALU = cpu->DL + cpu->DB; //page boundary crossings not handled
+    cpu->DL = cpu->DB;
+    cpu->AB = cpu->ALU;
 }
 
+void fetch_ADH_add_X(CPU *cpu, BYTE *memory, Instruction *ins){
+    //at the start of cycle cpu->DL holds ADL
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB]; //DB is ADH
+    cpu->ALU = cpu->DL + cpu->X; // add ADL and X
+    cpu->AB = (cpu->DB << 8) + cpu->ALU;
+    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
+    incrementPC(cpu);
+}
+void fetch_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
+    //start of cycle cpu->DL is ADL
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB]; //DB is ADH
+    cpu->ALU = cpu->DL + cpu->Y; // add ADL and X
+    cpu->AB = (cpu->DB << 8) + cpu->ALU;
+    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
+    incrementPC(cpu);
+}
+
+void read_addr_fixADH_X(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->DB = memory[cpu->AB];
+    if(!(cpu->ALU < cpu->X)) { //consider alternative implementation with alucarryflag
+        cpu->T++; //will skip next cycle step if overflow didn't occur
+        ins(cpu); //if no reread must execute instruction here
+    } else {
+        cpu->ALU = cpu->DL + 1; //new ADH
+        cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //get fixed address
+    }
+    // if(cpu->ALU < cpu->X) { //if ALU is smaller than X means wraparound has occurred
+    //     cpu->T--; //decrease cycle number to repeat step and add cycle
+    //     cpu->ALU = cpu->DL + 1;
+    //     //how to avoid repeating
+    // }
+    cpu->DL = cpu->DB;
+}
+void read_addr_fixADH_Y(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->DB = memory[cpu->AB];
+    if(!(cpu->ALU < cpu->Y)) {
+        cpu->T++; //will skip next cycle step if overflow didn't occur
+        ins(cpu); //if no reread must execute instruction here
+    } else {
+        cpu->ALU = cpu->DL + 1; //new ADH
+        cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //get fixed address
+    }
+    cpu->DL = cpu->DB;
+}
 /*
     BRK - Break
     Assumes Opcode process has already incremented PC by 2.
@@ -459,13 +579,13 @@ void ASL(CPU *cpu) {
     } else {
         resetFlag(cpu, FLAG_C);
     }
-    cpu->DB = cpu->DB << 1;
-    if (cpu->DB == 0) {
+    cpu->ALU = cpu->DB << 1; //ALU holds result before it is transferred on buses
+    if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
         resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu->DB, FLAG_N) != 0) {
+    if (getBit(cpu->ALU, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
         resetFlag(cpu, FLAG_N);
@@ -484,13 +604,13 @@ void LSR(CPU *cpu) {
     } else {
         resetFlag(cpu, FLAG_C);
     }
-    cpu->DB = cpu->DB >> 1;
-    if (cpu->DB == 0) {
+    cpu->ALU = cpu->DB >> 1; //ALU holds result before it is transferred on buses
+    if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
         resetFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu->DB, FLAG_N) != 0){
+    if (getBit(cpu->ALU, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
         resetFlag(cpu, FLAG_N);

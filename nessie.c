@@ -45,9 +45,6 @@ int main(void) {
         cpu.T++;
         print_cpu(&cpu);
     }
-    cpu.DB = 0x18;
-    LSR(&cpu);
-    printf("DB: %02x\n", cpu.DB);
-
+    
     return 0;
 }
