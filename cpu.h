@@ -49,6 +49,8 @@ Instruction BRK;
 Instruction LDA;
 Instruction LDX;
 Instruction LDY;
+Instruction AND;
+
 
 //RMW instructions:
 Instruction ASL;
@@ -86,8 +88,15 @@ addr_mode_step read_addr_add_X;
 addr_mode_step read_addr_add_Y;
 addr_mode_step fetch_ADH_add_X;
 addr_mode_step fetch_ADH_add_Y;
-addr_mode_step read_addr_fixADH_X;
-addr_mode_step read_addr_fixADH_Y;
+addr_mode_step read_addr_fixADH_exe;
+addr_mode_step read_addr_updated_exe;
+addr_mode_step read_addr_fixADH;
+addr_mode_step read_addr_updated;
+addr_mode_step write_register_fixedADH;
+addr_mode_step read_ptr_add_X;
+addr_mode_step fetch_ptr_ADL;
+addr_mode_step fetch_ptr_ADH;
+
 
 typedef struct addr_mode {
     int numsteps;
@@ -129,7 +138,6 @@ BYTE getBit(BYTE source, int position);
 // instruction TXS;
 // instruction TYA;
 
-// instruction AND;
 // instruction EOR;
 // instruction ORA;
 // instruction BIT;

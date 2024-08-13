@@ -135,27 +135,95 @@ addressingmode(addr_absolute_X_r, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH_add_X,
-    read_addr_fixADH_X, //option to re-read if page boundary crossed
-    read_addr_exe
+    read_addr_fixADH,
+    read_addr_updated_exe
 }));
 
 addressingmode(addr_absolute_Y_r, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH_add_Y,
-    read_addr_fixADH_Y,  //option to re-read if page boundary crossed
+    read_addr_fixADH_exe,
+    read_addr_updated_exe
+}));
+
+addressingmode(addr_absolute_X_rmw, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH_add_X,
+    read_addr_fixADH,
+    read_addr_updated,
+    modify,
+    write_addr
+}));
+
+addressingmode(addr_absolute_Y_rmw, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH_add_Y,
+    read_addr_fixADH,
+    read_addr_updated,
+    modify,
+    write_addr
+}));
+
+addressingmode(addr_absolute_X_w, passarray ({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH_add_X,
+    read_addr,
+    write_register_fixedADH
+}));
+
+addressingmode(addr_absolute_Y_w, passarray ({
+    fetch_opcode,
+    fetch_ADL,
+    fetch_ADH_add_Y,
+    read_addr,
+    write_register_fixedADH //trace not quite accurate as accumulator should be dealt with before
+}));
+
+//relative addressing***
+
+addressingmode(addr_indexed_indirect_r, passarray ({
+    fetch_opcode,
+    fetch_address,
+    read_ptr_add_X,
+    fetch_ptr_ADL,
+    fetch_ptr_ADH,
     read_addr_exe
+}));
+
+addressingmode(addr_indexed_indirect_rmw, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_ptr_add_X,
+    fetch_ptr_ADL,
+    fetch_ptr_ADH,
+    read_addr,
+    modify, //zimmers describes as write value back and then do operation
+    write_addr
+}));
+
+addressingmode(addr_indexed_indirect_w, passarray({
+    fetch_opcode,
+    fetch_address,
+    read_ptr_add_X,
+    fetch_ptr_ADL,
+    fetch_ptr_ADH,
+    write_register
 }));
 
 Operation operations[] = {
     { BRK, &addr_brk },
-    { LDA, &addr_immediate},
     { CLC, &addr_implied },
+    { LDX, &addr_immediate},
     { LDX, &addr_absolute_r},
     { ASL, &addr_absolute_rmw},
     { STA, &addr_absolute_w},
     { LDY, &addr_zeropage_r},
-    { LSR, &addr_zeropage_rmw}
+    { LSR, &addr_zeropage_rmw},
+    { AND, &addr_absolute_X_r}
 };
 
 
@@ -218,9 +286,7 @@ void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
 void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
-    BYTE data = cpu->DB;
     cpu->DL = cpu->DB;
-    // cpu->DB = memory[cpu->PC];
     incrementPC(cpu);
     ins(cpu);
 }
@@ -291,7 +357,7 @@ void fetch_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
     incrementPC(cpu);
 }
 
-void fetch_address(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_address(CPU *cpu, BYTE *memory, Instruction *ins){ //***check as this reads address held in PC
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
     cpu->DL = cpu->DB;
@@ -349,7 +415,11 @@ void fetch_ADH_add_X(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB]; //DB is ADH
     cpu->ALU = cpu->DL + cpu->X; // add ADL and X
-    cpu->AB = (cpu->DB << 8) + cpu->ALU;
+    if(cpu->ALU < cpu->X) { //set ALU carry flag if page boundary crossed
+        cpu->ACR_FLAG = 1;
+    } else {
+        cpu->ACR_FLAG = 0;
+    }
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
     incrementPC(cpu);
 }
@@ -358,38 +428,98 @@ void fetch_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB]; //DB is ADH
     cpu->ALU = cpu->DL + cpu->Y; // add ADL and X
-    cpu->AB = (cpu->DB << 8) + cpu->ALU;
+    if(cpu->ALU < cpu->Y) { //set ALU carry flag if page boundary crossed
+        cpu->ACR_FLAG = 1;
+    } else {
+        cpu->ACR_FLAG = 0;
+    }
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
     incrementPC(cpu);
 }
 
-void read_addr_fixADH_X(CPU *cpu, BYTE *memory, Instruction *ins){
+void read_addr_fixADH_exe(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->AB = (cpu->DB << 8) + cpu->ALU;
     cpu->DB = memory[cpu->AB];
-    if(!(cpu->ALU < cpu->X)) { //consider alternative implementation with alucarryflag
-        cpu->T++; //will skip next cycle step if overflow didn't occur
-        ins(cpu); //if no reread must execute instruction here
+
+    if(cpu->ACR_FLAG != 0) {
+        cpu->ALU = cpu->DL + 1; //fixed ADH value including page boundary cross
+        cpu->ACR_FLAG = 0;
     } else {
-        cpu->ALU = cpu->DL + 1; //new ADH
-        cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //get fixed address
-    }
-    // if(cpu->ALU < cpu->X) { //if ALU is smaller than X means wraparound has occurred
-    //     cpu->T--; //decrease cycle number to repeat step and add cycle
-    //     cpu->ALU = cpu->DL + 1;
-    //     //how to avoid repeating
-    // }
-    cpu->DL = cpu->DB;
-}
-void read_addr_fixADH_Y(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->DB = memory[cpu->AB];
-    if(!(cpu->ALU < cpu->Y)) {
-        cpu->T++; //will skip next cycle step if overflow didn't occur
-        ins(cpu); //if no reread must execute instruction here
-    } else {
-        cpu->ALU = cpu->DL + 1; //new ADH
-        cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //get fixed address
+        cpu->DL = cpu->DB; //check if ins use DB or DL
+        ins(cpu);
+        cpu->T++; //skip next step if additional cycle not needed
     }
     cpu->DL = cpu->DB;
 }
+
+void read_addr_updated_exe(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //updated address
+    cpu->ALU = 0x00;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
+    ins(cpu);
+}
+
+void read_addr_fixADH(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->AB = (cpu->DB << 8) + cpu->ALU;
+    cpu->DB = memory[cpu->AB];
+    if(cpu->ACR_FLAG != 0) {
+        cpu->ALU = cpu->DL + 1; //fixed ADH value including page boundary cross
+        cpu->ACR_FLAG = 0;
+    } else {
+        cpu->T++; //skip next step if additional cycle not needed
+    }
+    cpu->DL = cpu->DB;
+}
+
+void read_addr_updated(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //updated address
+    cpu->ALU = 0x00;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
+}
+
+// void read_addr_fixADH_w(CPU *cpu, BYTE *memory, Instruction *ins){
+//     cpu->AB = (cpu->DB << 8) + cpu->ALU;
+//     cpu->DB = memory[cpu->AB];
+//     if(cpu->ACR_FLAG != 0) {
+//         cpu->ALU = cpu->DL + 1; //fixed ADH value including page boundary cross
+//         cpu->ACR_FLAG = 0;
+//         cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //updated address for write - trace will only display updated address
+//     }
+//     cpu->DL = cpu->DB;
+// }
+
+void write_register_fixedADH(CPU *cpu, BYTE *memory, Instruction *ins) {
+    if(cpu->ACR_FLAG != 0) { //technically ALU and flag should be reset by time write starts
+        cpu->ALU = (cpu->AB >> 8) + 1;
+        cpu->ACR_FLAG = 0;
+        cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff);
+        //cpu->AB = cpu->AB + 0x0100; alternative
+    }
+    ins(cpu);
+    cpu->DL = cpu->DB;
+    memory[cpu->AB] = cpu->DL; //write register value returned by instruction
+}
+
+void read_ptr_add_X(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->DB = cpu->X;
+    cpu->ALU = cpu->DL + cpu->DB; //page boundary crossings not handled
+    cpu->DL = cpu->DB;
+    cpu->AB = cpu->ALU; //AB is pointer + x
+}
+
+void fetch_ptr_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB; //DL is ADL
+}
+
+void fetch_ptr_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->DB = memory[cpu->AB + 1]; //DB is AHL
+    cpu->AB = (cpu->DB << 8) + cpu->DL;
+    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
+}
+
 /*
     BRK - Break
     Assumes Opcode process has already incremented PC by 2.
@@ -814,25 +944,25 @@ void STY(CPU *cpu) {
 //     }
 // }
 
-// /*
-//     AND - AND memory and Accumulator
-//     Bitwise AND performed on contents of memory and Accumulator.
-//     Result stored in Accumulator.
-//     Sets Z and N flags according to result.
-// */
-// void AND(CPU *cpu, BYTE *memory) {
-//     cpu->A = cpu->A & *memory;
-//     if (cpu->A == 0) {
-//         setFlag(cpu, FLAG_Z);
-//     } else {
-//         resetFlag(cpu, FLAG_Z);
-//     }
-//     if (getBit(cpu->A, FLAG_N) != 0) {
-//         setFlag(cpu, FLAG_N);
-//     } else {
-//         resetFlag(cpu, FLAG_N);
-//     }
-// }
+/*
+    AND - AND memory and Accumulator
+    Bitwise AND performed on contents of memory and Accumulator.
+    Result stored in Accumulator.
+    Sets Z and N flags according to result.
+*/
+void AND(CPU *cpu) {
+    cpu->A = cpu->A & cpu->DL;
+    if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
+    } else {
+        resetFlag(cpu, FLAG_Z);
+    }
+    if (getBit(cpu->A, FLAG_N) != 0) {
+        setFlag(cpu, FLAG_N);
+    } else {
+        resetFlag(cpu, FLAG_N);
+    }
+}
 
 // /*
 //     EOR - Exclusive OR
