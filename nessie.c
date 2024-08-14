@@ -59,8 +59,9 @@ int main(void) {
     for (int step_num = 0; step_num < 12; step_num++) {
         operation = decode(&cpu);
         operation.mode->step[cpu.T](&cpu, memory, operation.ins);
-        cpu.T++;
         print_cpu(&cpu);
+        cpu.T++;
+
     }
     
     return 0;

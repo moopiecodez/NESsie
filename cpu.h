@@ -1,3 +1,6 @@
+#ifndef CPU_H
+#define CPU_H
+
 #include <stdint.h>
 
 #define BYTE uint8_t
@@ -49,12 +52,38 @@ Instruction BRK;
 Instruction LDA;
 Instruction LDX;
 Instruction LDY;
+Instruction EOR;
 Instruction AND;
+Instruction ORA;
+Instruction ADC;
+Instruction SBC;
+Instruction CMP;
+Instruction BIT;
+Instruction NOP;
 
 
 //RMW instructions:
 Instruction ASL;
 Instruction LSR;
+Instruction ROL;
+Instruction ROR;
+Instruction INC;
+Instruction INX;
+Instruction INY;
+Instruction DEC;
+Instruction DEX;
+Instruction DEY;
+
+void increment(CPU *cpu, BYTE *memory);
+void decrement(CPU *cpu, BYTE *memory);
+
+//transfer instructions
+Instruction TAX;
+Instruction TAY;
+Instruction TSX;
+Instruction TXA;
+Instruction TXS;
+Instruction TYA;
 
 // Write instructions:
 Instruction STX;
@@ -62,6 +91,11 @@ Instruction STA;
 Instruction STY;
 
 Instruction CLC;
+Instruction CLD;
+Instruction CLI;
+Instruction CLV;
+Instruction CPY;
+Instruction CPX;
 
 
 void incrementPC(CPU *cpu);
@@ -81,6 +115,8 @@ addr_mode_step fetch_ADH;
 addr_mode_step fetch_address;
 addr_mode_step read_addr_exe;
 addr_mode_step read_addr;
+addr_mode_step read_zp_addr_exe;
+addr_mode_step read__zp_addr;
 addr_mode_step modify;
 addr_mode_step write_addr;
 addr_mode_step write_register;
@@ -95,7 +131,12 @@ addr_mode_step read_addr_updated;
 addr_mode_step write_register_fixedADH;
 addr_mode_step read_ptr_add_X;
 addr_mode_step fetch_ptr_ADL;
-addr_mode_step fetch_ptr_ADH;
+addr_mode_step fetch_ptr_ADH_add_Y;
+addr_mode_step fetch_ptrX_ADL;
+addr_mode_step fetch_ptrX_ADH;
+addr_mode_step branch_PCL;
+addr_mode_step branch_fixPCH;
+addr_mode_step read_PCH;
 
 
 typedef struct addr_mode {
@@ -116,31 +157,9 @@ void setFlag(CPU *cpu, int position);
 void resetFlag(CPU *cpu, int position);
 BYTE getBit(BYTE source, int position);
 
-// void increment(CPU *cpu, BYTE *memory);
-
-// instruction INC;
-// instruction INX;
-// instruction INY;
-// void decrement(CPU *cpu, BYTE *memory);
-// instruction DEC;
-// instruction DEX;
-// instruction DEY;
-
-// instruction ROL;
-// instruction ROR;
 
 
 
-// instruction TAX;
-// instruction TAY;
-// instruction TSX;
-// instruction TXA;
-// instruction TXS;
-// instruction TYA;
-
-// instruction EOR;
-// instruction ORA;
-// instruction BIT;
 
 // void push_to_stack(CPU *cpu, BYTE *memory, BYTE reg);
 // instruction PHA;
@@ -150,15 +169,9 @@ BYTE getBit(BYTE source, int position);
 // instruction PLA;
 // instruction PLP;
 
-// instruction ADC;
-// instruction SBC;
-
 // void set_flags_on_compare(CPU *cpu, BYTE reg, BYTE *memory);
-// instruction CMP;
-// instruction CPX;
-// instruction CPY;
 
-// instruction CLD;
+
 // instruction CLI;
 // instruction CLV;
 // instruction SEC;
@@ -178,8 +191,6 @@ BYTE getBit(BYTE source, int position);
 // instruction JSR;
 // instruction RTS;
 
-// instruction BRK;
-// instruction NOP;
 // instruction RTI;
 
 //addressing modes
@@ -195,3 +206,4 @@ BYTE *indirectX(CPU *cpu, BYTE *memory);
 BYTE *indirectY(CPU *cpu, BYTE *memory);
 void absIndirect(CPU *cpu, BYTE *memory);
 */
+#endif
