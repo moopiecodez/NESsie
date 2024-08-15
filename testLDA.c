@@ -4,9 +4,9 @@
 
 START_TEST(test_LDA) {
     BYTE expectedA = 0x2C;
-    memory[0xFFF1] = expectedA;
+    cpu.DL = expectedA;
 
-    LDA(&cpu, &memory[0xFFF1]);
+    LDA(&cpu);
 
     ck_assert_msg(cpu.A == expectedA, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
@@ -21,9 +21,9 @@ END_TEST
 
 START_TEST(test_LDX) {
     BYTE expectedX = 0x00; //zero
-    memory[0xFFF2] = expectedX;
+    cpu.DL = expectedX;
 
-    LDX(&cpu, &memory[0xFFF2]);
+    LDX(&cpu);
 
     ck_assert_msg(cpu.X == expectedX, "incorrect X register value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
@@ -33,9 +33,9 @@ END_TEST
 
 START_TEST(test_LDY) {
     BYTE expectedY = 0x85; //negative
-    memory[0xFFF3] = expectedY;
+    cpu.DL = expectedY;
 
-    LDY(&cpu, &memory[0xFFF3]);
+    LDY(&cpu);
     ck_assert_msg(cpu.Y == expectedY, "incorrect Y register value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) != 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");

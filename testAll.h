@@ -1,9 +1,12 @@
+#ifndef TESTALL_H
+#define TESTALL_H
+
 #include <check.h>
 #include <stdint.h>
 #include "cpu.h"
 
 extern CPU cpu;
-extern BYTE memory[];
+// extern BYTE memory[];
 
 void setup(void);
 void teardown(void);
@@ -21,3 +24,5 @@ Suite *Stack_suite(void);
 Suite *Store_suite(void);
 Suite *System_suite(void);
 Suite *Transfer_suite(void);
+
+#endif

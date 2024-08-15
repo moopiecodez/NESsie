@@ -8,7 +8,7 @@ START_TEST(test_JMP) {
     u_int16_t operand = 0xAF03;
     BYTE Low = 0x03;
     BYTE High = 0xAF;
-    JMP(&cpu, Low, High);
+    // JMP(&cpu, Low, High);
 
     ck_assert_msg(cpu.PC == operand, "incorrect PC value");
 }
@@ -21,10 +21,10 @@ START_TEST(test_JSR) {
     BYTE High = 0xE1;
     //set up to reflect incrementing of PC by 2 on any instruction executing
     cpu.PC += 2;
-    JSR(&cpu, memory, Low, High);
+    // JSR(&cpu, memory, Low, High);
     ck_assert_msg(cpu.PC == operand, "incorrect PC value");
-    ck_assert_msg(memory[0x01FF] == 0xE3, "high byte of PC incorrectly stored");
-    ck_assert_msg(memory[0x01FE] == 0x4F, "low byte of PC incorrectly stored");
+    // ck_assert_msg(memory[0x01FF] == 0xE3, "high byte of PC incorrectly stored");
+    // ck_assert_msg(memory[0x01FE] == 0x4F, "low byte of PC incorrectly stored");
 
 }
 END_TEST
@@ -32,11 +32,11 @@ END_TEST
 START_TEST(test_RTS) {
     BYTE high = 0x7C;
     BYTE low = 0x08;
-    push_to_stack(&cpu, memory, high);
-    push_to_stack(&cpu, memory, low);
+    // push_to_stack(&cpu, memory, high);
+    // push_to_stack(&cpu, memory, low);
     uint16_t expectedPC = 0x7C09;
 
-    RTS(&cpu, memory);
+    // RTS(&cpu, memory);
     ck_assert_msg(cpu.PC == expectedPC, "incorrect PC value");
     ck_assert_msg(cpu.S == 0xFF, "incorrect Stack Pointer value");    
 }

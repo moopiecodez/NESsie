@@ -3,85 +3,100 @@
 #include "testAll.h"
 
 START_TEST(test_BCC) {
-    cpu.PC = 0xFF00;
-    BYTE displacement = 0x03;
-    BCC(&cpu, displacement);
+    setFlag(&cpu, FLAG_C);
+    BCC(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect C flag, expected set");
+    resetFlag(&cpu, FLAG_C);
+    BCC(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect C flag, expected clear");
 
-    ck_assert_msg(cpu.PC == 0xFF03, "incorrect PC value");
-    ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect C flag");
+
 }
 END_TEST
 
 START_TEST(test_BCS) {
-    cpu.PC = 0xFF00;
-    BYTE displacement = 0x03;
     setFlag(&cpu, FLAG_C);
-
-    BCS(&cpu, displacement);
-    ck_assert_msg(cpu.PC == 0xFF03, "incorrect PC value");
-    ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect C flag");
+    BCS(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect C flag, expected set");
+    resetFlag(&cpu, FLAG_C);
+    BCS(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect C flag, expected clear");
 }
 END_TEST
 
 START_TEST(test_BEQ) {
-    cpu.PC = 0xFF00;
-    BYTE displacement = 0x04;
     setFlag(&cpu, FLAG_Z);
-
-    BEQ(&cpu, displacement);
-    ck_assert_msg(cpu.PC == 0xFF04, "incorrect PC value");
-    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 1, "incorrect Z flag");
+    BEQ(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 1, "incorrect Z flag, expected set");
+    resetFlag(&cpu, FLAG_Z);
+    BEQ(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag, expected clear");
 }
 END_TEST
 
 START_TEST(test_BMI) {
-    cpu.PC = 0xFF00;
-    BYTE displacement = 0x05;
     setFlag(&cpu, FLAG_N);
-
-    BMI(&cpu, displacement);
-    ck_assert_msg(cpu.PC == 0xFF05, "incorrect PC value");
-    ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
+    BMI(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag, expected set");
+    resetFlag(&cpu, FLAG_N);
+    BMI(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag, expected clear");
 }
 END_TEST
 
 START_TEST(test_BNE) {
-    cpu.PC = 0xFF00;
-    BYTE displacement = 0x03;
-
-    BNE(&cpu, displacement);
-    ck_assert_msg(cpu.PC == 0xFF03, "incorrect PC value");
-    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
+    setFlag(&cpu, FLAG_Z);
+    BNE(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 1, "incorrect Z flag, expected set");
+    resetFlag(&cpu, FLAG_Z);
+    BNE(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag, expected clear");
 }
 END_TEST
 
 START_TEST(test_BPL) {
-    cpu.PC = 0xFF00;
-    BYTE displacement = 0x06;
-    BPL(&cpu, displacement);
-    ck_assert_msg(cpu.PC == 0xFF06, "incorrect PC value");
-    ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
+    setFlag(&cpu, FLAG_N);
+    BPL(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag, expected set");
+    resetFlag(&cpu, FLAG_N);
+    BPL(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag, expected clear");
 }
 END_TEST
 
 START_TEST(test_BVC) {
-    cpu.PC = 0xFF00;
-    BYTE displacement = 0x04;
-
-    BVC(&cpu, displacement);
-    ck_assert_msg(cpu.PC == 0xFF04, "incorrect PC value");
-    ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
+    setFlag(&cpu, FLAG_V);
+    BVC(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_V) == 1, "incorrect V flag, expected set");
+    resetFlag(&cpu, FLAG_V);
+    BVC(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag, expected clear");
 }
 END_TEST
 
 START_TEST(test_BVS) {
     setFlag(&cpu, FLAG_V);
-    cpu.PC = 0xFF00;
-    BYTE displacement = 0x01;
-
-    BVS(&cpu, displacement);
-    ck_assert_msg(cpu.PC == 0xFF01, "incorrect PC value");
-    ck_assert_msg(getBit(cpu.P, FLAG_V) == 1, "incorrect N flag");
+    BVS(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_V) == 1, "incorrect V flag, expected set");
+    resetFlag(&cpu, FLAG_V);
+    BVS(&cpu);
+    ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
+    ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag, expected clear");
 }
 END_TEST
 

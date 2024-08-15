@@ -5,33 +5,37 @@
 START_TEST(test_INC) {
     BYTE val = 0xFD;
     BYTE expectedVal = val + 0x01;
-    memory[0xFFFE] = val;
+    cpu.DB = val;
     
-    INC(&cpu, &memory[0xFFFE]);
+    INC(&cpu);
 
-    ck_assert_msg(memory[0xFFFE] == expectedVal, "incorrect value");
+    ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
 }
 END_TEST
 
 START_TEST(test_INX) {
-    cpu.X = 0x02;
-    BYTE expectedVal = cpu.X + 0x01;
+    BYTE val = 0x02;
+    cpu.X = 0x03;
+    BYTE expectedVal = cpu.X + val;
+    cpu.DB = val;
 
     INX(&cpu);
-    ck_assert_msg(cpu.X == expectedVal, "incorrect value");
+    ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
 }
 END_TEST
 
 START_TEST(test_INY) {
+    BYTE val = 0x01;
     cpu.Y = 0xC2;
-    BYTE expectedVal = cpu.Y + 0x01;
+    BYTE expectedVal = cpu.Y + val;
+    cpu.DB = val;
 
     INY(&cpu);
-    ck_assert_msg(cpu.Y == expectedVal, "incorrect value");
+    ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
 }
@@ -40,35 +44,37 @@ END_TEST
 START_TEST(test_DEC) {
     BYTE val = 0xFD;
     BYTE expectedVal = val - 0x01;
-    memory[0xFFFE] = val;
+    cpu.DB = val;
     
-    DEC(&cpu, &memory[0xFFFE]);
+    DEC(&cpu);
 
-    ck_assert_msg(memory[0xFFFE] == expectedVal, "incorrect value");
+    ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
 }
 END_TEST
 
 START_TEST(test_DEX) {
+    BYTE val = 0x01;
     cpu.X = 0x02;
-    BYTE expectedVal = cpu.X - 0x01;
+    BYTE expectedVal = cpu.X - val;
     
     DEX(&cpu);
 
-    ck_assert_msg(cpu.X == expectedVal, "incorrect value");
+    ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
 }
 END_TEST
 
 START_TEST(test_DEY) {
+    BYTE val = 0x01;
     cpu.Y = 0x00;
-    BYTE expectedVal = cpu.Y - 0x01;
+    BYTE expectedVal = cpu.Y - val;
 
     DEY(&cpu);
 
-    ck_assert_msg(cpu.Y == expectedVal, "incorrect value");
+    ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
 }

@@ -3,29 +3,23 @@
 #include "testAll.h"
 
 START_TEST(test_STA) {
-    memory[0xFFFC] = 0x00;
     cpu.A = 0xC9;
-    STA(&cpu, &memory[0xFFFC]);
-    ck_assert_msg(memory[0xFFFC] == cpu.A, "incorrect value stored");
-    ck_assert_msg(memory[0xFFFC] != 0x00, "value not stored");
+    STA(&cpu);
+    ck_assert_msg(cpu.DB == cpu.A, "incorrect value on DB for storage");
 }
 END_TEST
 
 START_TEST(test_STX) {
-    memory[0xFFFB] = 0x00;
     cpu.X = 0xC8;
-    STX(&cpu, &memory[0xFFFB]);;
-    ck_assert_msg(memory[0xFFFB] == cpu.X, "incorrect value stored");
-    ck_assert_msg(memory[0xFFFB] != 0x00, "value not stored");
+    STX(&cpu);
+    ck_assert_msg(cpu.DB == cpu.X, "incorrect value on DB for storage");
 }
 END_TEST
 
 START_TEST(test_STY) {
-    memory[0xFFFA] = 0x00;
     cpu.Y = 0xC7;
-    STY(&cpu, &memory[0xFFFA]);;
-    ck_assert_msg(memory[0xFFFA] == cpu.Y, "incorrect value stored");
-    ck_assert_msg(memory[0xFFFA] != 0x00, "value not stored");
+    STY(&cpu);
+    ck_assert_msg(cpu.DB == cpu.Y, "incorrect value stored");
 }
 END_TEST
 

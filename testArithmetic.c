@@ -4,11 +4,11 @@
 
 START_TEST(test_ADC) {
     setFlag(&cpu, FLAG_C);
-    memory[0xFF0C] = 0xCE;
+    cpu.DL = 0xCE;
     cpu.A = 0x23;
     BYTE expected = 0xF2;
 
-    ADC(&cpu, &memory[0xFF0C]);
+    ADC(&cpu);
     getBit(cpu.P, FLAG_B);
 
     ck_assert_msg(cpu.A == expected, "incorrect result");
@@ -24,11 +24,11 @@ END_TEST
 
 START_TEST(test_SBC){
     setFlag(&cpu, FLAG_C);
-    memory[0xFF0C] = 0xCE;
+    cpu.DL = 0xCE;
     cpu.A = 0x23;
     BYTE expected = 0x55;
 
-    SBC(&cpu, &memory[0xFF0C]);
+    SBC(&cpu);
 
     ck_assert_msg(cpu.A == expected, "incorrect result");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
@@ -42,12 +42,13 @@ START_TEST(test_SBC){
 END_TEST
 
 START_TEST(test_CMP){
-    cpu.A = 0xF6;
-    memory[0xFFEC] = 0x18;
+    BYTE expected = 0xF6;
+    cpu.A = expected;
+    cpu.DL = 0x18;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0xF6, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -60,12 +61,13 @@ END_TEST
 
 START_TEST(test_CMP_eq){
     //compares equal values
-    cpu.A = 0xF6;
-    memory[0xFFEC] = 0xF6;
+    BYTE expected = 0xF6;
+    cpu.A = expected;
+    cpu.DL = 0xF6;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0xF6, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -78,12 +80,13 @@ END_TEST
 
 START_TEST(test_CMP_zero_positive){
     //compares zero with positive number
-    cpu.A = 0x00;
-    memory[0xFFEC] = 0x18;
+    BYTE expected = 0x00;
+    cpu.A = expected;
+    cpu.DL = 0x18;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0x00, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -96,12 +99,13 @@ END_TEST
 
 START_TEST(test_CMP_zero_negative){
     //compares zero with negative number
-    cpu.A = 0x00;
-    memory[0xFFEC] = 0xF6;
+    BYTE expected = 0x00;
+    cpu.A = expected;
+    cpu.DL = 0xF6;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0x00, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -114,12 +118,13 @@ END_TEST
 
 START_TEST(test_CMP_pos_neg){
     //compares positive with negative number
-    cpu.A = 0x0C;
-    memory[0xFFEC] = 0xF6;
+    BYTE expected = 0x0C;
+    cpu.A = expected;
+    cpu.DL = 0xF6;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0x0C, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -132,12 +137,13 @@ END_TEST
 
 START_TEST(test_CMP_neg_neg){
     //compares negative with negative number
-    cpu.A = 0x81;
-    memory[0xFFEC] = 0xF6;
+    BYTE expected = 0x81;
+    cpu.A = expected;
+    cpu.DL = 0xF6;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0x81, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -150,12 +156,13 @@ END_TEST
 
 START_TEST(test_CMP_pos_pos){
     //compares positive with positive number
-    cpu.A = 0x0C;
-    memory[0xFFEC] = 0x2C;
+    BYTE expected = 0x0C;
+    cpu.A = expected;
+    cpu.DL = 0x2C;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0x0C, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -168,12 +175,13 @@ END_TEST
 
 START_TEST(test_CMP_neg_pos){
     //compares negative with positive number
-    cpu.A = 0xF6;
-    memory[0xFFEC] = 0x0C;
+    BYTE expected = 0xF6;
+    cpu.A = expected;
+    cpu.DL = 0x0C;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0xF6, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -186,12 +194,13 @@ END_TEST
 
 START_TEST(test_CMP_neg_smallneg){
     //compares negative with smaller negative number
-    cpu.A = 0xF6;
-    memory[0xFFEC] = 0x81;
+    BYTE expected = 0xF6;
+    cpu.A = expected;
+    cpu.DL = 0x81;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0xF6, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -204,12 +213,13 @@ END_TEST
 
 START_TEST(test_CMP_pos_smallpos){
     //compares positive with smaller positive number
-    cpu.A = 0x2C;
-    memory[0xFFEC] = 0x0C;
+    BYTE expected = 0x2C;
+    cpu.A = expected;
+    cpu.DL = 0x0C;
 
-    CMP(&cpu, &memory[0xFFEC]);
+    CMP(&cpu);
 
-    ck_assert_msg(cpu.A == 0x2C, "incorrect Accumulator value");
+    ck_assert_msg(cpu.A == expected, "incorrect Accumulator value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -221,12 +231,13 @@ START_TEST(test_CMP_pos_smallpos){
 END_TEST
 
 START_TEST(test_CPX) {
-    cpu.X = 0xF6;
-    memory[0xFFEC] = 0x18;
+    BYTE expected = 0xF6;
+    cpu.X = expected;
+    cpu.DL = 0x18;
 
-    CPX(&cpu, &memory[0xFFEC]);
+    CPX(&cpu);
 
-    ck_assert_msg(cpu.X == 0xF6, "incorrect X reg value");
+    ck_assert_msg(cpu.X == expected, "incorrect X reg value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
@@ -238,12 +249,13 @@ START_TEST(test_CPX) {
 END_TEST
 
 START_TEST(test_CPY) {
-    cpu.Y = 0xF6;
-    memory[0xFFEC] = 0x18;
+    BYTE expected = 0xF6;
+    cpu.Y = expected;
+    cpu.DL = 0x18;
 
-    CPY(&cpu, &memory[0xFFEC]);
+    CPY(&cpu);
 
-    ck_assert_msg(cpu.Y == 0xF6, "incorrect Y reg value");
+    ck_assert_msg(cpu.Y == expected, "incorrect Y reg value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
     ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");

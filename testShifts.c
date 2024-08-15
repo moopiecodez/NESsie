@@ -4,11 +4,11 @@
 #include "testAll.h"
 
 START_TEST(test_ASL) {
-    memory[0xFFF1] = 0x2e;
+    cpu.DL = 0x2e;
     BYTE expected = 0x5c;
 
-    ASL(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    ASL(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
@@ -16,11 +16,11 @@ START_TEST(test_ASL) {
 END_TEST
 
 START_TEST(test_ASL_neg) {
-    memory[0xFFF1] = 0xEC;
+    cpu.DL = 0xEC;
     BYTE expected = 0xD8;
 
-    ASL(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    ASL(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
@@ -28,11 +28,11 @@ START_TEST(test_ASL_neg) {
 END_TEST
 
 START_TEST(test_ASL_car) {
-    memory[0xFFF1] = 0x95;
+    cpu.DL = 0x95;
     BYTE expected = 0x2A;
 
-    ASL(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    ASL(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
@@ -40,11 +40,11 @@ START_TEST(test_ASL_car) {
 END_TEST
 
 START_TEST(test_ASL_zer) {
-    memory[0xFFF1] = 0x80;
+    cpu.DL = 0x80;
     BYTE expected = 0x00;
 
-    ASL(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    ASL(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 1, "incorrect zero flag");
@@ -52,11 +52,11 @@ START_TEST(test_ASL_zer) {
 END_TEST
 
 START_TEST(test_LSR) {
-    memory[0xFFF1] = 0x5c;
+    cpu.DL = 0x5c;
     BYTE expected = 0x2e;
 
-    LSR(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    LSR(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
@@ -64,11 +64,11 @@ START_TEST(test_LSR) {
 END_TEST
 
 START_TEST(test_LSR_neg) {
-    memory[0xFFF1] = 0xec;
+    cpu.DL = 0xec;
     BYTE expected = 0x76;
 
-    LSR(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    LSR(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
@@ -76,11 +76,11 @@ START_TEST(test_LSR_neg) {
 END_TEST
 
 START_TEST(test_LSR_car) {
-    memory[0xFFF1] = 0x3b;
+    cpu.DL = 0x3b;
     BYTE expected = 0x1d;
 
-    LSR(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    LSR(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
@@ -88,11 +88,11 @@ START_TEST(test_LSR_car) {
 END_TEST
 
 START_TEST(test_LSR_zer) {
-    memory[0xFFF1] = 0x01;
+    cpu.DL = 0x01;
     BYTE expected = 0x00;
 
-    LSR(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    LSR(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 1, "incorrect zero flag");
@@ -101,11 +101,11 @@ END_TEST
 
 START_TEST(test_ROL) {
     setFlag(&cpu, FLAG_C);
-    memory[0xFFF1] = 0x2e;
+    cpu.DL = 0x2e;
     BYTE expected = 0x5D;
 
-    ROL(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    ROL(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
@@ -114,11 +114,11 @@ END_TEST
 
 START_TEST(test_ROR) {
     setFlag(&cpu, FLAG_C);
-    memory[0xFFF1] = 0x5D;
+    cpu.DL = 0x5D;
     BYTE expected = 0xAE;
 
-    ROR(&cpu, &memory[0xFFF1]);
-    ck_assert_msg(memory[0xFFF1] == expected, "resulting byte is wrong");
+    ROR(&cpu);
+    ck_assert_msg(cpu.ALU == expected, "resulting byte is wrong");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect negative flag");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 1, "incorrect carry flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect zero flag");
