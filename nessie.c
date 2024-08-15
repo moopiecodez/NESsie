@@ -29,16 +29,6 @@ BYTE memory[0xFFFF] = {
 
 };
 
-void print_cpu(CPU *cpu) {
-    char flags[8];
-    for (int i = 7; i >= 0; i--) {
-        flags[7-i] = cpu->P & (1<<i) ? '1' : '0';
-    }
-    printf("PC: %04x, AB: %04x, DB: %02x, IR: %02x, A: %02x, X: %02x, Y: %02x, P: %s, T: %u, DL: %02x, ALU: %02x, ACR: %02x\n",
-            cpu->PC, cpu->AB, cpu->DB, cpu->IR, cpu->A, cpu->X, cpu->Y,
-              flags, cpu->T, cpu->DL, cpu->ALU, cpu->ACR_FLAG);
-}
-
 int main(void) {
     printf("setting up new main function for nessie\n");
 
@@ -57,11 +47,7 @@ int main(void) {
     print_cpu(&cpu);
     //--------------------------------------------------
     for (int step_num = 0; step_num < 12; step_num++) {
-        operation = decode(&cpu);
-        operation.mode->step[cpu.T](&cpu, memory, operation.ins);
-        print_cpu(&cpu);
-        cpu.T++;
-
+        clocktick(&cpu, memory);
     }
     
     return 0;

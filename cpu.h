@@ -151,6 +151,11 @@ typedef struct op {
 
 Operation decode(CPU *cpu);
 
+void execute(CPU *cpu, Operation operation, BYTE *memory);
+
+void clocktick(CPU *cpu, BYTE *memory);
+void print_cpu(CPU *cpu);
+
 void power_cpu(CPU *cpu);
 
 void setFlag(CPU *cpu, int position);
