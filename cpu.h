@@ -97,6 +97,16 @@ Instruction CLV;
 Instruction CPY;
 Instruction CPX;
 
+//branch instructions
+Instruction BCC;
+Instruction BCS;
+Instruction BEQ;
+Instruction BMI;
+Instruction BNE;
+Instruction BPL;
+Instruction BVC;
+Instruction BVS;
+
 
 void incrementPC(CPU *cpu);
 
@@ -183,14 +193,7 @@ BYTE getBit(BYTE source, int position);
 // instruction SED;
 // instruction SEI;
 
-// instruction BCC;
-// instruction BCS;
-// instruction BEQ;
-// instruction BMI;
-// instruction BNE;
-// instruction BPL;
-// instruction BVC;
-// instruction BVS;
+
 
 // instruction JMP;
 // instruction JSR;

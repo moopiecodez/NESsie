@@ -324,7 +324,6 @@ void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
     cpu->DL = cpu->DB;
-    // memory[cpu->PC];
     ins(cpu);
 }
 
@@ -335,7 +334,6 @@ void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
 */
 void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
     //emulate reading memory but doing nothing with it
-    // memory[cpu->PC];
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
     cpu->DL = cpu->DB;
@@ -362,13 +360,13 @@ void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
 
 void branch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->ALU = (BYTE)(cpu->PC & 0xFF) + cpu->DL;
-    if(cpu->DL < 0x80 && !(cpu->ALU < cpu->DL)){ // operand < 0x80 means positive offset 0x80 so check for overflow
+    if((cpu->DL < 0x80) && !(cpu->ALU < cpu->DL)){ // operand < 0x80 means positive offset 0x80 so check for overflow
         cpu->ACR_FLAG = 0; //only need to adjust to 0 as carry flag already set if you get to this cycle
     }
-    if(cpu->DL >= 0x80 && !(cpu->ALU > (BYTE)(cpu->PC & 0xFF))) { // need to check condition as offset can be negative
+    if((cpu->DL >= 0x80) && !(cpu->ALU > (BYTE)(cpu->PC & 0xFF))) { // need to check condition as offset can be negative
         cpu->ACR_FLAG = 0;
     }
-    if(cpu->ACR_FLAG = 0){
+    if(cpu->ACR_FLAG == 0){
         cpu->T++;
     }
     cpu->PC = (cpu->PC & 0xFF00) + cpu->ALU;
@@ -1429,7 +1427,7 @@ void BNE(CPU *cpu) {
     BPL - Branch if Positive
     If N flag clear relative displacement added to PC to cause branch.
 */
-void BPL(CPU *cpu, BYTE *displacement) {
+void BPL(CPU *cpu) {
     if(getBit(cpu->P, FLAG_N) == 0) {
         cpu->ACR_FLAG = 1;
     }
@@ -1439,7 +1437,7 @@ void BPL(CPU *cpu, BYTE *displacement) {
     BVC - Branch if Overflow Clear
     If V flag clear relative displacement added to PC to cause branch.
 */
-void BVC(CPU *cpu, BYTE *displacement) {
+void BVC(CPU *cpu) {
     if(getBit(cpu->P, FLAG_V) == 0) {
         cpu->ACR_FLAG = 1;
     }
@@ -1449,7 +1447,7 @@ void BVC(CPU *cpu, BYTE *displacement) {
     BVS - Branch if Overflow Set
     If V flag set relative displacement added to PC to cause branch.
 */
-void BVS(CPU *cpu, BYTE *displacement) {
+void BVS(CPU *cpu) {
     if(getBit(cpu->P, FLAG_V) != 0) {
         cpu->ACR_FLAG = 1;;
     }
