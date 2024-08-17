@@ -688,23 +688,7 @@ Suite *cycle_suite(void) {
     tcase_add_test(tc_core, fetch_ptr_ADL_cpu_trace);
     tcase_add_test(tc_core, fetch_ptr_add_Y_overflow_T);
     tcase_add_test(tc_core, fetch_ptr_add_Y_overflow_F);
-
     
-
-
-    // tcase_add_test(tc_core, test_addr_imm);
-    // tcase_add_test(tc_core, test_addr_absolute);
-    // tcase_add_test(tc_core, test_addr_zp);
-    // tcase_add_test(tc_core, test_addr_zpX);
-    // tcase_add_test(tc_core, test_addr_zpY);
-    // tcase_add_test(tc_core, test_addr_absX);
-    // tcase_add_test(tc_core, test_addr_absY);
-    // tcase_add_test(tc_core, test_addr_imp);
-    // tcase_add_test(tc_core, test_addr_rel_true);
-    // tcase_add_test(tc_core, test_addr_indirectX);
-    // tcase_add_test(tc_core, test_addr_indirectY);
-    // tcase_add_test(tc_core, test_addr_indirectY_with_carry);
-
     tcase_add_checked_fixture(tc_core, setup, teardown);
 
     suite_add_tcase(s, tc_core);
