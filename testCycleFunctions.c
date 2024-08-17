@@ -256,107 +256,184 @@ START_TEST(fetch_address_cpu_trace) {
 END_TEST
 
 START_TEST(read_addr_exe_cpu_trace) {
+    BYTE expected_val = 0x03;
     cpu.ALU = 0x1D;
     cpu.DL = 0x2C;
-    memory[0x2C1D] = 0x03;
+    memory[0x2C1D] = expected_val;
     read_addr_exe(&cpu, memory, LDA);
     ck_assert_msg(cpu.AB == 0x2C1D, "AB incorrect");
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(cpu.A == expected_val, "Accumulator incorrect, expected to be loaded");
+}
+END_TEST
+
+START_TEST(read_addr_cpu_trace) {
+    BYTE expected_val = 0x03;
+    cpu.ALU = 0x1D;
+    cpu.DL = 0x2C;
+    memory[0x2C1D] = expected_val;
+    read_addr(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x2C1D, "AB incorrect");
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(cpu.A == 0x00, "Accumulator incorrect, no operation expected");
+}
+END_TEST
+
+START_TEST(read_zp_addr_exe_cpu_trace) {
+    BYTE expected_val = 0x03;
+    cpu.DL = 0x2C;
+    memory[0x002C] = expected_val;
+    read_zp_addr_exe(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x002C, "AB incorrect");
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(cpu.A == expected_val, "Accumulator incorrect, expected to be loaded");
+}
+END_TEST
+
+START_TEST(read_zp_addr_cpu_trace) {
+    BYTE expected_val = 0x03;
+    cpu.DL = 0x2C;
+    memory[0x002C] = expected_val;
+    read_zp_addr(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x002C, "AB incorrect");
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(cpu.A == 0x00, "Accumulator incorrect, no operation expected");
+}
+END_TEST
+
+START_TEST(read_PCH_cpu_trace) {
+    BYTE expected_val = 0x03;
+    cpu.AB = 0x002B;
+    cpu.DL = 0x2D;
+    memory[0x002C] = expected_val;
+    read_PCH(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x002C, "AB incorrect");
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(cpu.PC == 0x032D, "PC incorrect");
+    ck_assert_msg(cpu.A == 0x00, "Accumulator incorrect, no operation expected");
+}
+END_TEST
+
+//variants of ASL tested in instruction specific tests
+START_TEST(modify_ASLinstruction_cpu_trace) {
+    BYTE expected_val = 0x08;
+    cpu.DL = 0x04;
+    modify(&cpu, memory, ASL); //result goes to ALU not DB
+    ck_assert_msg(cpu.DB == 0x00, "DB incorrect");
+    ck_assert_msg(cpu.ALU == expected_val, "ALU incorrect");
+    ck_assert_msg(cpu.DL == 0x04, "DL incorrect");
+}
+END_TEST
+
+START_TEST(write_addr_cpu_trace) {
+    BYTE expected_val = 0x08;
+    cpu.ALU = expected_val;
+    cpu.AB = 0x002C;
+    write_addr(&cpu, memory, ASL);
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(memory[cpu.AB] == expected_val, "Memory contents incorrect");
+}
+END_TEST
+
+START_TEST(write_register_cpu_trace) {
+    BYTE expected_val = 0x08;
+    cpu.A = expected_val; //register to be stored is accumulator
+    cpu.AB = 0x002C;
+    write_register(&cpu, memory, STA); //result goes to ALU not DB
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(memory[cpu.AB] == expected_val, "Memory contents incorrect");
+}
+END_TEST
+
+START_TEST(read_addr_add_X_cpu_trace) {
+    cpu.X = 0x03;
+    cpu.DL = 0x2D;
+    read_addr_add_X(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x0030, "AB incorrect");
     ck_assert_msg(cpu.DB == 0x03, "DB incorrect");
-    ck_assert_msg(cpu.A == 0x03, "Accumulator incorrect, expected to be loaded");
+    ck_assert_msg(cpu.DL == 0x03, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x0030, "ALU incorrect");
+}
+END_TEST
+
+START_TEST(read_addr_add_Y_cpu_trace) {
+    cpu.Y = 0x03;
+    cpu.DL = 0x2D;
+    read_addr_add_Y(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x0030, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x03, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x03, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x0030, "ALU incorrect");
+}
+END_TEST
+
+START_TEST(fetch_ADH_add_X_overflow_F) {
+    cpu.X = 0x03;
+    cpu.DL = 0x2D; //holds ADL
+    cpu.PC = 0x0123;
+    memory[0x0123] = 0x02;
+    fetch_ADH_add_X(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x0123, "AB incorrect");
+    ck_assert_msg(cpu.PC == 0x0124, "PC incorrect");
+    ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x30, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+}
+END_TEST
+
+START_TEST(fetch_ADH_add_X_overflow_T) {
+    cpu.X = 0x03;
+    cpu.DL = 0xFD; //holds ADL
+    cpu.PC = 0x0123;
+    memory[0x0123] = 0x02;
+    fetch_ADH_add_X(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x0123, "AB incorrect");
+    ck_assert_msg(cpu.PC == 0x0124, "PC incorrect");
+    ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x00, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x01, "Expected ACR_FLAG to be clear");
+}
+END_TEST
+
+START_TEST(fetch_ADH_add_Y_overflow_F) {
+    cpu.Y = 0x03;
+    cpu.DL = 0x2D; //holds ADL
+    cpu.PC = 0x0123;
+    memory[0x0123] = 0x02;
+    fetch_ADH_add_Y(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x0123, "AB incorrect");
+    ck_assert_msg(cpu.PC == 0x0124, "PC incorrect");
+    ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x30, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+}
+END_TEST
+
+START_TEST(fetch_ADH_add_Y_overflow_T) {
+    cpu.Y = 0x03;
+    cpu.DL = 0xFD; //holds ADL
+    cpu.PC = 0x0123;
+    memory[0x0123] = 0x02;
+    fetch_ADH_add_Y(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x0123, "AB incorrect");
+    ck_assert_msg(cpu.PC == 0x0124, "PC incorrect");
+    ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x00, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x01, "Expected ACR_FLAG to be clear");
 }
 END_TEST
 /*
-
-void read_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = (cpu->DL << 8) + cpu->ALU;
-    cpu->DB = memory[cpu->AB];
-    cpu->DL = cpu->DB;
-    ins(cpu);
-}
-
-void read_zp_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = cpu->DL;
-    cpu->DB = memory[cpu->AB];
-    cpu->DL = cpu->DB;
-    ins(cpu);
-}
-
-void read_zp_addr(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = cpu->DL; //in previous cycle effective address stored in DL
-    cpu->DB = memory[cpu->AB];
-    cpu->DL = cpu->DB;
-}
-
-void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = (cpu->DL << 8) + cpu->ALU; //in previous cycle address stored in ALU
-    cpu->DB = memory[cpu->AB];
-    cpu->DL = cpu->DB;
-}
-
-void read_PCH(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = cpu->AB + 1;
-    cpu->DB = memory[cpu->AB];
-    cpu->PC = (cpu->DB << 8) + cpu->DL;
-    cpu->DL = cpu->DB;
-}
-
-void modify(CPU *cpu, BYTE *memory, Instruction *ins) {
-    //memory[cpu->AB] = cpu->DB writes unmodified value again first
-    ins(cpu);
-}
-
-void write_addr(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->DB = cpu->ALU;
-    cpu->DL = cpu->DB;
-    memory[cpu->AB] = cpu->DL; //write modified value
-}
-
-void write_register(CPU *cpu, BYTE *memory, Instruction *ins) {
-    ins(cpu);
-    cpu->DL = cpu->DB;
-    memory[cpu->AB] = cpu->DL; //write register value returned by instruction
-}
-
-void read_addr_add_X(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->DB = cpu->X;
-    cpu->ALU = cpu->DL + cpu->DB; //page boundary crossings not handled
-    cpu->DL = cpu->DB;
-    cpu->AB = cpu->ALU; //check this is happening at right point
-}
-
-void read_addr_add_Y(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->DB = cpu->Y;
-    cpu->ALU = cpu->DL + cpu->DB; //page boundary crossings not handled
-    cpu->DL = cpu->DB;
-    cpu->AB = cpu->ALU;
-}
-
-void fetch_ADH_add_X(CPU *cpu, BYTE *memory, Instruction *ins){
-    //at the start of cycle cpu->DL holds ADL
-    cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB]; //DB is ADH
-    cpu->ALU = cpu->DL + cpu->X; // add ADL and X
-    if(cpu->ALU < cpu->X) { //set ALU carry flag if page boundary crossed
-        cpu->ACR_FLAG = 1;
-    } else {
-        cpu->ACR_FLAG = 0;
-    }
-    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
-    incrementPC(cpu);
-}
-void fetch_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
-    //start of cycle cpu->DL is ADL
-    cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB]; //DB is ADH
-    cpu->ALU = cpu->DL + cpu->Y; // add ADL and X
-    if(cpu->ALU < cpu->Y) { //set ALU carry flag if page boundary crossed
-        cpu->ACR_FLAG = 1;
-    } else {
-        cpu->ACR_FLAG = 0;
-    }
-    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
-    incrementPC(cpu);
-}
 
 void read_addr_fixADH_exe(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->AB = (cpu->DL << 8) + cpu->ALU;
@@ -478,6 +555,19 @@ Suite *cycle_suite(void) {
     tcase_add_test(tc_core, fetch_ADH_cpu_trace);
     tcase_add_test(tc_core, fetch_address_cpu_trace);
     tcase_add_test(tc_core, read_addr_exe_cpu_trace);
+    tcase_add_test(tc_core, read_addr_cpu_trace);
+    tcase_add_test(tc_core, read_zp_addr_exe_cpu_trace);
+    tcase_add_test(tc_core, read_zp_addr_cpu_trace);
+    tcase_add_test(tc_core, read_PCH_cpu_trace);
+    tcase_add_test(tc_core, modify_ASLinstruction_cpu_trace);
+    tcase_add_test(tc_core, write_addr_cpu_trace);
+    tcase_add_test(tc_core, write_register_cpu_trace);
+    tcase_add_test(tc_core, read_addr_add_X_cpu_trace);
+    tcase_add_test(tc_core, read_addr_add_Y_cpu_trace);
+    tcase_add_test(tc_core, fetch_ADH_add_X_overflow_F);
+    tcase_add_test(tc_core, fetch_ADH_add_X_overflow_T);
+    tcase_add_test(tc_core, fetch_ADH_add_Y_overflow_F);
+    tcase_add_test(tc_core, fetch_ADH_add_Y_overflow_T);
 
     // tcase_add_test(tc_core, test_addr_imm);
     // tcase_add_test(tc_core, test_addr_absolute);

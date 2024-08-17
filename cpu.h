@@ -126,7 +126,7 @@ addr_mode_step fetch_address;
 addr_mode_step read_addr_exe;
 addr_mode_step read_addr;
 addr_mode_step read_zp_addr_exe;
-addr_mode_step read__zp_addr;
+addr_mode_step read_zp_addr;
 addr_mode_step modify;
 addr_mode_step write_addr;
 addr_mode_step write_register;
