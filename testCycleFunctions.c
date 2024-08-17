@@ -430,103 +430,209 @@ START_TEST(fetch_ADH_add_Y_overflow_T) {
     ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
     ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
     ck_assert_msg(cpu.ALU == 0x00, "ALU incorrect ");
-    ck_assert_msg(cpu.ACR_FLAG == 0x01, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(cpu.ACR_FLAG == 0x01, "Expected ACR_FLAG to be set");
 }
 END_TEST
-/*
 
-void read_addr_fixADH_exe(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = (cpu->DL << 8) + cpu->ALU;
-    cpu->DB = memory[cpu->AB];
-    if(cpu->ACR_FLAG != 0) {
-        cpu->ALU = cpu->DL + 1; //fixed ADH value including page boundary cross
-        cpu->ACR_FLAG = 0;
-    } else {
-        cpu->DL = cpu->DB; //check if ins use DB or DL
-        ins(cpu);
-        cpu->T++; //skip next step if additional cycle not needed
-    }
-    cpu->DL = cpu->DB;
+START_TEST(read_addr_fixADH_exe_overflow_F) {
+    cpu.ACR_FLAG = 0x00;
+    cpu.ALU = 0x3C;
+    cpu.DL = 0x1D;
+    memory[0x1D3C] = 0x02;
+    read_addr_fixADH_exe(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x1D3C, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x3C, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(cpu.T == 0x01, "T incorrect");
+    ck_assert_msg(cpu.A == 0x02, "A incorrect");
 }
+END_TEST
 
-void read_addr_updated_exe(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //updated address
-    cpu->ALU = 0x00;
-    cpu->DB = memory[cpu->AB];
-    cpu->DL = cpu->DB;
-    ins(cpu);
+START_TEST(read_addr_fixADH_exe_overflow_T) {
+    cpu.ACR_FLAG = 0x01;
+    cpu.ALU = 0x3C;
+    cpu.DL = 0x1D;
+    memory[0x1D3C] = 0x02;
+    read_addr_fixADH_exe(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x1D3C, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x1E, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(cpu.T == 0x00, "T incorrect");
+    ck_assert_msg(cpu.A == 0x00, "A incorrect");
 }
+END_TEST
 
-void read_addr_fixADH(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = (cpu->DL << 8) + cpu->ALU;
-    cpu->DB = memory[cpu->AB];
-    if(cpu->ACR_FLAG != 0) {
-        cpu->ALU = cpu->DL + 1; //fixed ADH value including page boundary cross
-        cpu->ACR_FLAG = 0;
-    } else {
-        cpu->T++; //skip next step if additional cycle not needed
-    }
-    cpu->DL = cpu->DB;
+START_TEST(read_addr_updated_exe_cpu_trace) {
+    cpu.ALU = 0x1E;
+    cpu.DL = 0x02;
+    cpu.AB = 0x1D3C;
+    memory[0x1E3C] = 0x05;
+    read_addr_updated_exe(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x1E3C, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x05, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x05, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x00, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(cpu.T == 0x00, "T incorrect");
+    ck_assert_msg(cpu.A == 0x05, "A incorrect");
 }
+END_TEST
 
-void read_addr_updated(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //updated address
-    cpu->ALU = 0x00;
-    cpu->DB = memory[cpu->AB];
-    cpu->DL = cpu->DB;
+
+START_TEST(read_addr_fixADH_overflow_F) {
+    cpu.ACR_FLAG = 0x00;
+    cpu.ALU = 0x3C;
+    cpu.DL = 0x1D;
+    memory[0x1D3C] = 0x02;
+    read_addr_fixADH_exe(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x1D3C, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x3C, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(cpu.T == 0x01, "T incorrect");
 }
+END_TEST
 
-
-void write_register_fixedADH(CPU *cpu, BYTE *memory, Instruction *ins) {
-    if(cpu->ACR_FLAG != 0) { //technically ALU and flag should be reset by time write starts
-        cpu->ALU = (cpu->AB >> 8) + 1;
-        cpu->ACR_FLAG = 0;
-        cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff);
-        //cpu->AB = cpu->AB + 0x0100; alternative
-    }
-    ins(cpu);
-    cpu->DL = cpu->DB;
-    memory[cpu->AB] = cpu->DL; //write register value returned by instruction
+START_TEST(read_addr_fixADH_overflow_T) {
+    cpu.ACR_FLAG = 0x01;
+    cpu.ALU = 0x3C;
+    cpu.DL = 0x1D;
+    memory[0x1D3C] = 0x02;
+    read_addr_fixADH(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x1D3C, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x02, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x02, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x1E, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(cpu.T == 0x00, "T incorrect");
 }
+END_TEST
 
-void read_ptr_add_X(CPU *cpu, BYTE *memory, Instruction *ins) {
-    cpu->AB = cpu->DL;
-    cpu->DB = memory[cpu->AB];
-    cpu->ALU = cpu->DL + cpu->X; //ALU holds address (ptr fetched in previous cycle + X) doesn't deal with crossing page boundaries
-    cpu->DL = cpu->DB;
+START_TEST(read_addr_updated_cpu_trace) {
+    cpu.ALU = 0x1E;
+    cpu.DL = 0x02;
+    cpu.AB = 0x1D3C;
+    memory[0x1E3C] = 0x05;
+    read_addr_updated(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x1E3C, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x05, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x05, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x00, "ALU incorrect ");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(cpu.T == 0x00, "T incorrect");
 }
+END_TEST
 
-void fetch_ptrX_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = cpu->ALU; //ptr + X
-    cpu->DB = memory[cpu->AB];
-    cpu->ALU = cpu->ALU + 1; //ptr + X + 1
-    cpu->DL = cpu->DB; //DL is ADL
-}
 
-void fetch_ptrX_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = cpu->ALU; //ALU holds ptr + X + 1
-    cpu->DB = memory[cpu->AB]; //DB is AHL, DL still holds ADL
-    cpu->ALU = cpu->DB; //store ADL in ALU
-    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
+START_TEST(write_register_fixedADH_overflow_T) {
+    BYTE expected_val = 0x08;
+    cpu.ACR_FLAG = 0x01;
+    cpu.A = expected_val; //register to be stored is accumulator
+    cpu.AB = 0x1E2C;
+    write_register_fixedADH(&cpu, memory, STA); 
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(cpu.AB == 0x1F2C, "AB incorrect");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(memory[0x1F2C] == expected_val, "Memory contents incorrect");
 }
-void fetch_ptr_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = cpu->DL;
-    cpu->DB = memory[cpu->AB];
-    cpu->ALU = cpu->DL + 1;
-    cpu->DL = cpu->DB; //DL is ADL
-}
+END_TEST
 
-void fetch_ptr_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = cpu->ALU;
-    cpu->DB = memory[cpu->AB]; //DB is AHL
-    cpu->ALU = cpu->DB + cpu->Y; //store ADL in ALU add Y
-    if(cpu->ALU < cpu->Y) {
-        cpu->ACR_FLAG = 1;
-    } else {
-        cpu->ACR_FLAG = 0;
-    }
-    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
-*/
+START_TEST(write_register_fixedADH_overflow_F) {
+    BYTE expected_val = 0x08;
+    cpu.ACR_FLAG = 0;
+    cpu.A = expected_val; //register to be stored is accumulator
+    cpu.AB = 0x1E2C;
+    write_register_fixedADH(&cpu, memory, STA); 
+    ck_assert_msg(cpu.DB == expected_val, "DB incorrect");
+    ck_assert_msg(cpu.DL == expected_val, "DL incorrect");
+    ck_assert_msg(cpu.AB == 0x1E2C, "AB incorrect");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be clear");
+    ck_assert_msg(memory[cpu.AB] == expected_val, "Memory contents incorrect");
+}
+END_TEST
+
+START_TEST(read_ptr_add_X_cpu_trace) {
+    cpu.X = 0x03;
+    cpu.DL = 0x2D;
+    memory[0x002D] = 0x05;
+    read_ptr_add_X(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x002D, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x05, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x05, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x30, "ALU incorrect");
+}
+END_TEST
+
+START_TEST(fetch_ptrX_ADL_cpu_trace) {
+    cpu.ALU = 0x30;
+    cpu.DL = 0x2D;
+    memory[0x0030] = 0x05;
+    fetch_ptrX_ADL(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x0030, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x05, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x05, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x31, "ALU incorrect");
+}
+END_TEST
+
+START_TEST(fetch_ptrX_ADH_cpu_trace) {
+    cpu.ALU = 0x31;
+    cpu.DL = 0x2D;
+    memory[0x0031] = 0x05;
+    fetch_ptrX_ADH(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x0031, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x05, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x05, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x05, "ALU incorrect");
+}
+END_TEST
+
+START_TEST(fetch_ptr_ADL_cpu_trace) {
+    cpu.DL = 0x2D;
+    memory[0x002D] = 0x05;
+    fetch_ptr_ADL(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x002D, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x05, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x05, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x2E, "ALU incorrect");
+}
+END_TEST
+
+START_TEST(fetch_ptr_add_Y_overflow_T) {
+    cpu.Y = 0x0A;
+    cpu.ALU = 0xFA;
+    cpu.DL = 0x2D;
+    memory[0x00FA] = 0xF6;
+    fetch_ptr_ADH_add_Y(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x00FA, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0xF6, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0xF6, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x00, "ALU incorrect");
+    ck_assert_msg(cpu.ACR_FLAG == 0x01, "Expected ACR_FLAG to be set");
+
+}
+END_TEST
+
+START_TEST(fetch_ptr_add_Y_overflow_F) {
+    cpu.Y = 0x02;
+    cpu.ALU = 0xFA;
+    cpu.DL = 0x2D;
+    memory[0x00FA] = 0x05;
+    fetch_ptr_ADH_add_Y(&cpu, memory, LDA);
+    ck_assert_msg(cpu.AB == 0x00FA, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x05, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x05, "DL incorrect");
+    ck_assert_msg(cpu.ALU == 0x07, "ALU incorrect");
+    ck_assert_msg(cpu.ACR_FLAG == 0x00, "Expected ACR_FLAG to be set");
+
+}
+END_TEST
 
 Suite *cycle_suite(void) {
     Suite *s;
@@ -568,6 +674,23 @@ Suite *cycle_suite(void) {
     tcase_add_test(tc_core, fetch_ADH_add_X_overflow_T);
     tcase_add_test(tc_core, fetch_ADH_add_Y_overflow_F);
     tcase_add_test(tc_core, fetch_ADH_add_Y_overflow_T);
+    tcase_add_test(tc_core, read_addr_fixADH_exe_overflow_F);
+    tcase_add_test(tc_core, read_addr_fixADH_exe_overflow_T);
+    tcase_add_test(tc_core, read_addr_updated_exe_cpu_trace);
+    tcase_add_test(tc_core, read_addr_fixADH_overflow_F);
+    tcase_add_test(tc_core, read_addr_fixADH_overflow_T);
+    tcase_add_test(tc_core, read_addr_updated_cpu_trace);
+    tcase_add_test(tc_core, write_register_fixedADH_overflow_T);
+    tcase_add_test(tc_core, write_register_fixedADH_overflow_F);
+    tcase_add_test(tc_core, read_ptr_add_X_cpu_trace);
+    tcase_add_test(tc_core, fetch_ptrX_ADL_cpu_trace);
+    tcase_add_test(tc_core, fetch_ptrX_ADH_cpu_trace);
+    tcase_add_test(tc_core, fetch_ptr_ADL_cpu_trace);
+    tcase_add_test(tc_core, fetch_ptr_add_Y_overflow_T);
+    tcase_add_test(tc_core, fetch_ptr_add_Y_overflow_F);
+
+    
+
 
     // tcase_add_test(tc_core, test_addr_imm);
     // tcase_add_test(tc_core, test_addr_absolute);

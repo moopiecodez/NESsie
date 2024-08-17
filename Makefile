@@ -14,8 +14,14 @@ nessie: nessie.c cpu.c
 loadRom: loadROM.c
 	$(CC) $(CFLAGS) loadROM.c -o $@
 
+testcycles: testCycleFunctions.o cpu.o
+	$(CC) $(CFLAGS) $^ -o $@ $(TESTFLAGS)
+
 testInstructions: testAllInstructions.o cpu.o $(TESTSUITES)
 	$(CC) $(CFLAGS) $^ -o $@ $(TESTFLAGS)
+
+testCycleFunctions.o: testCycleFunctions.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 testAllInstructions.o: testAllInstructions.c $(TESTSUITES)
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -24,4 +30,4 @@ $(TESTSUITES) cpu.o: %.o: %.c
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 clean:
-	rm -f testInstructions loadRom nessie *.o
+	rm -f testInstructions testcycles loadRom nessie *.o
