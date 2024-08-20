@@ -310,7 +310,7 @@ void fetch_opcode(CPU *cpu, BYTE *memory, Instruction *ins) {
     // cpu->DB = memory[cpu->PC];
     cpu->DL = cpu->DB;
     cpu->IR = cpu->DL;
-    incrementPC(cpu);
+    cpu->PC++;
 }
 
 /*
@@ -337,7 +337,7 @@ void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
     cpu->DL = cpu->DB;
-    incrementPC(cpu);
+    cpu->PC++;
     //implied addressing does not take an operand
     ins(cpu);
 }
@@ -354,7 +354,7 @@ void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
     if(cpu->ACR_FLAG == 0) { //for branch instructions check if branch triggered
         cpu->T++; //skip branch next step
         cpu->T++; //skip potential second next step to fix PCH if page boundary crossed
-        incrementPC(cpu); //if branch not triggered or not a branch instruction just increment PC
+        cpu->PC++; //if branch not triggered or not a branch instruction just increment PC
     }
 }
 
@@ -436,7 +436,7 @@ void fetch_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
     cpu->DL = cpu->DB;
-    incrementPC(cpu);
+    cpu->PC++;
 }
 
 void fetch_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
@@ -444,14 +444,14 @@ void fetch_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->DB = memory[cpu->AB];
     cpu->ALU = cpu->DL; //start of cycle cpu->DL is ADL which is stored in ALU
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->PD is ADH
-    incrementPC(cpu);
+    cpu->PC++;
 }
 
 void fetch_address(CPU *cpu, BYTE *memory, Instruction *ins){ //***check as this reads address held in PC
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
     cpu->DL = cpu->DB; //at end of cycle DL holds contents of address stored in PC to be used as address in next cycle
-    incrementPC(cpu);
+    cpu->PC++;
 }
 
 void read_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
@@ -529,7 +529,7 @@ void fetch_ADH_add_X(CPU *cpu, BYTE *memory, Instruction *ins){
         cpu->ACR_FLAG = 0;
     }
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
-    incrementPC(cpu);
+    cpu->PC++;
 }
 void fetch_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
     //start of cycle cpu->DL is ADL
@@ -542,7 +542,7 @@ void fetch_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
         cpu->ACR_FLAG = 0;
     }
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
-    incrementPC(cpu);
+    cpu->PC++;
 }
 
 void read_addr_fixADH_exe(CPU *cpu, BYTE *memory, Instruction *ins){
@@ -667,10 +667,6 @@ void BRK(CPU *cpu) {
 */
 void CLC(CPU *cpu) {
     resetFlag(cpu, FLAG_C);
-}
-
-void incrementPC(CPU *cpu) {
-    cpu->PC++;
 }
 
 void power_cpu(CPU *cpu) {

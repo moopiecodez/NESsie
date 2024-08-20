@@ -46,13 +46,6 @@ START_TEST(fetchOpcode_cpu_trace) {
 }
 END_TEST
 
-START_TEST(incrementPC_PC_impact) {
-    BYTE expected = 0x01;
-    incrementPC(&cpu);
-    ck_assert_msg(cpu.PC == expected, "PC incorrect");
-}
-END_TEST
-
 START_TEST(fetch_throw_cpu_trace) {
     BYTE expected = 0xA4;
     fetch_throw(&cpu, memory, CLI);
@@ -643,7 +636,6 @@ Suite *cycle_suite(void) {
     /*Core test case*/
     tc_core = tcase_create("Core");
     tcase_add_test(tc_core, fetchOpcode_cpu_trace);
-    tcase_add_test(tc_core, incrementPC_PC_impact);
     tcase_add_test(tc_core, fetch_throw_cpu_trace);
     tcase_add_test(tc_core, fetch_throw_brk_cpu_trace);
     tcase_add_test(tc_core, imm_fetch_operand_branch_F_cpu_trace);

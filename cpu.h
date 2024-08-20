@@ -107,9 +107,6 @@ Instruction BPL;
 Instruction BVC;
 Instruction BVS;
 
-
-void incrementPC(CPU *cpu);
-
 typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
 addr_mode_step fetch_opcode;
 addr_mode_step fetch_throw;
