@@ -666,7 +666,7 @@ void BRK(CPU *cpu) {
     Sets C flag to 0
 */
 void CLC(CPU *cpu) {
-    resetFlag(cpu, FLAG_C);
+    clearFlag(cpu, FLAG_C);
 }
 
 void power_cpu(CPU *cpu) {
@@ -683,7 +683,7 @@ void setFlag(CPU *cpu, int position) {
     cpu->P = cpu->P | (FLAG_MASK << position);
 }
 
-void resetFlag(CPU *cpu, int position) {
+void clearFlag(CPU *cpu, int position) {
     cpu->P = cpu->P & ~(FLAG_MASK << position);
 }
 
@@ -697,12 +697,12 @@ void increment(CPU *cpu, BYTE *target) {
     if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->ALU, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -735,12 +735,12 @@ void decrement(CPU *cpu, BYTE *target) {
     if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->ALU, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -776,12 +776,12 @@ void LDA(CPU *cpu) {
     if (cpu->DL == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->DL, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -794,12 +794,12 @@ void LDX(CPU *cpu) {
     if (cpu->DL == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->DL, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -812,12 +812,12 @@ void LDY(CPU *cpu) {
     if (cpu->DL == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->DL, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -831,18 +831,18 @@ void ASL(CPU *cpu) {
     if (getBit(cpu->DL, 7) != 0) {
         setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(cpu, FLAG_C);
+        clearFlag(cpu, FLAG_C);
     }
     cpu->ALU = cpu->DL << 1; //ALU holds result before it is transferred on buses
     if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->ALU, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -856,18 +856,18 @@ void LSR(CPU *cpu) {
     if (getBit(cpu->DL, 0) != 0) {
         setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(cpu, FLAG_C);
+        clearFlag(cpu, FLAG_C);
     }
     cpu->ALU = cpu->DL >> 1; //ALU holds result before it is transferred on buses
     if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->ALU, FLAG_N) != 0){
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 
 }
@@ -889,7 +889,7 @@ void ROL(CPU *cpu) {
     if (getBit(cpu->DL, LEFT_BIT) != 0) {
         setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(cpu, FLAG_C);
+        clearFlag(cpu, FLAG_C);
     }
     cpu->DB = cpu->DL << 1;
     //sets 0 bit
@@ -897,12 +897,12 @@ void ROL(CPU *cpu) {
     if (cpu->DB == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->DB, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -923,7 +923,7 @@ void ROR(CPU *cpu) {
     if (getBit(cpu->DL, RIGHT_BIT) != 0) {
         setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(cpu, FLAG_C);
+        clearFlag(cpu, FLAG_C);
     }
     cpu->DB = cpu->DL >> 1;
     //sets 0 bit
@@ -931,12 +931,12 @@ void ROR(CPU *cpu) {
     if (cpu->DB == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->DB, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -974,12 +974,12 @@ void TAX(CPU *cpu) {
     if (cpu->X == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->X, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -993,12 +993,12 @@ void TAY(CPU *cpu) {
     if (cpu->Y == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->Y, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -1012,12 +1012,12 @@ void TSX(CPU *cpu) {
     if (cpu->X == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->X, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -1031,12 +1031,12 @@ void TXA(CPU *cpu) {
     if (cpu->A == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->A, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -1059,12 +1059,12 @@ void TYA(CPU *cpu) {
     if (cpu->A == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->A, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -1079,12 +1079,12 @@ void AND(CPU *cpu) {
     if (cpu->A == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->A, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -1099,12 +1099,12 @@ void EOR(CPU *cpu) {
     if (cpu->A == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->A, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -1119,12 +1119,12 @@ void ORA(CPU *cpu) {
     if (cpu->A == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->A, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
 }
 
@@ -1139,17 +1139,17 @@ void BIT(CPU *cpu) {
     if((cpu->A & cpu->DL) == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (getBit(cpu->DL, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
     if (getBit(cpu->DL, FLAG_V) != 0) {
         setFlag(cpu, FLAG_V);
     } else {
-        resetFlag(cpu, FLAG_V);
+        clearFlag(cpu, FLAG_V);
     }
 }
 
@@ -1193,12 +1193,12 @@ void BIT(CPU *cpu) {
 //     if (getBit(cpu->A, FLAG_N)) {
 //         setFlag(cpu, FLAG_N);
 //     } else {
-//         resetFlag(cpu, FLAG_N);
+//         clearFlag(cpu, FLAG_N);
 //     }
 //     if (cpu->A == 0) {
 //         setFlag(cpu, FLAG_Z);
 //     } else {
-//         resetFlag(cpu, FLAG_Z);
+//         clearFlag(cpu, FLAG_Z);
 //     }
 // }
 
@@ -1225,24 +1225,24 @@ void ADC(CPU *cpu) {
     if((cpu->A ^ sum) & (cpu->DL ^ sum) & HIGH_BIT_MASK) {
         setFlag(cpu, FLAG_V);
     } else {
-        resetFlag(cpu, FLAG_V);
+        clearFlag(cpu, FLAG_V);
     }
     cpu->A = sum;
     //check if unsigned sum larger than 255 to determine if carry set
     if(sum > 0xFF) {
         setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(cpu, FLAG_C);
+        clearFlag(cpu, FLAG_C);
     }
     if (getBit(cpu->A, FLAG_N)) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
      if (cpu->A == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
 
 }
@@ -1269,18 +1269,18 @@ void set_flags_on_compare(CPU *cpu, BYTE reg) {
     if (getBit(cpu->ALU, FLAG_N)) {
         setFlag(cpu, FLAG_N);
     } else {
-        resetFlag(cpu, FLAG_N);
+        clearFlag(cpu, FLAG_N);
     }
     if (reg == cpu->DL) {
         setFlag(cpu, FLAG_Z);
         setFlag(cpu, FLAG_C);
     } else {
-        resetFlag(cpu, FLAG_Z);
+        clearFlag(cpu, FLAG_Z);
     }
     if (reg > cpu->DL) {
         setFlag(cpu, FLAG_C);
     } else if (reg < cpu->DL) {
-        resetFlag(cpu, FLAG_C);
+        clearFlag(cpu, FLAG_C);
     }
 }
 
@@ -1326,7 +1326,7 @@ void CPY(CPU *cpu) {
     Not used in NES (NES doesn't use decimal mode)
 */
 void CLD(CPU *cpu) {
-    resetFlag(cpu, FLAG_D);
+    clearFlag(cpu, FLAG_D);
 }
 
 /*
@@ -1334,7 +1334,7 @@ void CLD(CPU *cpu) {
     Sets I flag to 0
 */
 void CLI(CPU *cpu) {
-    resetFlag(cpu, FLAG_I);
+    clearFlag(cpu, FLAG_I);
 }
 
 /*
@@ -1342,7 +1342,7 @@ void CLI(CPU *cpu) {
     Sets V flag to 0
 */
 void CLV(CPU *cpu) {
-    resetFlag(cpu, FLAG_V);
+    clearFlag(cpu, FLAG_V);
 }
 
 /*

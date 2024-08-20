@@ -166,7 +166,7 @@ void print_cpu(CPU *cpu);
 void power_cpu(CPU *cpu);
 
 void setFlag(CPU *cpu, int position);
-void resetFlag(CPU *cpu, int position);
+void clearFlag(CPU *cpu, int position);
 BYTE getBit(BYTE source, int position);
 
 
