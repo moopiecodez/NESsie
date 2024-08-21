@@ -175,10 +175,38 @@ START_TEST(stack_push_PCL_cpu_trace) {
 }
 END_TEST
 
-START_TEST(stack_push_P_cpu_trace) {
-    cpu.P = 0x2C;
+START_TEST(stack_push_register_PHP_cpu_trace) {
+    cpu.P = 0x3C;
     cpu.S = 0xFD;
-    stack_push_P(&cpu, memory, BCC);
+    stack_push_register(&cpu, memory, PHP);
+    ck_assert_msg(cpu.PC == 0x0000, "PC incorrect");
+    ck_assert_msg(cpu.AB == 0x01FD, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x3C, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x3C, "DL incorrect");
+    ck_assert_msg(memory[cpu.AB] == 0x3C, "memory contents incorrect");
+    ck_assert_msg(cpu.S == 0xFC, "S incorrect");
+}
+END_TEST
+
+START_TEST(stack_push_register_PHA_cpu_trace) {
+    cpu.A = 0x3C;
+    cpu.S = 0xFD;
+    stack_push_register(&cpu, memory, PHA);
+    ck_assert_msg(cpu.PC == 0x0000, "PC incorrect");
+    ck_assert_msg(cpu.AB == 0x01FD, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x3C, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x3C, "DL incorrect");
+    ck_assert_msg(memory[cpu.AB] == 0x3C, "memory contents incorrect");
+    ck_assert_msg(cpu.S == 0xFC, "S incorrect");
+}
+END_TEST
+
+START_TEST(stack_push_register_BRK_cpu_trace) {
+    cpu.DB = 0x00;
+    cpu.DL = 0x00;
+    cpu.P = 0x2C; //value will change to reflect setting of B flag
+    cpu.S = 0xFD;
+    stack_push_register(&cpu, memory, BRK);
     ck_assert_msg(cpu.PC == 0x0000, "PC incorrect");
     ck_assert_msg(cpu.AB == 0x01FD, "AB incorrect");
     ck_assert_msg(cpu.DB == 0x3C, "DB incorrect");
@@ -646,7 +674,10 @@ Suite *cycle_suite(void) {
     tcase_add_test(tc_core, branch_fixPCH_negative_offset);
     tcase_add_test(tc_core, stack_push_PCH_cpu_trace);
     tcase_add_test(tc_core, stack_push_PCL_cpu_trace);
-    tcase_add_test(tc_core, stack_push_P_cpu_trace);
+    tcase_add_test(tc_core, stack_push_register_PHP_cpu_trace);
+    tcase_add_test(tc_core, stack_push_register_PHA_cpu_trace);
+    tcase_add_test(tc_core, stack_push_register_BRK_cpu_trace);
+
     tcase_add_test(tc_core, fetch_PCL_from_interrupt_vector_cpu_trace);
     tcase_add_test(tc_core, fetch_PCH_from_interrupt_vector_cpu_trace);
     tcase_add_test(tc_core, fetch_ADL_cpu_trace);

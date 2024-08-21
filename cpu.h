@@ -108,10 +108,10 @@ Instruction BVC;
 Instruction BVS;
 
 //stack instructions
-// Instruction PHA;
-// Instruction PHP;
-// Instruction PLA;
-// Instruction PLP;
+Instruction PHA;
+Instruction PHP;
+Instruction PLA;
+Instruction PLP;
 
 typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
 addr_mode_step fetch_opcode;

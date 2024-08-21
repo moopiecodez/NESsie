@@ -1198,7 +1198,7 @@ void PHA(CPU *cpu) {
     Puts Processor Status contents on cpu data bus to store on stack.
     No other registers/statuses are affected.
 */
-void PHP(CPU *cpu, BYTE *memory) {
+void PHP(CPU *cpu) {
     cpu->DB = cpu->P;
 }
 
