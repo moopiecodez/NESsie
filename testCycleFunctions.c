@@ -216,6 +216,42 @@ START_TEST(stack_push_register_BRK_cpu_trace) {
 }
 END_TEST
 
+START_TEST(increment_s_cpu_trace) {
+    cpu.S = 0xFD;
+    increment_s(&cpu, memory, PHP);
+    ck_assert_msg(cpu.S == 0xFE, "S incorrect");
+}
+END_TEST
+
+START_TEST(stack_pull_register_PLP_cpu_trace) {
+    //doing
+    cpu.S = 0xFD;
+    memory[STACK_BASE + cpu.S] = 0x3C;
+    cpu.P = 0x00;
+    stack_pull_register(&cpu, memory, PLP);
+    ck_assert_msg(cpu.PC == 0x0000, "PC incorrect");
+    ck_assert_msg(cpu.AB == 0x01FD, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x3C, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x3C, "DL incorrect");
+    ck_assert_msg(cpu.P == 0x3C, "P incorrect");
+    ck_assert_msg(cpu.S == 0xFD, "S incorrect");
+}
+END_TEST
+
+START_TEST(stack_pull_register_PLA_cpu_trace) {
+    cpu.S = 0xFD;
+    memory[STACK_BASE + cpu.S] = 0x3C;
+    cpu.A = 0x00;
+    stack_pull_register(&cpu, memory, PLA);
+    ck_assert_msg(cpu.PC == 0x0000, "PC incorrect");
+    ck_assert_msg(cpu.AB == 0x01FD, "AB incorrect");
+    ck_assert_msg(cpu.DB == 0x3C, "DB incorrect");
+    ck_assert_msg(cpu.DL == 0x3C, "DL incorrect");
+    ck_assert_msg(cpu.A == 0x3C, "A incorrect");
+    ck_assert_msg(cpu.S == 0xFD, "S incorrect");
+}
+END_TEST
+
 START_TEST(fetch_PCL_from_interrupt_vector_cpu_trace) {
     memory[IRQ_LOW] = 0x1D;
     memory[IRQ_HIGH] = 0x2C;
@@ -677,7 +713,9 @@ Suite *cycle_suite(void) {
     tcase_add_test(tc_core, stack_push_register_PHP_cpu_trace);
     tcase_add_test(tc_core, stack_push_register_PHA_cpu_trace);
     tcase_add_test(tc_core, stack_push_register_BRK_cpu_trace);
-
+    tcase_add_test(tc_core, increment_s_cpu_trace);
+    tcase_add_test(tc_core, stack_pull_register_PLP_cpu_trace);
+    tcase_add_test(tc_core, stack_pull_register_PLA_cpu_trace);
     tcase_add_test(tc_core, fetch_PCL_from_interrupt_vector_cpu_trace);
     tcase_add_test(tc_core, fetch_PCH_from_interrupt_vector_cpu_trace);
     tcase_add_test(tc_core, fetch_ADL_cpu_trace);
