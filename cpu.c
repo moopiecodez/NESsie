@@ -43,7 +43,7 @@ addressingmode(addr_brk, passarray({
     fetch_throw_brk,
     stack_push_PCH,
     stack_push_PCL,
-    stack_push_P,
+    stack_push_register,
     fetch_PCL,
     fetch_PCH
 }));
@@ -59,6 +59,15 @@ addressingmode(addr_immediate, passarray({
 addressingmode(addr_implied, passarray({
     fetch_opcode,
     fetch_throw     //unlike in BRK, PC not incremented
+}));
+
+/*
+    addressing mode for instructions pushing to stack
+*/
+addressingmode(addr_implied_push, passarray ({
+    fetch_opcode,
+    fetch_throw,
+    stack_push_register
 }));
 
 addressingmode(addr_absolute_r, passarray({
@@ -325,6 +334,12 @@ void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->DB = memory[cpu->AB];
     cpu->DL = cpu->DB;
     ins(cpu);
+    if(cpu->IR == 0xE8 || cpu->IR == 0xCA){ // update X reg after INX or DEX
+        cpu->X = cpu->ALU;
+    }
+    if(cpu->IR == 0xC8 || cpu->IR == 0x88) {// update Y reg after INX or DEX
+        cpu->Y = cpu->ALU;
+    }
 }
 
 /*
@@ -338,8 +353,6 @@ void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->DB = memory[cpu->AB];
     cpu->DL = cpu->DB;
     cpu->PC++;
-    //implied addressing does not take an operand
-    ins(cpu);
 }
 
 /*
@@ -402,15 +415,11 @@ void stack_push_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->S--;
 }
 
-void stack_push_P(CPU *cpu, BYTE *memory, Instruction *ins) {
-    setFlag(cpu, FLAG_B);
-    cpu->DB = cpu->P;
+void stack_push_register(CPU *cpu, BYTE *memory, Instruction *ins) {
+    ins(cpu);
     cpu->DL = cpu->DB;
     cpu->AB = STACK_BASE + cpu->S;
     memory[cpu->AB] = cpu->DL;
-    // cpu->DB = cpu->P;
-    // cpu->AB = STACK_BASE + cpu->S;
-    // memory[cpu->AB] = cpu->DB;
     cpu->S--;
 }
 
@@ -657,8 +666,9 @@ void fetch_ptr_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
     Interrupt Pointer ($FFFF and $FFFE) loaded into PC.
 */
 void BRK(CPU *cpu) {
-//  setFlag(cpu, FLAG_B);
-//  setFlag(cpu, FLAG_I);
+    setFlag(cpu, FLAG_B);
+    cpu->DB = cpu->P;
+    //interrupt flag set after status register pushed
 }
 
 /*
@@ -692,8 +702,8 @@ BYTE getBit(BYTE source, int position) {
     return bit;
 }
 
-void increment(CPU *cpu, BYTE *target) {
-    cpu->ALU = *target + 1;
+void increment(CPU *cpu, BYTE target) {
+    cpu->ALU = target + 1;
     if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
@@ -711,7 +721,7 @@ void increment(CPU *cpu, BYTE *target) {
     Z and N flags set depending on result.
 */
 void INC(CPU *cpu) {
-    increment(cpu, &cpu->DL);
+    increment(cpu, cpu->DL);
 }
 
 /*
@@ -719,7 +729,7 @@ void INC(CPU *cpu) {
     Z and N flags set depending on result.
 */
 void INX(CPU *cpu) {
-    increment(cpu, &cpu->X);
+    increment(cpu, cpu->X);
 }
 
 /*
@@ -727,7 +737,7 @@ void INX(CPU *cpu) {
     Z and N flags set depending on result.
 */
 void INY(CPU *cpu) {
-    increment(cpu, &cpu->Y);
+    increment(cpu, cpu->Y);
 }
 
 void decrement(CPU *cpu, BYTE *target) {
@@ -1159,19 +1169,19 @@ void BIT(CPU *cpu) {
     Then decrements Stack Pointer by 1.
     No other registers/statuses are affected.
 */
-// void PHA(CPU *cpu) {
-//     push_to_stack(cpu cpu->A);
-// }
+void PHA(CPU *cpu) {
+    cpu->DB = cpu->A;
+}
 
-// /*
-//     Push - Processor Status
-//     Stores contents of Processor Status on stack.
-//     Then decrements Stack Pointer by 1.
-//     No other registers/statuses are affected.
-// */
-// void PHP(CPU *cpu, BYTE *memory) {
-//     push_to_stack(cpu, memory, cpu->P);
-// }
+/*
+    Push - Processor Status
+    Stores contents of Processor Status on stack.
+    Then decrements Stack Pointer by 1.
+    No other registers/statuses are affected.
+*/
+void PHP(CPU *cpu, BYTE *memory) {
+    cpu->DB = cpu->P;
+}
 
 // /*
 //     Helper function - pulls register from stack

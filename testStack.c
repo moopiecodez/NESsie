@@ -4,21 +4,18 @@
 
 START_TEST(test_PHA) {
     cpu.A = 0xCC;
-
-    // PHA(&cpu, memory);
-    // ck_assert_msg(memory[cpu.S + STACK_BASE + 1] == 0xCC,
-    // "incorrect stack value");
+    PHA(&cpu);
+    ck_assert_msg(cpu.DB == 0xCC, "incorrect stack value");
 }
 END_TEST
 
 START_TEST(test_PHP) {
     setFlag(&cpu, FLAG_N);
     setFlag(&cpu, FLAG_Z);
+    setFlag(&cpu, FLAG_I);
     BYTE expected = 0x86;
-
-    // PHP(&cpu, memory);
-    // ck_assert_msg(memory[cpu.S + STACK_BASE + 1] == expected,
-    // "incorrect stack value");
+    PHP(&cpu);
+    ck_assert_msg(cpu.DB == expected, "incorrect stack value");
 }
 END_TEST
 

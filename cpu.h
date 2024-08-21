@@ -74,7 +74,7 @@ Instruction DEC;
 Instruction DEX;
 Instruction DEY;
 
-void increment(CPU *cpu, BYTE *memory);
+void increment(CPU *cpu, BYTE memory);
 void decrement(CPU *cpu, BYTE *memory);
 
 //transfer instructions
@@ -114,7 +114,7 @@ addr_mode_step fetch_throw_brk;
 addr_mode_step imm_fetch_operand;
 addr_mode_step stack_push_PCH;
 addr_mode_step stack_push_PCL;
-addr_mode_step stack_push_P;
+addr_mode_step stack_push_register;
 addr_mode_step fetch_PCL;
 addr_mode_step fetch_PCH;
 addr_mode_step fetch_ADL;
