@@ -107,6 +107,12 @@ Instruction BPL;
 Instruction BVC;
 Instruction BVS;
 
+//stack instructions
+// Instruction PHA;
+// Instruction PHP;
+// Instruction PLA;
+// Instruction PLP;
+
 typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
 addr_mode_step fetch_opcode;
 addr_mode_step fetch_throw;
@@ -115,6 +121,8 @@ addr_mode_step imm_fetch_operand;
 addr_mode_step stack_push_PCH;
 addr_mode_step stack_push_PCL;
 addr_mode_step stack_push_register;
+addr_mode_step increment_s;
+addr_mode_step stack_pull_register;
 addr_mode_step fetch_PCL;
 addr_mode_step fetch_PCH;
 addr_mode_step fetch_ADL;
@@ -178,8 +186,7 @@ BYTE getBit(BYTE source, int position);
 // instruction PHP;
 
 // void pull_from_stack(CPU *cpu, BYTE *memory, BYTE *reg);
-// instruction PLA;
-// instruction PLP;
+
 
 // void set_flags_on_compare(CPU *cpu, BYTE reg, BYTE *memory);
 

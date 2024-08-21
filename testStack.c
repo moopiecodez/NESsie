@@ -3,9 +3,10 @@
 #include "testAll.h"
 
 START_TEST(test_PHA) {
-    cpu.A = 0xCC;
+    BYTE expected = 0xCC;
+    cpu.A = expected;
     PHA(&cpu);
-    ck_assert_msg(cpu.DB == 0xCC, "incorrect stack value");
+    ck_assert_msg(cpu.DB == expected, "incorrect value to be pushed to stack");
 }
 END_TEST
 
@@ -15,27 +16,32 @@ START_TEST(test_PHP) {
     setFlag(&cpu, FLAG_I);
     BYTE expected = 0x86;
     PHP(&cpu);
-    ck_assert_msg(cpu.DB == expected, "incorrect stack value");
+    ck_assert_msg(cpu.DB == expected, "incorrect value to be pushed to stack");
 }
 END_TEST
 
 START_TEST(test_PLA) {
     BYTE expected = 0xCC;
-    // memory[0x01FF] = expected;
-    cpu.S--;
+    cpu.P = 0x00; // reset status register to test PLA function effect on flags
+    cpu.DL = expected;
     cpu.A = 0x02;
-
-    // PLA(&cpu, memory);
+    PLA(&cpu);
     ck_assert_msg(cpu.A == expected, "incorrect accumulator value");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_D) == 0, "incorrect D flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_I) == 0, "incorrect I flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect C flag");
 }
 END_TEST
 
 START_TEST(test_PLP) {
     BYTE expected = 0x86;
-    // memory[0x01FF] = expected;
-    cpu.S--;
-
-    // PLP(&cpu, memory);
+    cpu.DL = expected;
+    cpu.P = 0x01;
+    PLP(&cpu);
     ck_assert_msg(cpu.P == expected, "incorrect status register value");
     ck_assert_msg(getBit(cpu.P, FLAG_N) == 1, "incorrect N flag");
     ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");

@@ -70,6 +70,16 @@ addressingmode(addr_implied_push, passarray ({
     stack_push_register
 }));
 
+/*
+    addressing mode for instructions pulling from stack
+*/
+addressingmode(addr_implied_pull, passarray ({
+    fetch_opcode,
+    fetch_throw,
+    increment_s,
+    stack_pull_register
+}));
+
 addressingmode(addr_absolute_r, passarray({
     fetch_opcode,
     fetch_ADL,
@@ -421,6 +431,17 @@ void stack_push_register(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->AB = STACK_BASE + cpu->S;
     memory[cpu->AB] = cpu->DL;
     cpu->S--;
+}
+
+void stack_pull_register(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->AB = STACK_BASE + cpu->S;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
+    ins(cpu);
+}
+
+void increment_s(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->S++;
 }
 
 void fetch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
@@ -1165,8 +1186,7 @@ void BIT(CPU *cpu) {
 
 /*
     Push - Accumulator
-    Stores contents of the Accumulator on top of the stack.
-    Then decrements Stack Pointer by 1.
+    Puts Accumulator contents on cpu data bus to store on stack.
     No other registers/statuses are affected.
 */
 void PHA(CPU *cpu) {
@@ -1175,8 +1195,7 @@ void PHA(CPU *cpu) {
 
 /*
     Push - Processor Status
-    Stores contents of Processor Status on stack.
-    Then decrements Stack Pointer by 1.
+    Puts Processor Status contents on cpu data bus to store on stack.
     No other registers/statuses are affected.
 */
 void PHP(CPU *cpu, BYTE *memory) {
@@ -1192,34 +1211,32 @@ void PHP(CPU *cpu, BYTE *memory) {
 //     *reg = memory[STACK_BASE + cpu->S];
 // }
 
-// /*
-//     Pull accumulator from stack
-//     Increments Stack Pointer by 1.
-//     Then load accumulator from Top of stack.
-//     Sets Zero flag and negative flag based on A.
-// */
-// void PLA(CPU *cpu, BYTE *memory) {
-//     pull_from_stack(cpu, memory, &cpu->A);
-//     if (getBit(cpu->A, FLAG_N)) {
-//         setFlag(cpu, FLAG_N);
-//     } else {
-//         clearFlag(cpu, FLAG_N);
-//     }
-//     if (cpu->A == 0) {
-//         setFlag(cpu, FLAG_Z);
-//     } else {
-//         clearFlag(cpu, FLAG_Z);
-//     }
-// }
+/*
+    Pull accumulator from stack
+    Load accumulator with value pulled from top of stack.
+    Sets Zero flag and negative flag based on A.
+*/
+void PLA(CPU *cpu) {
+    cpu->A = cpu->DL;
+    if (getBit(cpu->A, FLAG_N)) {
+        setFlag(cpu, FLAG_N);
+    } else {
+        clearFlag(cpu, FLAG_N);
+    }
+    if (cpu->A == 0) {
+        setFlag(cpu, FLAG_Z);
+    } else {
+        clearFlag(cpu, FLAG_Z);
+    }
+}
 
-// /*
-//     Pull processor status from stack
-//     Increments Stack Pointer by 1.
-//     Then load processor status from top of stack.
-// */
-// void PLP(CPU *cpu, BYTE *memory) {
-//     pull_from_stack(cpu, memory, &cpu->P);
-// }
+/*
+    Pull processor status from stack
+    Processor loaded with value pulled from top of stack.
+*/
+void PLP(CPU *cpu) {
+    cpu->P = cpu->DL;
+}
 
 /*
     ADC - Add with Carry
