@@ -922,15 +922,15 @@ void ROL(CPU *cpu) {
     } else {
         clearFlag(cpu, FLAG_C);
     }
-    cpu->DB = cpu->DL << 1;
+    cpu->ALU = cpu->DL << 1;
     //sets 0 bit
-    cpu->DB = cpu->DB | mask;
-    if (cpu->DB == 0) {
+    cpu->ALU = cpu->ALU | mask;
+    if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
         clearFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu->DB, FLAG_N) != 0) {
+    if (getBit(cpu->ALU, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
         clearFlag(cpu, FLAG_N);
@@ -956,15 +956,15 @@ void ROR(CPU *cpu) {
     } else {
         clearFlag(cpu, FLAG_C);
     }
-    cpu->DB = cpu->DL >> 1;
+    cpu->ALU = cpu->DL >> 1;
     //sets 0 bit
-    cpu->DB = cpu->DB | mask;
-    if (cpu->DB == 0) {
+    cpu->ALU = cpu->ALU | mask;
+    if (cpu->ALU == 0) {
         setFlag(cpu, FLAG_Z);
     } else {
         clearFlag(cpu, FLAG_Z);
     }
-    if (getBit(cpu->DB, FLAG_N) != 0) {
+    if (getBit(cpu->ALU, FLAG_N) != 0) {
         setFlag(cpu, FLAG_N);
     } else {
         clearFlag(cpu, FLAG_N);
