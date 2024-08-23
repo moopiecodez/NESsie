@@ -47,7 +47,6 @@ typedef struct cpu_registers {
 } CPU;
 
 typedef void Instruction(CPU *);
-Instruction BRK;
 //Read instructions:
 Instruction LDA;
 Instruction LDX;
@@ -113,6 +112,10 @@ Instruction PHP;
 Instruction PLA;
 Instruction PLP;
 
+//interrupts
+Instruction BRK;
+Instruction RTI;
+
 typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
 addr_mode_step fetch_opcode;
 addr_mode_step fetch_throw;
@@ -121,7 +124,10 @@ addr_mode_step imm_fetch_operand;
 addr_mode_step stack_push_PCH;
 addr_mode_step stack_push_PCL;
 addr_mode_step stack_push_register;
-addr_mode_step increment_s;
+addr_mode_step increment_S;
+addr_mode_step increment_PC;
+addr_mode_step stack_pull_PCH;
+addr_mode_step stack_pull_PCL;
 addr_mode_step stack_pull_register;
 addr_mode_step fetch_PCL;
 addr_mode_step fetch_PCH;

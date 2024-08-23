@@ -38,7 +38,7 @@ expands to:
 #define addressingmode(name, array) addressingmode_(name, name##_, passarray(array))
 
 
-addressingmode(addr_brk, passarray({
+addressingmode(addr_BRK, passarray({
     fetch_opcode,
     fetch_throw_brk,
     stack_push_PCH,
@@ -46,6 +46,24 @@ addressingmode(addr_brk, passarray({
     stack_push_register,
     fetch_PCL,
     fetch_PCH
+}));
+
+addressingmode(addr_RTS, passarray({
+    fetch_opcode,
+    fetch_throw,
+    increment_S,
+    stack_pull_PCL,
+    stack_pull_PCH,
+    increment_PC
+}));
+
+addressingmode(addr_RTI, passarray({
+    fetch_opcode,
+    fetch_throw,
+    increment_S,
+    stack_pull_register,
+    stack_pull_PCL,
+    stack_pull_PCH
 }));
 
 addressingmode(addr_immediate, passarray({
@@ -76,7 +94,7 @@ addressingmode(addr_implied_push, passarray ({
 addressingmode(addr_implied_pull, passarray ({
     fetch_opcode,
     fetch_throw,
-    increment_s,
+    increment_S,
     stack_pull_register
 }));
 
@@ -295,7 +313,7 @@ addressingmode(absolute_indirect, passarray({ //doesn't handle page boundary cro
 }));
 
 Operation operations[] = {
-    { BRK, &addr_brk },
+    { BRK, &addr_BRK },
     { CLC, &addr_implied },
     { LDX, &addr_immediate},
     { LDX, &addr_absolute_r},
@@ -326,9 +344,17 @@ void execute(CPU *cpu, Operation operation, BYTE *memory){
 void fetch_opcode(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
-    // cpu->DB = memory[cpu->PC];
     cpu->DL = cpu->DB;
     cpu->IR = cpu->DL;
+    cpu->PC++;
+}
+
+void increment_PC(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->PC = (cpu->DL << 8) + cpu->ALU;
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB; //reflect visual6502
+    ins(cpu); //RTS doesn't actually do anything but includes so ins used
     cpu->PC++;
 }
 
@@ -425,6 +451,20 @@ void stack_push_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->S--;
 }
 
+void stack_pull_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->ALU = cpu->DL; //PCL obtained in previous cycle
+    cpu->AB = STACK_BASE + cpu->S;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
+}
+
+void stack_pull_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
+    cpu->AB = STACK_BASE + cpu->S;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
+    cpu->S++;
+}
+
 void stack_push_register(CPU *cpu, BYTE *memory, Instruction *ins) {
     ins(cpu);
     cpu->DL = cpu->DB;
@@ -440,7 +480,11 @@ void stack_pull_register(CPU *cpu, BYTE *memory, Instruction *ins) {
     ins(cpu);
 }
 
-void increment_s(CPU *cpu, BYTE *memory, Instruction *ins) {
+void increment_S(CPU *cpu, BYTE *memory, Instruction *ins) {
+    //AB set to stack and read but nothing done with it (see visual6502)
+    cpu->AB = STACK_BASE + cpu->S;
+    cpu->DB = memory[cpu->AB];
+    cpu->DL = cpu->DB;
     cpu->S++;
 }
 
@@ -1507,29 +1551,20 @@ void JSR(CPU *cpu, BYTE *memory) {
     RTS - Return from Subroutine
     Pulls the Program Counter from the stack and increments by 1.
 */
-// void RTS(CPU *cpu, BYTE *memory) {
-//     BYTE lowByte;
-//     BYTE highByte;
-//     pull_from_stack(cpu, memory, &lowByte);
-//     pull_from_stack(cpu, memory, &highByte);
-//     cpu->PC = highByte << 8;
-//     cpu->PC = cpu->PC + lowByte + 1;
-// }
+void RTS(CPU *cpu) {
+    ; //functionality handled by cycle functions
+}
 
 /*
     RTI - Return from Interrupt
     Pulls the Status (P) register and Program Counter off top of the Stack.
-    Relies on Stack Pointer pointing to correct position in stack.
+    Increments S.
+    PC being pulled is handled by cycle functions.
 */
-// void RTI(CPU *cpu, BYTE *memory) {
-//     pull_from_stack(cpu, memory, &cpu->P);
-//     BYTE lowByte;
-//     BYTE highByte;
-//     pull_from_stack(cpu, memory, &lowByte);
-//     pull_from_stack(cpu, memory, &highByte);
-//     cpu->PC = highByte << 8;
-//     cpu->PC = cpu->PC + lowByte;
-// }
+void RTI(CPU *cpu) {
+    cpu->P = cpu->DL;
+    cpu->S++;
+}
 
 /*
     NOP - No operation

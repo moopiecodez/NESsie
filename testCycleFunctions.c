@@ -218,7 +218,7 @@ END_TEST
 
 START_TEST(increment_s_cpu_trace) {
     cpu.S = 0xFD;
-    increment_s(&cpu, memory, PHP);
+    increment_S(&cpu, memory, PHP);
     ck_assert_msg(cpu.S == 0xFE, "S incorrect");
 }
 END_TEST

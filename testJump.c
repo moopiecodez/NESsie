@@ -30,15 +30,18 @@ START_TEST(test_JSR) {
 END_TEST
 
 START_TEST(test_RTS) {
-    BYTE high = 0x7C;
-    BYTE low = 0x08;
-    // push_to_stack(&cpu, memory, high);
-    // push_to_stack(&cpu, memory, low);
-    uint16_t expectedPC = 0x7C09;
-
-    // RTS(&cpu, memory);
+    u_int16_t expectedPC = 0x0101;
+    cpu.PC = expectedPC;
+    RTS(&cpu);
     ck_assert_msg(cpu.PC == expectedPC, "incorrect PC value");
-    ck_assert_msg(cpu.S == 0xFF, "incorrect Stack Pointer value");    
+    ck_assert_msg(cpu.S == 0xFF, "incorrect Stack Pointer value");
+    ck_assert_msg(getBit(cpu.P, FLAG_N) == 0, "incorrect N flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_V) == 0, "incorrect V flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_B) == 0, "incorrect B flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_D) == 0, "incorrect D flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_I) != 0, "incorrect I flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect C flag");
 }
 END_TEST
 
