@@ -11,7 +11,7 @@ START_TEST(flag_C_T_BCC_branch_F) {
 END_TEST
 
 START_TEST(flag_C_F_BCC_branch_T) {
-    resetFlag(&cpu, FLAG_C);
+    clearFlag(&cpu, FLAG_C);
     BCC(&cpu);
     ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
     ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect C flag, expected clear");
@@ -28,7 +28,7 @@ START_TEST(flag_C_T_BCS_branch_T) {
 END_TEST
 
 START_TEST(flag_C_F_BCS_branch_F) {
-    resetFlag(&cpu, FLAG_C);
+    clearFlag(&cpu, FLAG_C);
     cpu.ACR_FLAG = 0;
     BCS(&cpu);
     ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
@@ -46,7 +46,7 @@ START_TEST(flag_Z_T_BEQ_branch_T) {
 END_TEST
 
 START_TEST(flag_Z_F_BEQ_branch_F) {
-    resetFlag(&cpu, FLAG_Z);
+    clearFlag(&cpu, FLAG_Z);
     cpu.ACR_FLAG = 0;
     BEQ(&cpu);
     ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
@@ -63,7 +63,7 @@ START_TEST(flag_N_T_BMI_branch_T) {
 END_TEST
 
 START_TEST(flag_N_F_BMI_branch_F) {
-    resetFlag(&cpu, FLAG_N);
+    clearFlag(&cpu, FLAG_N);
     cpu.ACR_FLAG = 0;
     BMI(&cpu);
     ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");
@@ -98,7 +98,7 @@ START_TEST(flag_N_T_BPL_branch_F) {
 END_TEST
 
 START_TEST(flag_N_F_BPL_branch_T) {
-    resetFlag(&cpu, FLAG_N);
+    clearFlag(&cpu, FLAG_N);
     cpu.ACR_FLAG = 0;
     BPL(&cpu);
     ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
@@ -108,7 +108,7 @@ END_TEST
 
 
 START_TEST(flag_V_T_BVC_branch_F) {
-    resetFlag(&cpu, FLAG_V);
+    clearFlag(&cpu, FLAG_V);
     cpu.ACR_FLAG = 0;
     BVC(&cpu);
     ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
@@ -117,7 +117,7 @@ START_TEST(flag_V_T_BVC_branch_F) {
 END_TEST
 
 START_TEST(flag_V_F_BVC_branch_T) {
-    resetFlag(&cpu, FLAG_V);
+    clearFlag(&cpu, FLAG_V);
     cpu.ACR_FLAG = 0;
     BVC(&cpu);
     ck_assert_msg(cpu.ACR_FLAG == 1, "incorrect FLAG, expected branch");
@@ -135,7 +135,7 @@ START_TEST(flag_V_T_BVS_branch_T) {
 END_TEST
 
 START_TEST(flag_V_F_BVS_branch_F) {
-    resetFlag(&cpu, FLAG_V);
+    clearFlag(&cpu, FLAG_V);
     cpu.ACR_FLAG = 0;
     BVS(&cpu);
     ck_assert_msg(cpu.ACR_FLAG == 0, "incorrect FLAG, expected no branch");

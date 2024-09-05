@@ -93,7 +93,7 @@ START_TEST(test_SED) {
 END_TEST
 
 START_TEST(test_SEI) {
-    resetFlag(&cpu, FLAG_I);
+    clearFlag(&cpu, FLAG_I);
     ck_assert_msg(getBit(cpu.P, FLAG_I) == 0, "initial I flag incorrectly set");
 
     SEI(&cpu);
