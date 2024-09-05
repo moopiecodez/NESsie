@@ -4,8 +4,8 @@
 
 START_TEST(test_INC) {
     BYTE val = 0xFD;
-    BYTE expectedVal = val + 0x01;
-    cpu.DB = val;
+    BYTE expectedVal = (val + 0x01);
+    cpu.DL = val;
     
     INC(&cpu);
 
@@ -16,10 +16,9 @@ START_TEST(test_INC) {
 END_TEST
 
 START_TEST(test_INX) {
-    BYTE val = 0x02;
     cpu.X = 0x03;
-    BYTE expectedVal = cpu.X + val;
-    cpu.DB = val;
+    BYTE expectedVal = cpu.X + 1;
+    cpu.DL = cpu.X;
 
     INX(&cpu);
     ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
@@ -29,10 +28,9 @@ START_TEST(test_INX) {
 END_TEST
 
 START_TEST(test_INY) {
-    BYTE val = 0x01;
     cpu.Y = 0xC2;
-    BYTE expectedVal = cpu.Y + val;
-    cpu.DB = val;
+    BYTE expectedVal = cpu.Y + 1;
+    cpu.DB = cpu.Y;
 
     INY(&cpu);
     ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
@@ -44,7 +42,7 @@ END_TEST
 START_TEST(test_DEC) {
     BYTE val = 0xFD;
     BYTE expectedVal = val - 0x01;
-    cpu.DB = val;
+    cpu.DL = val;
     
     DEC(&cpu);
 
@@ -55,10 +53,9 @@ START_TEST(test_DEC) {
 END_TEST
 
 START_TEST(test_DEX) {
-    BYTE val = 0x01;
     cpu.X = 0x02;
-    BYTE expectedVal = cpu.X - val;
-    
+    BYTE expectedVal = cpu.X - 0x01;
+
     DEX(&cpu);
 
     ck_assert_msg(cpu.ALU == expectedVal, "incorrect value");
@@ -68,9 +65,8 @@ START_TEST(test_DEX) {
 END_TEST
 
 START_TEST(test_DEY) {
-    BYTE val = 0x01;
     cpu.Y = 0x00;
-    BYTE expectedVal = cpu.Y - val;
+    BYTE expectedVal = cpu.Y - 0x01;
 
     DEY(&cpu);
 
