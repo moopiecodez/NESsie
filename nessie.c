@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     } else if (argc > 2) {
         printf("Error: too many arguments, please specify just one file\n");
     } else {
-    loadgame(*++argv);
+        loadgame(*++argv);
     }
     // CPU cpu;
     // // Operation operation;

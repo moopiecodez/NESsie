@@ -13,3 +13,8 @@ echo "When program called with invalid file error message printed to stdout"
 output="$(./nessie coconuttree.txt)"
 expected="Error: file could not be opened"
 [ "$output" = "$expected" ]  && echo "pass" || echo "fail"
+
+echo "When program called with file not in iNES format error message printed to stdout"
+output="$(./nessie ./roms/bubbles.nes)"
+expected="Error: file not in iNES format"
+[ "$output" = "$expected" ]  && echo "pass" || echo "fail"
