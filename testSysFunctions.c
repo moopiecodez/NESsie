@@ -33,7 +33,7 @@ START_TEST(test_NOP) {
     ck_assert_msg(getBit(cpu.P, FLAG_D) == 0, "incorrect D flag");
     ck_assert_msg(getBit(cpu.P, FLAG_I) != 0, "incorrect I flag");
     ck_assert_msg(getBit(cpu.P, FLAG_Z) == 0, "incorrect Z flag");
-    ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect C flag");   
+    ck_assert_msg(getBit(cpu.P, FLAG_C) == 0, "incorrect C flag");
 
 }
 END_TEST

@@ -14,10 +14,10 @@ nessie: nessie.c cpu.c
 loadRom: loadROM.c
 	$(CC) $(CFLAGS) loadROM.c -o $@
 
-testcycles: testCycleFunctions.o cpu.o
+testcycles: testCycleFunctions.o
 	$(CC) $(CFLAGS) $^ -o $@ $(TESTFLAGS)
 
-testInstructions: testAllInstructions.o cpu.o $(TESTSUITES)
+testInstructions: testAllInstructions.o $(TESTSUITES)
 	$(CC) $(CFLAGS) $^ -o $@ $(TESTFLAGS)
 
 testCycleFunctions.o: testCycleFunctions.c

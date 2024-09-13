@@ -33,7 +33,7 @@ int main(void) {
     printf("setting up new main function for nessie\n");
 
     CPU cpu;
-    Operation operation;
+    // Operation operation;
     cpu.A  = 0x0B;
     cpu.PC = 0x0000;
     cpu.IR = 0x00;

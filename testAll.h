@@ -6,7 +6,6 @@
 #include "cpu.h"
 
 extern CPU cpu;
-// extern BYTE memory[];
 
 void setup(void);
 void teardown(void);

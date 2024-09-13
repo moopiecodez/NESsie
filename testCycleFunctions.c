@@ -1,6 +1,6 @@
 #include <check.h>
 #include <stdlib.h>
-#include "cpu.h"
+#include "cpu.c"
 
 CPU cpu;
 BYTE memory[0xFFFF] = {

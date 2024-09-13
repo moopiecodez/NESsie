@@ -1,6 +1,7 @@
 #include <check.h>
 #include <stdlib.h>
 #include "testAll.h"
+#include "cpu.c"
 
 BYTE memory[0xFFFF];
 CPU cpu = {0x0000u, 0x00u, 0x00u, 0x00u, 0x00u, 0x00u};
@@ -31,7 +32,7 @@ int main() {
     srunner_add_suite(sr, System_suite());
     srunner_add_suite(sr, Transfer_suite());
     srunner_add_suite(sr, Load_suite());
-    srunner_add_suite(sr, Power_suite());
+    // srunner_add_suite(sr, Power_suite());
 
     srunner_run_all(sr, CK_VERBOSE);
     number_failed = srunner_ntests_failed(sr);

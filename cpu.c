@@ -1,6 +1,150 @@
 #include "cpu.h"
 #include <stdio.h>
 
+//instruction and addressing mode prototypes
+typedef void Instruction(CPU *);
+//Read instructions:
+Instruction LDA;
+Instruction LDX;
+Instruction LDY;
+Instruction EOR;
+Instruction AND;
+Instruction ORA;
+Instruction ADC;
+Instruction SBC;
+Instruction CMP;
+Instruction BIT;
+Instruction NOP;
+
+
+//RMW instructions:
+Instruction ASL;
+Instruction LSR;
+Instruction ROL;
+Instruction ROR;
+Instruction INC;
+Instruction INX;
+Instruction INY;
+Instruction DEC;
+Instruction DEX;
+Instruction DEY;
+
+void increment(CPU *cpu, BYTE memory);
+void decrement(CPU *cpu, BYTE *memory);
+
+//transfer instructions
+Instruction TAX;
+Instruction TAY;
+Instruction TSX;
+Instruction TXA;
+Instruction TXS;
+Instruction TYA;
+
+// Write instructions:
+Instruction STX;
+Instruction STA;
+Instruction STY;
+
+//flag instructions 
+Instruction CLC;
+Instruction CLD;
+Instruction CLI;
+Instruction CLV;
+Instruction CPY;
+Instruction CPX;
+
+Instruction SEC;
+Instruction SED;
+Instruction SEI;
+
+//branch instructions
+Instruction BCC;
+Instruction BCS;
+Instruction BEQ;
+Instruction BMI;
+Instruction BNE;
+Instruction BPL;
+Instruction BVC;
+Instruction BVS;
+
+//jump instructions
+Instruction JMP;
+Instruction JSR;
+//stack instructions
+Instruction PHA;
+Instruction PHP;
+Instruction PLA;
+Instruction PLP;
+
+//interrupts
+Instruction BRK;
+Instruction RTI;
+Instruction RTS;
+
+Instruction FAKE;
+
+
+typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
+addr_mode_step fetch_opcode;
+addr_mode_step fetch_throw;
+addr_mode_step fetch_throw_brk;
+addr_mode_step imm_fetch_operand;
+addr_mode_step stack_push_PCH;
+addr_mode_step stack_push_PCL;
+addr_mode_step stack_push_register;
+addr_mode_step increment_S;
+addr_mode_step increment_PC;
+addr_mode_step stack_pull_PCH;
+addr_mode_step stack_pull_PCL;
+addr_mode_step stack_pull_register;
+addr_mode_step fetch_PCL;
+addr_mode_step fetch_PCH;
+addr_mode_step fetch_ADL;
+addr_mode_step fetch_ADH;
+addr_mode_step fetch_address;
+addr_mode_step read_addr_exe;
+addr_mode_step read_addr;
+addr_mode_step read_zp_addr_exe;
+addr_mode_step read_zp_addr;
+addr_mode_step modify;
+addr_mode_step write_addr;
+addr_mode_step write_register;
+addr_mode_step read_addr_add_X;
+addr_mode_step read_addr_add_Y;
+addr_mode_step fetch_ADH_add_X;
+addr_mode_step fetch_ADH_add_Y;
+addr_mode_step read_addr_fixADH_exe;
+addr_mode_step read_addr_updated_exe;
+addr_mode_step read_addr_fixADH;
+addr_mode_step read_addr_updated;
+addr_mode_step write_register_fixedADH;
+addr_mode_step read_ptr_add_X;
+addr_mode_step fetch_ptr_ADL;
+addr_mode_step fetch_ptr_ADH_add_Y;
+addr_mode_step fetch_ptrX_ADL;
+addr_mode_step fetch_ptrX_ADH;
+addr_mode_step branch_PCL;
+addr_mode_step branch_fixPCH;
+addr_mode_step read_PCH;
+addr_mode_step hold_ADL;
+addr_mode_step set_PC_to_JSR;
+addr_mode_step set_PC_to_JMP;
+
+
+typedef struct addr_mode {
+    int numsteps;
+    addr_mode_step **step;
+} AddressingMode;
+
+typedef struct op {
+    Instruction *ins;
+    AddressingMode *mode;
+} Operation;
+
+Operation decode(CPU *cpu);
+
+void execute(CPU *cpu, Operation operation, BYTE *memory);
+
 void print_cpu(CPU *cpu) {
     char flags[8];
     for (int i = 7; i >= 0; i--) {
@@ -55,6 +199,21 @@ addressingmode(addr_RTS, passarray({
     stack_pull_PCL,
     stack_pull_PCH,
     increment_PC
+}));
+
+addressingmode(addr_JSR, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    hold_ADL,
+    stack_push_PCH,
+    stack_push_PCL,
+    set_PC_to_JSR
+}));
+
+addressingmode(addr_JMP_absolute, passarray({
+    fetch_opcode,
+    fetch_ADL,
+    set_PC_to_JMP
 }));
 
 addressingmode(addr_RTI, passarray({
@@ -304,7 +463,7 @@ addressingmode(addr_indirect_indexed_w, passarray({
     write_register_fixedADH
 }));
 
-addressingmode(absolute_indirect, passarray({ //doesn't handle page boundary crossing between PCL and PCH locations
+addressingmode(addr_absolute_indirect, passarray({ //doesn't handle page boundary crossing between PCL and PCH locations
     fetch_opcode,
     fetch_ADL,
     fetch_ADH,
@@ -312,16 +471,26 @@ addressingmode(absolute_indirect, passarray({ //doesn't handle page boundary cro
     read_PCH
 }));
 
+// Read instructions (LDA, LDX, LDY, EOR, AND, ORA, ADC, SBC, CMP, BIT, LAX, NOP)
+//Read-Modify-Write instructions (ASL, LSR, ROL, ROR, INC, DEC, SLO, SRE, RLA, RRA, ISB, DCP)
+//Write instructions (STA, STX, STY, SAX)
 Operation operations[] = {
-    { BRK, &addr_BRK },
-    { CLC, &addr_implied },
-    { LDX, &addr_immediate},
-    { LDX, &addr_absolute_r},
-    { ASL, &addr_absolute_rmw},
-    { STA, &addr_absolute_w},
-    { LDY, &addr_zeropage_r},
-    { LSR, &addr_zeropage_rmw},
-    { AND, &addr_absolute_X_r}
+    { BRK, &addr_BRK }, { ORA, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ORA, &addr_zeropage_r }, { ASL, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { PHP, &addr_implied_push }, { ORA, &addr_immediate }, { ASL, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ORA, &addr_absolute_r }, { ASL, &addr_absolute_rmw }, { FAKE, &addr_implied },
+    { BPL, &addr_relative }, { ORA, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ORA, &addr_zpindex_X_r }, { ASL, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { CLC, &addr_implied }, { ORA, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ORA, &addr_absolute_X_r }, { ASL, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
+    { JSR, &addr_JSR }, { AND, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { BIT, &addr_zeropage_r }, { AND, &addr_zeropage_r }, { ROL, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { PLP, &addr_implied_pull }, { AND, &addr_immediate }, { ROL, &addr_implied }, { FAKE, &addr_implied }, { BIT, &addr_absolute_r }, { AND, &addr_absolute_r }, { ROL, &addr_absolute_rmw }, { FAKE, &addr_implied },
+    { BMI, &addr_relative }, { AND, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, {AND, &addr_zpindex_X_r }, { ROL, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { SEC, &addr_implied }, { AND, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { AND, &addr_absolute_X_r }, { ROL, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
+    { RTI, &addr_RTI }, { EOR, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { EOR, &addr_zeropage_r }, { LSR, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { PHA, &addr_implied_push }, { EOR, &addr_immediate }, { LSR, &addr_implied }, { FAKE, &addr_implied }, { JMP, &addr_JMP_absolute }, { EOR, &addr_absolute_r }, { LSR, &addr_absolute_rmw }, { FAKE, &addr_implied },
+    { BVC, &addr_relative }, { EOR, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { EOR, &addr_zpindex_X_r }, { LSR, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { CLI, &addr_implied }, { EOR, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { EOR, &addr_absolute_X_r }, { LSR, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
+    { RTS, &addr_RTS }, { ADC, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ADC, &addr_zeropage_r }, { ROR, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { PLA, &addr_implied_pull }, { ADC, &addr_immediate }, { ROR, &addr_implied }, { FAKE, &addr_implied }, { JMP, &addr_absolute_indirect }, { ADC, &addr_absolute_r }, { ROR, &addr_absolute_rmw }, { FAKE, &addr_implied },
+    { BVS, &addr_relative}, { ADC, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, {ADC, &addr_zpindex_X_r }, { ROR, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { SEI, &addr_implied }, { ADC, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ADC, &addr_absolute_X_r }, { ROR, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
+    { FAKE, &addr_implied }, { STA, &addr_indexed_indirect_w }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { STY, &addr_zeropage_w }, { STA, &addr_zeropage_w }, { STX, &addr_zeropage_w }, { FAKE, &addr_implied }, { DEY, &addr_implied }, { FAKE, &addr_implied }, { TXA, &addr_implied }, { FAKE, &addr_implied }, { STY, &addr_absolute_w }, { STA, &addr_absolute_w }, { STX, &addr_absolute_w }, { FAKE, &addr_implied },
+    { BCC, &addr_relative }, { STA, &addr_indirect_indexed_w }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { STY, &addr_zpindex_X_w }, { STA, &addr_zpindex_X_w }, { STX, &addr_zpindex_Y_w }, { FAKE, &addr_implied }, { TYA, &addr_implied }, { STA, &addr_absolute_Y_w }, { TXS, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { STA, &addr_absolute_X_w }, { FAKE, &addr_implied }, { FAKE, &addr_implied },
+    { LDY, &addr_immediate }, { LDA, & addr_indexed_indirect_r }, { LDX, &addr_immediate }, { FAKE, &addr_implied }, { LDY, &addr_zeropage_r }, { LDA, &addr_zeropage_r }, { LDX, &addr_zeropage_r }, { FAKE, &addr_implied }, { TAY, &addr_implied }, { LDA, &addr_immediate }, { TAX, &addr_implied }, { FAKE, &addr_implied }, { LDY, &addr_absolute_r }, { LDA, &addr_absolute_r }, { LDX, &addr_absolute_r }, { FAKE, &addr_implied },
+    { BCS, &addr_relative }, { LDA, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { LDY, &addr_zpindex_X_r }, { LDA, &addr_zpindex_X_r }, { LDX, &addr_zpindex_Y_r }, { FAKE, &addr_implied }, { CLV, &addr_implied }, { LDA, &addr_absolute_Y_r }, { TSX, &addr_implied }, { FAKE, &addr_implied }, { LDY, &addr_absolute_X_r }, { LDA, &addr_absolute_X_r }, { LDX, &addr_absolute_Y_r }, { FAKE, &addr_implied },
+    { CPY, &addr_immediate }, { CMP, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { CPY, &addr_zeropage_r }, { CMP, &addr_zeropage_r }, { DEC, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { INY, &addr_implied }, { CMP, &addr_immediate }, { DEX, &addr_implied }, { FAKE, &addr_implied }, { CPY, &addr_absolute_r }, { CMP, &addr_absolute_r }, { DEC, &addr_absolute_rmw }, { FAKE, &addr_implied },
+    { BNE, &addr_relative }, { CMP, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { CMP, &addr_zpindex_X_r }, { DEC, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { CLD, &addr_implied }, { CMP, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { CMP, &addr_absolute_X_r }, { DEC, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
+    { CPX, &addr_immediate }, { SBC, &addr_indexed_indirect_r  }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { CPX, &addr_zeropage_r }, { SBC, &addr_zeropage_r }, { INC, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { INX, &addr_implied }, { SBC, &addr_immediate }, { NOP, &addr_implied }, { FAKE, &addr_implied },  { CPX, &addr_absolute_r }, { SBC, &addr_absolute_r }, { INC, &addr_absolute_rmw }, { FAKE, &addr_implied }, 
+    { BEQ, &addr_relative }, { SBC, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { SBC, &addr_zpindex_X_r }, { INC, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { SED, &addr_implied }, { SBC, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { SBC, &addr_absolute_X_r }, { INC, &addr_absolute_X_r }, { FAKE, &addr_implied }
 };
 
 
@@ -506,6 +675,28 @@ void fetch_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
     cpu->PC += cpu->DL << 8;
 }
 
+void set_PC_to_JSR(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB]; //get PCH
+    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->PD is ADH
+    cpu->PC = cpu->ALU; //ALU holds target PCL from earlier in JSR routine
+    cpu->PC += cpu->DL << 8;
+}
+
+void set_PC_to_JMP(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->AB = cpu->PC;
+    cpu->DB = memory[cpu->AB]; //get PCH
+    cpu->PC = cpu->DL; //DL still holds target PCL at start
+    cpu->PC += cpu->DB << 8;
+    cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->PD is ADH
+}
+
+void hold_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
+    cpu->ALU = cpu->DL; //holds ADL for jump later in JSR
+    ins(cpu);
+}
+
+
 void fetch_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->AB = cpu->PC;
     cpu->DB = memory[cpu->AB];
@@ -549,15 +740,15 @@ void read_zp_addr(CPU *cpu, BYTE *memory, Instruction *ins){
 }
 
 void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
-    cpu->AB = (cpu->DL << 8) + cpu->ALU; //in previous cycle address stored in ALU
+    cpu->AB = (cpu->DL << 8) + cpu->ALU; //in previous cycle ADL address stored in ALU and DL holds ADH
     cpu->DB = memory[cpu->AB];
-    cpu->DL = cpu->DB;
+    cpu->DL = cpu->DB; //DL holds target PCL
 }
 
 void read_PCH(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->AB = cpu->AB + 1;
-    cpu->DB = memory[cpu->AB];
-    cpu->PC = (cpu->DB << 8) + cpu->DL;
+    cpu->DB = memory[cpu->AB]; //DB holds PCH
+    cpu->PC = (cpu->DB << 8) + cpu->DL; //DL holds target PCL from previous cycle
     cpu->DL = cpu->DB;
 }
 
@@ -1536,8 +1727,8 @@ void JMP(CPU *cpu) {
     before this function is called.
     Address part of instruction then stored in PC.
 */
-void JSR(CPU *cpu, BYTE *memory) {
-    // implemented in cycle functions
+void JSR(CPU *cpu) {
+    ;// implemented in cycle functions
     // push_to_stack(cpu, memory, (cpu->PC >> 8));
     // push_to_stack(cpu, memory, cpu->PC);
     // BYTE high = memory[cpu->PC + 1];
@@ -1573,3 +1764,12 @@ void RTI(CPU *cpu) {
 void NOP(CPU *cpu) {
     ; //intention is that it does nothing
 }
+
+/*
+    FAKE
+    Unimplemented opcode
+*/
+void FAKE(CPU *cpu) {
+    printf("ERROR: this instruction is not implemented\n");
+}
+
