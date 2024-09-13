@@ -8,8 +8,8 @@ TESTSUITES = testpowercpu.o	testArithmetic.o testBranch.o testFlagChanges.o\
 
 .PHONY: clean
 
-nessie: nessie.c cpu.c
-	$(CC) $(CFLAGS) nessie.c cpu.c -o $@
+nessie: nessie.c cpu.c cartridge.c
+	$(CC) $(CFLAGS) nessie.c cpu.c cartridge.c -o $@
 
 loadRom: loadROM.c
 	$(CC) $(CFLAGS) loadROM.c -o $@

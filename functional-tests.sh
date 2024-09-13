@@ -9,3 +9,7 @@ output="$(./nessie burgle fish)"
 expected="Error: too many arguments, please specify just one file"
 [ "$output" = "$expected" ]  && echo "pass" || echo "fail"
 
+echo "When program called with invalid file error message printed to stdout"
+output="$(./nessie coconuttree.txt)"
+expected="Error: file could not be opened"
+[ "$output" = "$expected" ]  && echo "pass" || echo "fail"

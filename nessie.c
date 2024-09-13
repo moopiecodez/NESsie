@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include "cpu.h"
+#include "cartridge.h"
 
 /*
     array to hold NES memory addresses from $0000-$FFFF, each page is 0xFF will 
@@ -33,9 +34,10 @@ int main(int argc, char *argv[]) {
     // printf("setting up new main function for nessie\n");
     if (argc == 1) {
         printf("Error: no arguments provided\n");
-    }
-    if (argc > 2) {
+    } else if (argc > 2) {
         printf("Error: too many arguments, please specify just one file\n");
+    } else {
+    loadgame(*++argv);
     }
     // CPU cpu;
     // // Operation operation;
