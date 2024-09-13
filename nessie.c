@@ -29,26 +29,31 @@ BYTE memory[0xFFFF] = {
 
 };
 
-int main(void) {
-    printf("setting up new main function for nessie\n");
-
-    CPU cpu;
-    // Operation operation;
-    cpu.A  = 0x0B;
-    cpu.PC = 0x0000;
-    cpu.IR = 0x00;
-    cpu.P = 0x00;
-    //needed for BRK
-    memory[IRQ_HIGH] = 0x2E;
-    memory[IRQ_LOW] = 0x1C;
-    setFlag(&cpu, FLAG_I);
-    setFlag(&cpu, FLAG_C);
-
-    print_cpu(&cpu);
-    //--------------------------------------------------
-    for (int step_num = 0; step_num < 12; step_num++) {
-        clocktick(&cpu, memory);
+int main(int argc, char *argv[]) {
+    // printf("setting up new main function for nessie\n");
+    if (argc == 1) {
+        printf("Error: no arguments provided\n");
     }
+    if (argc > 2) {
+        printf("Error: too many arguments, please specify just one file\n");
+    }
+    // CPU cpu;
+    // // Operation operation;
+    // cpu.A  = 0x0B;
+    // cpu.PC = 0x0000;
+    // cpu.IR = 0x00;
+    // cpu.P = 0x00;
+    // //needed for BRK
+    // memory[IRQ_HIGH] = 0x2E;
+    // memory[IRQ_LOW] = 0x1C;
+    // setFlag(&cpu, FLAG_I);
+    // setFlag(&cpu, FLAG_C);
+
+    // print_cpu(&cpu);
+    // //--------------------------------------------------
+    // for (int step_num = 0; step_num < 12; step_num++) {
+    //     clocktick(&cpu, memory);
+    // }
     
     return 0;
 }
