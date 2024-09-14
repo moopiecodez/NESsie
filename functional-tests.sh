@@ -16,7 +16,8 @@ expected="Error: file could not be opened"
 
 echo "When program called with file not in iNES format error message printed to stdout"
 output="$(./nessie ./roms/bubbles.nes)"
-expected="Error: file not in iNES format"
+expected="Error: file not in iNES format
+Error: header not loaded"
 [ "$output" = "$expected" ]  && echo "pass" || (echo "fail" && echo $output && echo $expected)
 
 echo "When program called with iNES file format number of mapper, PRG and CHR banks and mirroring printed to stdout"

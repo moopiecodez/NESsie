@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 void loadgame(char *ROMfile);
-void extractHeader(FILE *fp);
+struct Header *extractHeader(FILE *fp);
 
 #endif
