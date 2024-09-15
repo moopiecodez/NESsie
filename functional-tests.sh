@@ -4,7 +4,7 @@ output="$(./nessie)"
 expected="Error: no arguments provided"
 [ "$output" = "$expected" ]  && echo "pass" || (echo "fail" && echo $output && echo $expected)
 
-echo "When program called withmore than two arguments error message printed to stdout"
+echo "When program called with more than two arguments error message printed to stdout"
 output="$(./nessie burgle fish)"
 expected="Error: too many arguments, please specify just one file"
 [ "$output" = "$expected" ]  && echo "pass" || (echo "fail" && echo $output && echo $expected)
@@ -16,8 +16,7 @@ expected="Error: file could not be opened"
 
 echo "When program called with file not in iNES format error message printed to stdout"
 output="$(./nessie ./roms/bubbles.nes)"
-expected="Error: file not in iNES format
-Error: header not loaded"
+expected="Error: file not in iNES format"
 [ "$output" = "$expected" ]  && echo "pass" || (echo "fail" && echo $output && echo $expected)
 
 echo "When program called with iNES file format number of mapper, PRG and CHR banks and mirroring printed to stdout"
