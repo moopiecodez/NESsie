@@ -1,47 +1,28 @@
-#include <stdio.h>
-#include <stdint.h>
+#include <stdlib.h>
+#include "bus.h"
 
-#define CPU_RAM_MIRROR 0x07FF
-#define PPU_REG_MIRROR 0x0007
-
-//would need to implement other I/O for DMA, controllers APU
-
-uint8_t cpumemory[0xFFFF];
-
-typedef uint8_t Mapper_read(uint16_t);
-typedef void Mapper_write(uint16_t, uint8_t);
-
-struct Mapper {
-    Mapper_read *read;
-    Mapper_write *write;
-    // uint8_t (*mread)(uint16_t address);
-    // void (*mwrite)(uint16_t address, uint8_t byte);
+struct bus {
+    Device *cartridge;
 };
 
-
-struct Header {
-    int mapperno;
-    int PRG_Banks_num;
-    int CHR_Banks_num;
-    int mirror;
-};
-
-struct Cartridge {
-    struct Mapper *mapper;
-    struct Header *head;
-    uint8_t *PRG_Banks;
-    uint8_t *CHR_Banks;
-
-};
-
-struct Mapper mapper0 = { };
-
-uint8_t mapper0_read(uint16_t address) {
-
+Bus bus_create(Device *cartridge) {
+    Bus bus = malloc(sizeof(struct bus));
+    bus->cartridge = cartridge;
+    return bus;
 }
 
-uint8_t cpu_read (uint16_t address) {
+uint8_t bus_read(Bus bus, uint16_t address) {
     uint8_t byte;
+    if(address >= CARTRIDGE_START && address < ADDR_RANGE_END) {
+        byte = bus->cartridge->read(bus->cartridge->data, address);
+    }
+    return byte;
+}
+
+
+/*
+
+uint8_t cpu_read (uint16_t address) {
     if (address >= 0x0000 && address <= 0x1FFF) {
         byte = *(cpumemory + (address & CPU_RAM_MIRROR));
     }
@@ -55,8 +36,39 @@ uint8_t cpu_read (uint16_t address) {
     else if (address >= 0x4020 && address <= 0xFFFF) {
         byte = mapper_read(address); //needs to be mapper.read
     }
-    return byte;
+x}
+
+#include <stdio.h>
+#include "cartridge.h" //bus needs to be passed the cartridge
+
+#define CPU_RAM_MIRROR 0x07FF
+#define PPU_REG_MIRROR 0x0007
+
+
+
+//would need to implement other I/O for DMA, controllers APU
+
+uint8_t cpumemory[0xFFFF];
+
+uint8_t ppumemory[0x3FFF];
+
+struct Device {
+    void *data;
+    void (*mapper_write)(uint8_t *data, uint16_t address, uint8_t byte);
+    uint8_t (*mapper_read)(uint8_t *data, uint16_t address);
+};
+
+struct bus {
+    struct Device *cpudevice;
+    void *ppudevice;
+    void *cartridge;
+};
+
+struct Bus *connectBus(struct cartridge *cart){
+    struct Bus *bus;
 }
+
+
 
 void cpu_write(uint16_t address, uint8_t byte) {
     cpumemory[address] = byte;
@@ -74,3 +86,5 @@ void cpu_write(uint16_t address, uint8_t byte) {
         mapper_write(address, byte); // needs to be mapper.read
     }
 }
+
+*/

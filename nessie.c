@@ -3,6 +3,7 @@
 #include <stddef.h>
 #include "cpu.h"
 #include "cartridge.h"
+#include "bus.h"
 
 /*
     array to hold NES memory addresses from $0000-$FFFF, each page is 0xFF will 
@@ -45,12 +46,15 @@ char *check_args(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
     char *filename;
     Device cartridge;
+    Bus bus;
+
     filename = check_args(argc, argv);
     cartridge = cartridge_load(filename);
+    bus = bus_create(&cartridge);
 
     uint16_t address = 0x8002;
     uint8_t byte;
-    byte = cartridge.read(cartridge.data, address);
+    byte = bus_read(bus, address);
     printf("Read: %02x\n", byte);
 
     //cartridge free for malloc?
