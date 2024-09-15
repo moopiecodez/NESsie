@@ -1,6 +1,6 @@
 #Nessie makefile
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -Wpedantic
 TESTFLAGS = -lcheck -lm -lsubunit -pthread -lrt
 TESTSUITES = testpowercpu.o	testArithmetic.o testBranch.o testFlagChanges.o\
 			testINC-DEC.o testJump.o testLDA.o testLogical.o testShifts.o\
