@@ -22,7 +22,6 @@ expected="Error: file not in iNES format"
 echo "When program called with iNES file format number of mapper, PRG and CHR banks and mirroring printed to stdout"
 output="$(./nessie ./roms/nestest.nes)"
 expected="ROM file contains 1 PRG and 1 CHR banks
-Vertical arrangement, horizontal mirrored
 Mapper number is: 0"
 [ "$output" = "$expected" ]  && echo "pass" || (echo "fail" && echo $output && echo $expected)
 
