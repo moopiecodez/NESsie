@@ -52,10 +52,8 @@ int main(int argc, char *argv[]) {
     cartridge = cartridge_load(filename);
     bus = bus_create(&cartridge);
 
-    uint16_t address = 0x8002;
-    uint8_t byte;
-    byte = bus_read(bus, address);
-    printf("Read: %02x\n", byte);
+    printf("Read: %02x\n", bus_read(bus, 0xC003));
+    printf("Read: %02x\n", bus_read(bus, 0x8003));
 
     //cartridge free for malloc?
     // void *device = cartridge;

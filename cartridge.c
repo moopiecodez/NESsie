@@ -167,17 +167,12 @@ uint8_t map_000_read(void *data, uint16_t address) {
     if(address >= PRGROM_LOW_START && address < PRGROM_HIGH_START) {
         bank_addr = address - PRGROM_LOW_START;
         byte = cartridge->prg_low[bank_addr];
+    } else if(address >= PRGROM_HIGH_START && address < ADDR_RANGE_END) {
+        bank_addr = address - PRGROM_HIGH_START;
+        byte = cartridge->prg_high[bank_addr];
     }
     return byte;
 }
-
-// uint8_t cartridge_read(Cartridge cartridge, uint16_t address) {
-//     if(address >= PRGROM_LOW_START && address <= 0xFFFF) {
-//         uint16_t adjusted_addr = address - PRGROM_LOW_START;
-//         byte = cartridge->PRGROM[adjusted_addr];
-//     }
-//     return byte;
-// }
 
 void map_000_init(Cartridge cartridge) {
     cartridge->prg_low = cartridge->bank_prg[0];

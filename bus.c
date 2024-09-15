@@ -21,7 +21,6 @@ uint8_t bus_read(Bus bus, uint16_t address) {
 
 
 /*
-
 uint8_t cpu_read (uint16_t address) {
     if (address >= 0x0000 && address <= 0x1FFF) {
         byte = *(cpumemory + (address & CPU_RAM_MIRROR));
@@ -38,37 +37,19 @@ uint8_t cpu_read (uint16_t address) {
     }
 x}
 
-#include <stdio.h>
-#include "cartridge.h" //bus needs to be passed the cartridge
-
 #define CPU_RAM_MIRROR 0x07FF
 #define PPU_REG_MIRROR 0x0007
 
-
-
 //would need to implement other I/O for DMA, controllers APU
-
 uint8_t cpumemory[0xFFFF];
 
 uint8_t ppumemory[0x3FFF];
-
-struct Device {
-    void *data;
-    void (*mapper_write)(uint8_t *data, uint16_t address, uint8_t byte);
-    uint8_t (*mapper_read)(uint8_t *data, uint16_t address);
-};
 
 struct bus {
     struct Device *cpudevice;
     void *ppudevice;
     void *cartridge;
 };
-
-struct Bus *connectBus(struct cartridge *cart){
-    struct Bus *bus;
-}
-
-
 
 void cpu_write(uint16_t address, uint8_t byte) {
     cpumemory[address] = byte;
