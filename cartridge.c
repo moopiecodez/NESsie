@@ -32,8 +32,10 @@ struct cartridge {
     // uint8_t (*mapper_read)(uint8_t *data, uint16_t address);
 };
 
+uint8_t prg_bank[PRGBANKSIZE];
+typedef uint8_t *RomBankPrg;
+
 size_t cartridge_size();
-void loadgame(char *ROMfile);
 struct header *extractHeader(FILE *fp);
 
 uint8_t get_bit(uint8_t byte, uint8_t position) {
@@ -96,6 +98,10 @@ void romfile_extract_header(FILE *fp, Cartridge cartridge) {
     cartridge->header = header;
 }
 
+/*
+Placeholder for handling of trainers which is not yet implemented.
+Emulator currently only handles ROMs without trainers.
+*/
 void romfile_extract_trainer(FILE *fp, Cartridge cartridge) {
     if(cartridge->header.trainer != 0) {
         printf("Trainer present, handling trainers not implemented. Exiting\n");
@@ -103,11 +109,36 @@ void romfile_extract_trainer(FILE *fp, Cartridge cartridge) {
     }
 }
 
+void romfile_extract_prg_rom(FILE *fp, Cartridge cartridge) {
+    int num_of_banks = cartridge->header.prg_rom_size;
+    RomBankPrg *bank = malloc(sizeof(RomBankPrg) * num_of_banks); //remember because of typedef being a ptr*
+    for(int i = 0; i < num_of_banks; i++) {
+        bank[i] = malloc(PRGBANKSIZE); //conveniently works because we want bytes
+        int read = fread(bank[i], sizeof(uint8_t), PRGBANKSIZE, fp);
+        if(read != PRGBANKSIZE) {
+            printf("Error: insufficient ROM data, bytes read: %d\n", read);
+            exit(1);
+        }
+    }
+}
+
+// void extractROMdata(FILE *ifp, BYTE destination[], int destinationIndex, int size) {
+//     int c;
+//     for (int i = destinationIndex; i < (destinationIndex + size) && (c =getc(ifp)) != EOF; i++) {
+//         // print in hex i and c
+//         //printf("%06d is %x\n", i, c);
+//         destination[i] = c;
+//         //need to go from start
+//     }
+// }
+
+
 Cartridge cartridge_load(char *filename) {
     FILE *fp = romfile_open(filename);
     Cartridge cartridge = malloc(cartridge_size());
     romfile_extract_header(fp, cartridge);
     romfile_extract_trainer(fp, cartridge);
+    romfile_extract_prg_rom(fp, cartridge);
 
     return cartridge;
 }
@@ -120,35 +151,6 @@ uint8_t cartridge_read(Cartridge cartridge, uint16_t address) {
     }
     return byte;
 }
-
-void loadgame(char *ROMfile) {
-    /*
-    int cart_size = CART_SIZE_MIN;
-    struct cartridge *cart;
-
-    hdr = extractHeader(fp);
-    int extraPRGBanks = hdr->PRG_Banks_num - 2;
-    if(extraPRGBanks > 0) {
-        cart_size += CART_SIZE_MIN + (extraPRGBanks * PRGBANKSIZE);
-    }
-    uint8_t PRGROM[PRGBANKSIZE]; //donkeykong is simple
-    // cart_mem
-    // if(hdr->trainer != 0) {
-    //     extractData(fp);
-    // }; // load cartridge data
-    */
-}
-
-
-// void extractROMdata(FILE *ifp, BYTE destination[], int destinationIndex, int size) {
-//     int c;
-//     for (int i = destinationIndex; i < (destinationIndex + size) && (c =getc(ifp)) != EOF; i++) {
-//         // print in hex i and c
-//         //printf("%06d is %x\n", i, c);
-//         destination[i] = c;
-//         //need to go from start
-//     }
-// }
 
 
 //7000-$71FF where trainer goes if present

@@ -26,3 +26,9 @@ Vertical arrangement, horizontal mirrored
 Mapper number is: 0"
 [ "$output" = "$expected" ]  && echo "pass" || (echo "fail" && echo $output && echo $expected)
 
+echo "iNES file with corrupt PRG data quits with bytes read"
+output="$(./nessie ./roms/invalidprg.nes)"
+expected="ROM file contains 16 PRG and 0 CHR banks
+Mapper number is: 1
+Error: insufficient ROM data, bytes read: 16383"
+[ "$output" = "$expected" ]  && echo "pass" || (echo "fail" && echo $output && echo $expected)
