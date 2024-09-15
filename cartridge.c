@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include "cartridge.h"
@@ -24,19 +23,36 @@ struct header {
     uint8_t PRG_RAM;
 };
 
+typedef uint8_t *RomBank;
+
+typedef struct mapper {
+    int id;
+    char *name;
+    void (*initialise)(Cartridge);
+    uint8_t (*read)(void *, uint16_t);
+    void (*write)(void *, uint16_t, uint8_t);
+} Mapper;
+
 struct cartridge {
     struct header header;
-    uint8_t *PPU_ROM; //constains CHR ROM
-    uint8_t PRGROM[PRGROMSIZE]; //PRG ROM addressing space
-    // void (*mapper_write)(uint8_t *data, uint16_t address, uint8_t byte);
-    // uint8_t (*mapper_read)(uint8_t *data, uint16_t address);
+    RomBank *bank_prg; //array of pointers to PRG ROM banks
+    RomBank *bank_chr; //array of pointers to CHR ROM banks
+    Mapper mapper;
+    RomBank prg_low;
+    RomBank prg_high;
 };
 
-uint8_t prg_bank[PRGBANKSIZE];
-typedef uint8_t *RomBankPrg;
 
+void map_000_write(void *, uint16_t, uint8_t);
+uint8_t map_000_read(void *, uint16_t);
+void map_000_init(Cartridge);
 size_t cartridge_size();
 struct header *extractHeader(FILE *fp);
+Mapper mapper_get(uint8_t);
+
+Mapper mapper[] = {
+    {0, "NROM", map_000_init, map_000_read, map_000_write }
+};
 
 uint8_t get_bit(uint8_t byte, uint8_t position) {
     uint8_t mask = ~(~0 << 1);
@@ -87,12 +103,7 @@ void romfile_extract_header(FILE *fp, Cartridge cartridge) {
     };
 
     printf("ROM file contains %d PRG and %d CHR banks\n", header.prg_rom_size, header.chr_rom_size);
-    if(header.mirror == 0) {
-        printf("Vertical arrangement, horizontal mirrored\n");
-    }
-    if(header.battery != 0) {
-        printf("Persistent memory present\n");
-    }
+
     printf("Mapper number is: %d\n", header.mapper_num);
 
     cartridge->header = header;
@@ -109,12 +120,15 @@ void romfile_extract_trainer(FILE *fp, Cartridge cartridge) {
     }
 }
 
+/*
+Attempts to read PRG ROM banks.
+*/
 void romfile_extract_prg_rom(FILE *fp, Cartridge cartridge) {
     int num_of_banks = cartridge->header.prg_rom_size;
-    RomBankPrg *bank = malloc(sizeof(RomBankPrg) * num_of_banks); //remember because of typedef being a ptr*
+    cartridge->bank_prg = malloc(sizeof(RomBank) * num_of_banks);
     for(int i = 0; i < num_of_banks; i++) {
-        bank[i] = malloc(PRGBANKSIZE); //conveniently works because we want bytes
-        int read = fread(bank[i], sizeof(uint8_t), PRGBANKSIZE, fp);
+        cartridge->bank_prg[i] = malloc(PRGBANKSIZE); //conveniently works because we want bytes
+        int read = fread(cartridge->bank_prg[i], sizeof(uint8_t), PRGBANKSIZE, fp);
         if(read != PRGBANKSIZE) {
             printf("Error: insufficient ROM data, bytes read: %d\n", read);
             exit(1);
@@ -122,37 +136,170 @@ void romfile_extract_prg_rom(FILE *fp, Cartridge cartridge) {
     }
 }
 
-// void extractROMdata(FILE *ifp, BYTE destination[], int destinationIndex, int size) {
-//     int c;
-//     for (int i = destinationIndex; i < (destinationIndex + size) && (c =getc(ifp)) != EOF; i++) {
-//         // print in hex i and c
-//         //printf("%06d is %x\n", i, c);
-//         destination[i] = c;
-//         //need to go from start
+/*
+Attempts to read CHR ROM banks.
+*/
+void romfile_extract_chr_rom(FILE *fp, Cartridge cartridge) {
+    int num_of_banks = cartridge->header.chr_rom_size;
+    cartridge->bank_chr = malloc(sizeof(RomBank) * num_of_banks);
+    for(int i = 0; i < num_of_banks; i++) {
+        cartridge->bank_chr[i] = malloc(CHRBANKSIZE); //conveniently works because we want bytes
+        int read = fread(cartridge->bank_chr[i], sizeof(uint8_t), CHRBANKSIZE, fp);
+        if(read != CHRBANKSIZE) {
+            printf("Error: insufficient ROM data, bytes read: %d\n", read);
+            exit(1);
+        }
+    }
+}
+
+void map_000_write(void *data, uint16_t address, uint8_t byte) {
+    ;
+}
+
+uint8_t map_000_read(void *data, uint16_t address) {
+    uint8_t byte = 3;
+    return byte;
+}
+
+// uint8_t cartridge_read(Cartridge cartridge, uint16_t address) {
+//     if(address >= PRGROM_LOW_START && address <= 0xFFFF) {
+//         uint16_t adjusted_addr = address - PRGROM_LOW_START;
+//         byte = cartridge->PRGROM[adjusted_addr];
 //     }
+//     return byte;
 // }
 
+void map_000_init(Cartridge cartridge) {
+    cartridge->prg_low = cartridge->bank_prg[0];
+    cartridge->prg_high = cartridge->bank_prg[0];
+}
 
-Cartridge cartridge_load(char *filename) {
+void set_mapper(Cartridge cartridge) {
+    cartridge->mapper = mapper_get(cartridge->header.mapper_num);
+    cartridge->mapper.initialise(cartridge);
+}
+
+Device cartridge_load(char *filename) {
     FILE *fp = romfile_open(filename);
-    Cartridge cartridge = malloc(cartridge_size());
-    romfile_extract_header(fp, cartridge);
-    romfile_extract_trainer(fp, cartridge);
-    romfile_extract_prg_rom(fp, cartridge);
+    Cartridge data = malloc(cartridge_size());
+    romfile_extract_header(fp, data);
+    romfile_extract_trainer(fp, data);
+    romfile_extract_prg_rom(fp, data);
+    romfile_extract_chr_rom(fp, data);
+    fclose(fp);
+
+    set_mapper(data);
+
+    Device cartridge = {
+        data->mapper.read,
+        data->mapper.write,
+        data
+    };
 
     return cartridge;
 }
 
-uint8_t cartridge_read(Cartridge cartridge, uint16_t address) {
-    uint8_t byte;
-    if(address >= PRGROM_LOW_START && address <= 0xFFFF) {
-        uint16_t adjusted_addr = address - PRGROM_LOW_START;
-        byte = cartridge->PRGROM[adjusted_addr];
-    }
-    return byte;
+Mapper mapper_get(uint8_t mapper_num) {
+    return mapper[mapper_num];
 }
+
+
 
 
 //7000-$71FF where trainer goes if present
 //trainer before PRG ram if present
 //6000 to 7fff prg ram
+
+// char *mappers[] = {
+//     "NROM",
+//     "UnROM switch",
+//     "CNROM switch",
+//     "MMC3",
+//     "MMC5",
+//     "FFE F4xxx",
+//     "AOROM switch",
+//     "FFE F3xxx",
+//     "MMC2",
+//     "MMC4",
+//     "ColorDreams chip",
+//     "FFE F6xxx",
+//     "CPROM switch",
+//     '\0',
+//     "100-in-1 switch",
+//     "Bandai chip",
+//     "FFE F8xxx",
+//     "Jaleco SS8806",
+//     "Namcot 106",
+//     "Nintendo DiskSystem",
+//     "Konami VRC4a",
+//     "Konami VRC2a",
+//     "Konami VRC4a?",
+//     "Konami VRC6",
+//     "Konami VRC4b",
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     "Irem G-101 chip",
+//     "Taito TC0190/TC0350",
+//     "Nina-1",
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     "Tengen RAMBO-1 chip",
+//     "Irem H-3001 chip",
+//     "GNROM switch",
+//     "SunSoft3 chip",
+//     "SunSoft4 chip",
+//     "SunSoft5 FME-7 chip",
+//     '\0',
+//     "Camerica chip",
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     "Irem 74HC161/32-based",
+//     "AVE Nina-3 board",
+//     '\0',
+//     "AVE Nina-6 board",
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     '\0',
+//     "Pirate HK-SF3 chip"
+//      };

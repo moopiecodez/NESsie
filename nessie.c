@@ -44,14 +44,14 @@ char *check_args(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
     char *filename;
-    Cartridge cartridge;
+    Device cartridge;
     filename = check_args(argc, argv);
     cartridge = cartridge_load(filename);
 
     uint16_t address = 0x8003;
     uint8_t byte;
-    byte = cartridge_read(cartridge, address);
-
+    byte = cartridge.read(&cartridge, address);
+    printf("Read: %02x\n", byte);
 
     //cartridge free for malloc?
     // void *device = cartridge;
