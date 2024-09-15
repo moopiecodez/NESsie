@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <stdint.h>
 
-void loadgame(char *ROMfile);
-struct Header *extractHeader(FILE *fp);
+typedef struct cartridge *Cartridge;
+
+Cartridge cartridge_load(char *);
+uint8_t cartridge_read(Cartridge, uint16_t);
 
 #endif

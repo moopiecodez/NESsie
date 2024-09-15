@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
 #include "cpu.h"
 #include "cartridge.h"
@@ -29,16 +30,31 @@ BYTE memory[0xFFFF] = {
     0x12, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 };
-
-int main(int argc, char *argv[]) {
-    // printf("setting up new main function for nessie\n");
+char *check_args(int argc, char *argv[]) {
     if (argc == 1) {
         printf("Error: no arguments provided\n");
+        exit(1);
     } else if (argc > 2) {
         printf("Error: too many arguments, please specify just one file\n");
+        exit(1);
     } else {
-        loadgame(*++argv);
+        return argv[1];
     }
+}
+
+int main(int argc, char *argv[]) {
+    char *filename;
+    Cartridge cartridge;
+    filename = check_args(argc, argv);
+    cartridge = cartridge_load(filename);
+
+    uint16_t address = 0x8003;
+    uint8_t byte;
+    byte = cartridge_read(cartridge, address);
+
+
+    //cartridge free for malloc?
+    // void *device = cartridge;
     // CPU cpu;
     // // Operation operation;
     // cpu.A  = 0x0B;

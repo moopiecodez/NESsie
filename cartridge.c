@@ -1,35 +1,137 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include "cartridge.h"
 
 #define HEADERSIZE 16
 #define PRGBANKSIZE 16384
 #define CHRBANKSIZE 8192
 #define TRAINERSIZE 512
-#define CART_SIZE_MIN 0xBFDF //CPU memory range used by cartridge $4020 to $FFFF
+#define CART_SIZE_MIN 0x10000 - 0x4020 //CPU memory range used by cartridge
+#define PRGROM_LOW_START 0x8000
+#define PRGROMSIZE 0x10000 - PRGROM_LOW_START //PRG ROM memory range
 
-struct Header {
-    uint8_t PRG_Banks_num;
-    uint8_t CHR_Banks_num; //CHR associated with PPU
-    uint8_t mapper_num;
-    uint8_t battery; //0 means no battery backed RAM
+const uint8_t ines[] = { 0x4E, 0x45, 0x53, 0x1A };
+
+struct header {
+    uint8_t prg_rom_size;
+    uint8_t chr_rom_size; //CHR associated with PPU
     uint8_t mirror; // 0 means vertical arrangement / horizontal mirroring
+    uint8_t battery; //0 means no battery backed RAM
     uint8_t trainer;
+    uint8_t mapper_num;
     uint8_t PRG_RAM;
 };
 
-struct Cartridge {
-    struct Header *head;
-    uint8_t *CPU_ROM; //contains PRG ROM
+struct cartridge {
+    struct header header;
     uint8_t *PPU_ROM; //constains CHR ROM
-    void (*mapper_write)(uint8_t *data, uint16_t address, uint8_t byte);
-    uint8_t (*mapper_read)(uint8_t *data, uint16_t address);
-
+    uint8_t PRGROM[PRGROMSIZE]; //PRG ROM addressing space
+    // void (*mapper_write)(uint8_t *data, uint16_t address, uint8_t byte);
+    // uint8_t (*mapper_read)(uint8_t *data, uint16_t address);
 };
 
-uint8_t get_Bit(uint8_t byte, uint8_t position) {
+size_t cartridge_size();
+void loadgame(char *ROMfile);
+struct header *extractHeader(FILE *fp);
+
+uint8_t get_bit(uint8_t byte, uint8_t position) {
     uint8_t mask = ~(~0 << 1);
     return (byte >> position) & mask;
+}
+
+size_t cartridge_size() {
+    size_t size;
+    size = sizeof(struct cartridge);
+    return size;
+}
+
+/* Attempts to open a file, returns error message and closes program if it fails*/
+FILE *romfile_open(char *filename) {
+    FILE *fp;
+    // printf("%s\n", filename);
+    fp = fopen(filename, "r");
+    if(fp == NULL) {
+        printf("Error: file could not be opened\n");
+        exit(1);
+    }
+    return fp;
+}
+
+/*
+Attempts to parse header (first 16 bytes) from file, returns error message and
+closes program if format incorrect. See iNES header format description for
+details
+*/
+struct header romfile_extract_header(FILE *fp) {
+    uint8_t data[HEADERSIZE];
+    size_t read = fread(&data, sizeof(uint8_t), HEADERSIZE, fp);
+
+    //checks that iNES constant is present
+    if (read < HEADERSIZE || memcmp(data, ines, sizeof(ines)) != 0) {
+        printf("Error: file not in iNES format\n");
+        exit(1);
+    }
+
+    struct header header = {
+        data[4],
+        data[5],
+        get_bit(data[6], 0),
+        get_bit(data[6], 1),
+        get_bit(data[6], 2),
+        (data[6] >> 4) + ((data[7] >> 4) << 4),
+        (data[8] == 0) ? 1 : data[8]
+    };
+
+    printf("ROM file contains %d PRG and %d CHR banks\n", header.prg_rom_size, header.chr_rom_size);
+    if(header.mirror == 0) {
+        printf("Vertical arrangement, horizontal mirrored\n");
+    }
+    if(header.battery != 0) {
+        printf("Persistent memory present\n");
+    }
+    if(header.trainer != 0) {
+        printf("Trainer present\n");
+    }
+    printf("Mapper number is: %d\n", header.mapper_num);
+
+    return header;
+}
+
+Cartridge cartridge_load(char *filename) {
+    FILE *fp = romfile_open(filename);
+    Cartridge cartridge = malloc(cartridge_size());
+    cartridge->header = romfile_extract_header(fp);
+
+    return cartridge;
+}
+
+uint8_t cartridge_read(Cartridge cartridge, uint16_t address) {
+    uint8_t byte;
+    if(address >= PRGROM_LOW_START && address <= 0xFFFF) {
+        uint16_t adjusted_addr = address - PRGROM_LOW_START;
+        byte = cartridge->PRGROM[adjusted_addr];
+    }
+    return byte;
+}
+
+void loadgame(char *ROMfile) {
+    /*
+    int cart_size = CART_SIZE_MIN;
+    struct cartridge *cart;
+
+    hdr = extractHeader(fp);
+    int extraPRGBanks = hdr->PRG_Banks_num - 2;
+    if(extraPRGBanks > 0) {
+        cart_size += CART_SIZE_MIN + (extraPRGBanks * PRGBANKSIZE);
+    }
+    uint8_t PRGROM[PRGBANKSIZE]; //donkeykong is simple
+    // cart_mem
+    // if(hdr->trainer != 0) {
+    //     extractData(fp);
+    // }; // load cartridge data
+    */
 }
 
 
@@ -42,76 +144,6 @@ uint8_t get_Bit(uint8_t byte, uint8_t position) {
 //         //need to go from start
 //     }
 // }
-
-void loadgame(char *ROMfile) {
-    FILE *fp; //pointer to file to be passed by nessie.c
-    struct Header *hdr;
-    int cart_size = CART_SIZE_MIN;
-    struct Cartridge *cart;
-    fp = fopen(ROMfile, "r");
-    if(fp == NULL) {
-        printf("Error: file could not be opened\n");
-    } else {
-        hdr = extractHeader(fp);
-        if(hdr == NULL) {
-            printf("Error: header not loaded\n");
-        } else {
-            int extraPRGBanks = hdr->PRG_Banks_num - 2;
-            if(extraPRGBanks > 0) {
-                cart_size += CART_SIZE_MIN + (extraPRGBanks * PRGBANKSIZE);
-            }
-            uint8_t PRGROM[PRGBANKSIZE]; //donkeykong is simple
-            // cart_mem
-            // if(hdr->trainer != 0) {
-            //     extractData(fp);
-            // }; // load cartridge data
-        }
-    }
-}
-
-struct Header *extractHeader(FILE *fp) {
-    int c;
-    struct Header header;
-    struct Header *ptr;
-    uint8_t Flags_6;
-    uint8_t Flags_7;
-    uint8_t Flags_8;
-    char str[HEADERSIZE];
-    for(int i = 0; i < HEADERSIZE && (c = getc(fp)) != EOF; i++) { //extracts 16 byte header from file
-        str[i] = c;
-    }
-    if(!(str[0] == 0x4E && str[1] == 0x45 && str[2] == 0x53 && str[3] == 0x1A)) {
-        printf("Error: file not in iNES format\n");
-        ptr = NULL;
-    } else {
-        header.PRG_Banks_num = str[4];  
-        header.CHR_Banks_num = str[5];
-        printf("ROM file contains %d PRG and %d CHR banks\n", header.PRG_Banks_num, header.CHR_Banks_num);
-
-        Flags_6 = str[6];
-        header.mirror = get_Bit(Flags_6, 0);
-        if(header.mirror == 0) {printf("Vertical arrangement, horizontal mirrored\n");}
-        header.battery = get_Bit(Flags_6, 1);
-        if(header.battery != 0) {printf("Persistent memory present\n");}
-        header.trainer = get_Bit(Flags_6, 2);
-        if(header.trainer != 0) {printf("Trainer present\n");}
-        uint8_t low_map = Flags_6 >> 4;
-
-        Flags_7 = str[7];
-        header.mapper_num = ((Flags_7 >> 4) << 4) + low_map;
-        printf("Mapper number is: %d\n", header.mapper_num);
-
-        Flags_8 = str[8]; //Size of PRG RAM in 8KB units, 0 infers 8KB
-        if(Flags_8 == 0) {
-            header.PRG_RAM = 1;
-        } else {
-            header.PRG_RAM = Flags_8;
-        }
-        ptr = &header;
-    }
-    return ptr;
-}
-
 
 
 //7000-$71FF where trainer goes if present
