@@ -7,9 +7,10 @@
 #define PRGBANKSIZE 16384
 #define CHRBANKSIZE 8192
 #define TRAINERSIZE 512
-#define CART_SIZE_MIN 0x10000 - 0x4020 //CPU memory range used by cartridge
 #define PRGROM_LOW_START 0x8000
-#define PRGROMSIZE 0x10000 - PRGROM_LOW_START //PRG ROM memory range
+#define PRGROM_HIGH_START 0xC000
+#define ADDR_RANGE_END 0x10000
+#define PRGROMSIZE ADDR_RANGE_END - PRGROM_LOW_START //PRG ROM memory range
 
 const uint8_t ines[] = { 0x4E, 0x45, 0x53, 0x1A };
 
@@ -153,11 +154,20 @@ void romfile_extract_chr_rom(FILE *fp, Cartridge cartridge) {
 }
 
 void map_000_write(void *data, uint16_t address, uint8_t byte) {
-    ;
+    Cartridge cartridge = (Cartridge) data;
+    if(address >= PRGROM_LOW_START && address < ADDR_RANGE_END) {
+        printf("PRG ROM: Invalid write\n");
+    };
 }
 
 uint8_t map_000_read(void *data, uint16_t address) {
-    uint8_t byte = 3;
+    uint8_t byte;
+    uint16_t bank_addr;
+    Cartridge cartridge = (Cartridge) data;
+    if(address >= PRGROM_LOW_START && address < PRGROM_HIGH_START) {
+        bank_addr = address - PRGROM_LOW_START;
+        byte = cartridge->prg_low[bank_addr];
+    }
     return byte;
 }
 

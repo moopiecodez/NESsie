@@ -48,9 +48,9 @@ int main(int argc, char *argv[]) {
     filename = check_args(argc, argv);
     cartridge = cartridge_load(filename);
 
-    uint16_t address = 0x8003;
+    uint16_t address = 0x8002;
     uint8_t byte;
-    byte = cartridge.read(&cartridge, address);
+    byte = cartridge.read(cartridge.data, address);
     printf("Read: %02x\n", byte);
 
     //cartridge free for malloc?
