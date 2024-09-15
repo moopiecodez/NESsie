@@ -64,7 +64,7 @@ Attempts to parse header (first 16 bytes) from file, returns error message and
 closes program if format incorrect. See iNES header format description for
 details
 */
-struct header romfile_extract_header(FILE *fp) {
+void romfile_extract_header(FILE *fp, Cartridge cartridge) {
     uint8_t data[HEADERSIZE];
     size_t read = fread(&data, sizeof(uint8_t), HEADERSIZE, fp);
 
@@ -91,18 +91,23 @@ struct header romfile_extract_header(FILE *fp) {
     if(header.battery != 0) {
         printf("Persistent memory present\n");
     }
-    if(header.trainer != 0) {
-        printf("Trainer present\n");
-    }
     printf("Mapper number is: %d\n", header.mapper_num);
 
-    return header;
+    cartridge->header = header;
+}
+
+void romfile_extract_trainer(FILE *fp, Cartridge cartridge) {
+    if(cartridge->header.trainer != 0) {
+        printf("Trainer present, handling trainers not implemented. Exiting\n");
+        exit(1);
+    }
 }
 
 Cartridge cartridge_load(char *filename) {
     FILE *fp = romfile_open(filename);
     Cartridge cartridge = malloc(cartridge_size());
-    cartridge->header = romfile_extract_header(fp);
+    romfile_extract_header(fp, cartridge);
+    romfile_extract_trainer(fp, cartridge);
 
     return cartridge;
 }
