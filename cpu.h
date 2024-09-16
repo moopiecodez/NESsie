@@ -2,6 +2,7 @@
 #define CPU_H
 
 #include <stdint.h>
+#include "bus.h"
 
 #define BYTE uint8_t
 
@@ -177,12 +178,12 @@ typedef struct cpu_registers {
 
 // void execute(CPU *cpu, Operation operation, BYTE *memory);
 
-void clocktick(CPU *cpu, BYTE *memory);
-void print_cpu(CPU *cpu);
+void clocktick(CPU *, Bus);
+void print_cpu(CPU *);
 
-void power_cpu(CPU *cpu);
+void power_cpu(CPU *);
 
-void setFlag(CPU *cpu, int position);
-void clearFlag(CPU *cpu, int position);
-BYTE getBit(BYTE source, int position);
+void setFlag(CPU *, int);
+void clearFlag(CPU *, int);
+BYTE getBit(BYTE, int);
 #endif

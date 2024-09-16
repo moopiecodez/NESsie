@@ -9,7 +9,7 @@
     array to hold NES memory addresses from $0000-$FFFF, each page is 0xFF will 
     need to do memory mirroring $0000-$07FF mapped to $0800-$1FFF
 */
-BYTE memory[0xFFFF] = {
+BYTE memory[0x2000] = {
     0x02, 0x23, 0x08, 0xfe, 0x00, 0x02, 0x01, 0x00, 0x03, 0x44, 0x01, 0x05, 0x24, 0x18, 0xCC, 0x1E,
     0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x20, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -31,6 +31,19 @@ BYTE memory[0xFFFF] = {
     0x12, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 };
+
+uint8_t read_mem(void *data, uint16_t address) {
+    BYTE *memory = (BYTE *) data;
+    uint8_t byte = memory[address];
+    return byte;
+}
+
+void write_mem(void *data, uint16_t address, uint8_t byte) {
+    BYTE *memory = (BYTE *) data;
+    memory[address] = byte;
+}
+
+
 char *check_args(int argc, char *argv[]) {
     if (argc == 1) {
         printf("Error: no arguments provided\n");
@@ -46,34 +59,28 @@ char *check_args(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
     char *filename;
     Device cartridge;
+    Device ram;
     Bus bus;
+    CPU cpu;
 
     filename = check_args(argc, argv);
     cartridge = cartridge_load(filename);
-    bus = bus_create(&cartridge);
+    ram.data = memory;
+    ram.read = &read_mem;
+    ram.write = &write_mem;
+    bus = bus_create(&cartridge, &ram);
 
-    printf("Read: %02x\n", bus_read(bus, 0xC003));
-    printf("Read: %02x\n", bus_read(bus, 0x8003));
+    power_cpu(&cpu);
+    print_cpu(&cpu);
+    int t_limit = 10;
+    printf("Read: %02x\n", bus_read(bus, 0xFFFC));
+    printf("Read: %02x\n", bus_read(bus, 0xFFFE));
+    printf("Read: %02x\n", bus_read(bus, 0xFFFF));
+    printf("Read: %02x\n", bus_read(bus, 0xC000));
 
-    //cartridge free for malloc?
-    // void *device = cartridge;
-    // CPU cpu;
-    // // Operation operation;
-    // cpu.A  = 0x0B;
-    // cpu.PC = 0x0000;
-    // cpu.IR = 0x00;
-    // cpu.P = 0x00;
-    // //needed for BRK
-    // memory[IRQ_HIGH] = 0x2E;
-    // memory[IRQ_LOW] = 0x1C;
-    // setFlag(&cpu, FLAG_I);
-    // setFlag(&cpu, FLAG_C);
-
-    // print_cpu(&cpu);
-    // //--------------------------------------------------
-    // for (int step_num = 0; step_num < 12; step_num++) {
-    //     clocktick(&cpu, memory);
-    // }
+    for (int t = 0; t < t_limit; t++) {
+        clocktick(&cpu, bus);
+    }
     
     return 0;
 }

@@ -13,10 +13,9 @@
 struct bus;
 typedef struct bus *Bus;
 
-Bus bus_create(Device *);
+Bus bus_create(Device *, Device *);
 
 uint8_t bus_read(Bus, uint16_t);
-
-// void write(uint16_t address, uint8_t byte);
+void bus_write(Bus, uint16_t, uint8_t);
 
 #endif

@@ -1,5 +1,5 @@
-#include "cpu.h"
 #include <stdio.h>
+#include "cpu.h"
 
 //instruction and addressing mode prototypes
 typedef void Instruction(CPU *);
@@ -29,8 +29,8 @@ Instruction DEC;
 Instruction DEX;
 Instruction DEY;
 
-void increment(CPU *cpu, BYTE memory);
-void decrement(CPU *cpu, BYTE *memory);
+void increment(CPU *, BYTE);
+void decrement(CPU *, BYTE *);
 
 //transfer instructions
 Instruction TAX;
@@ -84,7 +84,7 @@ Instruction RTS;
 Instruction FAKE;
 
 
-typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
+typedef void addr_mode_step(CPU *, Bus, Instruction *);
 addr_mode_step fetch_opcode;
 addr_mode_step fetch_throw;
 addr_mode_step fetch_throw_brk;
@@ -143,7 +143,7 @@ typedef struct op {
 
 Operation decode(CPU *cpu);
 
-void execute(CPU *cpu, Operation operation, BYTE *memory);
+void execute(CPU *, Operation, Bus);
 
 void print_cpu(CPU *cpu) {
     char flags[8];
@@ -155,10 +155,10 @@ void print_cpu(CPU *cpu) {
               flags, cpu->T, cpu->DL, cpu->ALU, cpu->ACR_FLAG);
 }
 
-void clocktick(CPU *cpu, BYTE *memory) {
+void clocktick(CPU *cpu, Bus bus) {
     Operation operation;
     operation = decode(cpu);
-    execute(cpu, operation, memory);
+    execute(cpu, operation, bus);
     print_cpu(cpu);
     cpu->T++;
 }
@@ -502,26 +502,26 @@ Operation decode(CPU *cpu) {
     return operation;
 }
 
-void execute(CPU *cpu, Operation operation, BYTE *memory){
-    operation.mode->step[cpu->T](cpu, memory, operation.ins);
+void execute(CPU *cpu, Operation operation, Bus bus){
+    operation.mode->step[cpu->T](cpu, bus, operation.ins);
 }
 
 /*
     Fetches opcode and loads it into Instruction Register.
     Increments Program Counter.
 */
-void fetch_opcode(CPU *cpu, BYTE *memory, Instruction *ins) {
+void fetch_opcode(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     cpu->IR = cpu->DL;
     cpu->PC++;
 }
 
-void increment_PC(CPU *cpu, BYTE *memory, Instruction *ins) {
+void increment_PC(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->PC = (cpu->DL << 8) + cpu->ALU;
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB; //reflect visual6502
     ins(cpu); //RTS doesn't actually do anything but includes so ins used
     cpu->PC++;
@@ -533,10 +533,10 @@ void increment_PC(CPU *cpu, BYTE *memory, Instruction *ins) {
     Does not increment Program Counter.
     Note BRK would increment PC
 */
-void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
+void fetch_throw(CPU *cpu, Bus bus, Instruction *ins) {
     //emulate reading memory but doing nothing with it
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     ins(cpu);
     if(cpu->IR == 0xE8 || cpu->IR == 0xCA){ // update X reg after INX or DEX
@@ -552,10 +552,10 @@ void fetch_throw(CPU *cpu, BYTE *memory, Instruction *ins) {
     Used for implied accumulator addressing BRK instruction.
     Increments Program Counter.
 */
-void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
+void fetch_throw_brk(CPU *cpu, Bus bus, Instruction *ins) {
     //emulate reading memory but doing nothing with it
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     cpu->PC++;
 }
@@ -564,9 +564,9 @@ void fetch_throw_brk(CPU *cpu, BYTE *memory, Instruction *ins) {
     Fetches operand and holds it in CPU predecode register.
     Increments Program Counter.
 */
-void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
+void imm_fetch_operand(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     ins(cpu);
     if(cpu->ACR_FLAG == 0) { //for branch instructions check if branch triggered
@@ -576,7 +576,7 @@ void imm_fetch_operand(CPU *cpu, BYTE *memory, Instruction *ins) {
     }
 }
 
-void branch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
+void branch_PCL(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->ALU = (BYTE)(cpu->PC & 0xFF) + cpu->DL;
     if((cpu->DL < 0x80) && !(cpu->ALU < cpu->DL)){ // operand < 0x80 means positive offset 0x80 so check for overflow
         cpu->ACR_FLAG = 0; //only need to adjust to 0 as carry flag already set if you get to this cycle
@@ -591,7 +591,7 @@ void branch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
 
 }
 
-void branch_fixPCH(CPU *cpu, BYTE *memory, Instruction *ins) {
+void branch_fixPCH(CPU *cpu, Bus bus, Instruction *ins) {
     if(cpu->DL < 0x80) {
         cpu->PC += 0x0100; //correct for positive offset page cross
     } else {
@@ -599,194 +599,192 @@ void branch_fixPCH(CPU *cpu, BYTE *memory, Instruction *ins) {
     }
 }
 
-void stack_push_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
-    // BYTE PCH = cpu->PC >> 8;
+void stack_push_PCH(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->DB = cpu->PC >> 8;
     cpu->DL = cpu->DB;
-    // memory[STACK_BASE + cpu->S] = cpu->DB;
     cpu->AB = STACK_BASE + cpu->S;
-    memory[cpu->AB] = cpu->DL;
+    bus_write(bus, cpu->AB, cpu->DL);
     cpu->S--;
 }
 
-void stack_push_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
+void stack_push_PCL(CPU *cpu, Bus bus, Instruction *ins) {
     // BYTE PCL = cpu->PC;
     cpu->DB = cpu->PC;
     cpu->DL = cpu->DB;
     cpu->AB = STACK_BASE + cpu->S;
-    memory[cpu->AB] = cpu->DL;
+    bus_write(bus, cpu->AB, cpu->DL);
     // cpu->AB = STACK_BASE + cpu->S;
     // memory[cpu->AB] = cpu->DB;
     cpu->S--;
 }
 
-void stack_pull_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
+void stack_pull_PCH(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->ALU = cpu->DL; //PCL obtained in previous cycle
     cpu->AB = STACK_BASE + cpu->S;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
 }
 
-void stack_pull_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
+void stack_pull_PCL(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->AB = STACK_BASE + cpu->S;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     cpu->S++;
 }
 
-void stack_push_register(CPU *cpu, BYTE *memory, Instruction *ins) {
+void stack_push_register(CPU *cpu, Bus bus, Instruction *ins) {
     ins(cpu);
     cpu->DL = cpu->DB;
     cpu->AB = STACK_BASE + cpu->S;
-    memory[cpu->AB] = cpu->DL;
+    bus_write(bus, cpu->AB, cpu->DL);
     cpu->S--;
 }
 
-void stack_pull_register(CPU *cpu, BYTE *memory, Instruction *ins) {
+void stack_pull_register(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->AB = STACK_BASE + cpu->S;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     ins(cpu);
 }
 
-void increment_S(CPU *cpu, BYTE *memory, Instruction *ins) {
+void increment_S(CPU *cpu, Bus bus, Instruction *ins) {
     //AB set to stack and read but nothing done with it (see visual6502)
     cpu->AB = STACK_BASE + cpu->S;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     cpu->S++;
 }
 
-void fetch_PCL(CPU *cpu, BYTE *memory, Instruction *ins) {
+void fetch_PCL(CPU *cpu, Bus bus, Instruction *ins) {
     // cpu->PC = memory[IRQ_LOW];
     cpu->AB = IRQ_LOW;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     cpu->PC = cpu->DL;
     //check which cycle this is set
     setFlag(cpu, FLAG_I);
 }
 
-void fetch_PCH(CPU *cpu, BYTE *memory, Instruction *ins) {
+void fetch_PCH(CPU *cpu, Bus bus, Instruction *ins) {
     // cpu->PC += (memory[IRQ_HIGH] << 8);
     cpu->AB = IRQ_HIGH;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     cpu->PC += cpu->DL << 8;
 }
 
-void set_PC_to_JSR(CPU *cpu, BYTE *memory, Instruction *ins){
+void set_PC_to_JSR(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB]; //get PCH
+    cpu->DB = bus_read(bus, cpu->AB); //get PCH
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->PD is ADH
     cpu->PC = cpu->ALU; //ALU holds target PCL from earlier in JSR routine
     cpu->PC += cpu->DL << 8;
 }
 
-void set_PC_to_JMP(CPU *cpu, BYTE *memory, Instruction *ins){
+void set_PC_to_JMP(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB]; //get PCH
+    cpu->DB = bus_read(bus, cpu->AB); //get PCH
     cpu->PC = cpu->DL; //DL still holds target PCL at start
     cpu->PC += cpu->DB << 8;
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->PD is ADH
 }
 
-void hold_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
+void hold_ADL(CPU *cpu, Bus bus, Instruction *ins){
     cpu->ALU = cpu->DL; //holds ADL for jump later in JSR
     ins(cpu);
 }
 
 
-void fetch_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_ADL(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     cpu->PC++;
 }
 
-void fetch_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_ADH(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->ALU = cpu->DL; //start of cycle cpu->DL is ADL which is stored in ALU
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->PD is ADH
     cpu->PC++;
 }
 
-void fetch_address(CPU *cpu, BYTE *memory, Instruction *ins){ //***check as this reads address held in PC
+void fetch_address(CPU *cpu, Bus bus, Instruction *ins){ //***check as this reads address held in PC
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB; //at end of cycle DL holds contents of address stored in PC to be used as address in next cycle
     cpu->PC++;
 }
 
-void read_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
+void read_addr_exe(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = (cpu->DL << 8) + cpu->ALU;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     ins(cpu);
 }
 
-void read_zp_addr_exe(CPU *cpu, BYTE *memory, Instruction *ins){
+void read_zp_addr_exe(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->DL;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     ins(cpu);
 }
 
-void read_zp_addr(CPU *cpu, BYTE *memory, Instruction *ins){
+void read_zp_addr(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->DL; //in previous cycle effective address stored in DL
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
 }
 
-void read_addr(CPU *cpu, BYTE *memory, Instruction *ins){
+void read_addr(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = (cpu->DL << 8) + cpu->ALU; //in previous cycle ADL address stored in ALU and DL holds ADH
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB; //DL holds target PCL
 }
 
-void read_PCH(CPU *cpu, BYTE *memory, Instruction *ins){
+void read_PCH(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->AB + 1;
-    cpu->DB = memory[cpu->AB]; //DB holds PCH
+    cpu->DB = bus_read(bus, cpu->AB); //DB holds PCH
     cpu->PC = (cpu->DB << 8) + cpu->DL; //DL holds target PCL from previous cycle
     cpu->DL = cpu->DB;
 }
 
-void modify(CPU *cpu, BYTE *memory, Instruction *ins) {
+void modify(CPU *cpu, Bus bus, Instruction *ins) {
     //memory[cpu->AB] = cpu->DB writes unmodified value again first
     ins(cpu); 
 }
 
-void write_addr(CPU *cpu, BYTE *memory, Instruction *ins) {
+void write_addr(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->DB = cpu->ALU;
     cpu->DL = cpu->DB;
-    memory[cpu->AB] = cpu->DL; //write modified value
+    bus_write(bus, cpu->AB, cpu->DL); //write modified value
 }
 
-void write_register(CPU *cpu, BYTE *memory, Instruction *ins) {
+void write_register(CPU *cpu, Bus bus, Instruction *ins) {
     ins(cpu);
     cpu->DL = cpu->DB;
-    memory[cpu->AB] = cpu->DL; //write register value returned by instruction
+    bus_write(bus, cpu->AB, cpu->DL); //write register value returned by instruction
 }
 
-void read_addr_add_X(CPU *cpu, BYTE *memory, Instruction *ins) {
+void read_addr_add_X(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->DB = cpu->X;
     cpu->ALU = cpu->DL + cpu->DB; //page boundary crossings not handled
     cpu->DL = cpu->DB;
     cpu->AB = cpu->ALU; //check this is happening at right point
 }
 
-void read_addr_add_Y(CPU *cpu, BYTE *memory, Instruction *ins) {
+void read_addr_add_Y(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->DB = cpu->Y;
     cpu->ALU = cpu->DL + cpu->DB; //page boundary crossings not handled
     cpu->DL = cpu->DB;
     cpu->AB = cpu->ALU;
 }
 
-void fetch_ADH_add_X(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_ADH_add_X(CPU *cpu, Bus bus, Instruction *ins){
     //at the start of cycle cpu->DL holds ADL
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB]; //DB is ADH
+    cpu->DB = bus_read(bus, cpu->AB); //DB is ADH
     cpu->ALU = cpu->DL + cpu->X; // add ADL and X
     if(cpu->ALU < cpu->X) { //set ALU carry flag if page boundary crossed
         cpu->ACR_FLAG = 1;
@@ -796,10 +794,10 @@ void fetch_ADH_add_X(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
     cpu->PC++;
 }
-void fetch_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_ADH_add_Y(CPU *cpu, Bus bus, Instruction *ins){
     //start of cycle cpu->DL is ADL
     cpu->AB = cpu->PC;
-    cpu->DB = memory[cpu->AB]; //DB is ADH
+    cpu->DB = bus_read(bus, cpu->AB); //DB is ADH
     cpu->ALU = cpu->DL + cpu->Y; // add ADL and X
     if(cpu->ALU < cpu->Y) { //set ALU carry flag if page boundary crossed
         cpu->ACR_FLAG = 1;
@@ -810,9 +808,9 @@ void fetch_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->PC++;
 }
 
-void read_addr_fixADH_exe(CPU *cpu, BYTE *memory, Instruction *ins){
+void read_addr_fixADH_exe(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = (cpu->DL << 8) + cpu->ALU;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     if(cpu->ACR_FLAG != 0) {
         cpu->ALU = cpu->DL + 1; //fixed ADH value including page boundary cross
         cpu->ACR_FLAG = 0;
@@ -824,17 +822,17 @@ void read_addr_fixADH_exe(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->DL = cpu->DB;
 }
 
-void read_addr_updated_exe(CPU *cpu, BYTE *memory, Instruction *ins) {
+void read_addr_updated_exe(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //updated address
     cpu->ALU = 0x00;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
     ins(cpu);
 }
 
-void read_addr_fixADH(CPU *cpu, BYTE *memory, Instruction *ins){
+void read_addr_fixADH(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = (cpu->DL << 8) + cpu->ALU;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     if(cpu->ACR_FLAG != 0) {
         cpu->ALU = cpu->DL + 1; //fixed ADH value including page boundary cross
         cpu->ACR_FLAG = 0;
@@ -844,16 +842,16 @@ void read_addr_fixADH(CPU *cpu, BYTE *memory, Instruction *ins){
     cpu->DL = cpu->DB;
 }
 
-void read_addr_updated(CPU *cpu, BYTE *memory, Instruction *ins) {
+void read_addr_updated(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->AB = (cpu->ALU << 8) + (cpu->AB & 0xff); //updated address
     cpu->ALU = 0x00;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
 }
 
-// void read_addr_fixADH_w(CPU *cpu, BYTE *memory, Instruction *ins){
+// void read_addr_fixADH_w(CPU *cpu, Bus bus, Instruction *ins){
 //     cpu->AB = (cpu->DB << 8) + cpu->ALU;
-//     cpu->DB = memory[cpu->AB];
+//     cpu->DB = bus_read(bus, cpu->AB);
 //     if(cpu->ACR_FLAG != 0) {
 //         cpu->ALU = cpu->DL + 1; //fixed ADH value including page boundary cross
 //         cpu->ACR_FLAG = 0;
@@ -862,7 +860,7 @@ void read_addr_updated(CPU *cpu, BYTE *memory, Instruction *ins) {
 //     cpu->DL = cpu->DB;
 // }
 
-void write_register_fixedADH(CPU *cpu, BYTE *memory, Instruction *ins) {
+void write_register_fixedADH(CPU *cpu, Bus bus, Instruction *ins) {
     if(cpu->ACR_FLAG != 0) { //technically ALU and flag should be reset by time write starts
         cpu->ALU = (cpu->AB >> 8) + 1;
         cpu->ACR_FLAG = 0;
@@ -871,39 +869,39 @@ void write_register_fixedADH(CPU *cpu, BYTE *memory, Instruction *ins) {
     }
     ins(cpu);
     cpu->DL = cpu->DB;
-    memory[cpu->AB] = cpu->DL; //write register value returned by instruction
+    bus_write(bus, cpu->AB, cpu->DL); //write register value returned by instruction
 }
 
-void read_ptr_add_X(CPU *cpu, BYTE *memory, Instruction *ins) {
+void read_ptr_add_X(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->AB = cpu->DL;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->ALU = cpu->DL + cpu->X; //ALU holds address (ptr fetched in previous cycle + X) doesn't deal with crossing page boundaries
     cpu->DL = cpu->DB;
 }
 
-void fetch_ptrX_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_ptrX_ADL(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->ALU; //ptr + X
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->ALU = cpu->ALU + 1; //ptr + X + 1
     cpu->DL = cpu->DB; //DL is ADL
 }
 
-void fetch_ptrX_ADH(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_ptrX_ADH(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->ALU; //ALU holds ptr + X + 1
-    cpu->DB = memory[cpu->AB]; //DB is AHL, DL still holds ADL
+    cpu->DB = bus_read(bus, cpu->AB); //DB is AHL, DL still holds ADL
     cpu->ALU = cpu->DB; //store ADL in ALU
     cpu->DL = cpu->DB; //end of cycle/start of next cycle cpu->DL is ADH
 }
-void fetch_ptr_ADL(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_ptr_ADL(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->DL;
-    cpu->DB = memory[cpu->AB];
+    cpu->DB = bus_read(bus, cpu->AB);
     cpu->ALU = cpu->DL + 1;
     cpu->DL = cpu->DB; //DL is ADL
 }
 
-void fetch_ptr_ADH_add_Y(CPU *cpu, BYTE *memory, Instruction *ins){
+void fetch_ptr_ADH_add_Y(CPU *cpu, Bus bus, Instruction *ins){
     cpu->AB = cpu->ALU;
-    cpu->DB = memory[cpu->AB]; //DB is AHL
+    cpu->DB = bus_read(bus, cpu->AB); //DB is AHL
     cpu->ALU = cpu->DB + cpu->Y; //store ADL in ALU add Y
     if(cpu->ALU < cpu->Y) {
         cpu->ACR_FLAG = 1;
