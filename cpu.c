@@ -624,11 +624,11 @@ void imm_fetch_operand(CPU *cpu, Bus bus, Instruction *ins) {
     cpu->AB = cpu->PC;
     cpu->DB = bus_read(bus, cpu->AB);
     cpu->DL = cpu->DB;
+    cpu->PC++;
     ins(cpu);
     if(cpu->ACR_FLAG == 0) { //for branch instructions check if branch triggered
         cpu->T++; //skip branch next step
         cpu->T++; //skip potential second next step to fix PCH if page boundary crossed
-        cpu->PC++; //if branch not triggered or not a branch instruction just increment PC
     }
 }
 
