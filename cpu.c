@@ -1,5 +1,55 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "cpu.h"
+
+//constant for flag bitwise operations
+#define FLAG_MASK ~(~0 << 1)
+#define LEFT_BIT 7
+#define RIGHT_BIT 0
+
+//IRQ interrupt vector locations
+#define IRQ_HIGH 0xFFFFu
+#define IRQ_LOW 0xFFFEu
+
+//constant for base stack location in memory
+#define STACK_BASE 0x0100u
+
+//constant for zero page location
+#define ZERO_PAGE 0x0000
+
+//constants for Processor Status register flags position, 5 not used
+#define FLAG_N 7    /* N (negative flag) */
+#define FLAG_V 6    /* V (overflow flag) */
+#define FLAG_B 4    /* B (break command flag) */
+#define FLAG_D 3    /* D (decimal mode flag) - not used in NES CPU */
+#define FLAG_I 2    /* I (interrupt disable flag) */
+#define FLAG_Z 1    /* Z (zero flag) */
+#define FLAG_C 0    /* C (carry flag)*/
+
+struct cpu {
+    uint16_t PC;    /* Program Counter */
+    BYTE P;         /* Processor status register */
+    BYTE A;         /* Accumulator register */
+    BYTE X;         /* Index Register X */
+    BYTE Y;         /* Index Register Y */
+    BYTE S;         /* Stack Pointer/offset from $0100, initialised at $FF*/
+    BYTE IR;        /* Instruction Register, holds opcode initialised to 0*/
+    BYTE DB;        /* Data Bus*/
+    uint16_t AB;    /* Address Bus*/
+    BYTE T;         /* Instruction step number*/
+    BYTE DL;        /*Input Data Latch duplicated in Predecode register loaded with each read bus cycle*/
+    BYTE ALU;       /*Arithmetic Logic Unit*/
+    BYTE ACR_FLAG;  /*ALU carry register used as a flag if ALU operation resulted in a carry*/
+};
+
+CPU * cpu_create(){
+    CPU *cpu = malloc(sizeof(struct cpu));
+    return cpu;
+}
+
+void setFlag(CPU *, int);
+void clearFlag(CPU *, int);
+BYTE getBit(BYTE, int);
 
 //instruction and addressing mode prototypes
 typedef void Instruction(CPU *);
@@ -30,7 +80,7 @@ Instruction DEX;
 Instruction DEY;
 
 void increment(CPU *, BYTE);
-void decrement(CPU *, BYTE *);
+void decrement(CPU *, BYTE);
 
 //transfer instructions
 Instruction TAX;
@@ -1435,15 +1485,6 @@ void PHP(CPU *cpu) {
     cpu->DB = cpu->P;
 }
 
-// /*
-//     Helper function - pulls register from stack
-//     Increments stack pointer before pulling contents
-// */
-// void pull_from_stack(CPU *cpu, BYTE *memory, BYTE *reg) {
-//     cpu->S++;
-//     *reg = memory[STACK_BASE + cpu->S];
-// }
-
 /*
     Pull accumulator from stack
     Load accumulator with value pulled from top of stack.
@@ -1726,14 +1767,7 @@ void JMP(CPU *cpu) {
     Address part of instruction then stored in PC.
 */
 void JSR(CPU *cpu) {
-    ;// implemented in cycle functions
-    // push_to_stack(cpu, memory, (cpu->PC >> 8));
-    // push_to_stack(cpu, memory, cpu->PC);
-    // BYTE high = memory[cpu->PC + 1];
-    // BYTE low = memory[cpu->PC + 2];;
-    // uint16_t address = high << 8;
-    // address += low;
-    // cpu->PC = address;
+    ;//operation implemented in cycle functions
 }
 
 /*
@@ -1741,7 +1775,7 @@ void JSR(CPU *cpu) {
     Pulls the Program Counter from the stack and increments by 1.
 */
 void RTS(CPU *cpu) {
-    ; //functionality handled by cycle functions
+    ; //operation implemented in cycle functions
 }
 
 /*
