@@ -8,7 +8,9 @@
 #define PRGROM_HIGH_START   0xC000
 #define PRGROM_LOW_START    0x8000
 #define CARTRIDGE_START     0x4020
-#define IO_REGISTERS_START  0x2000
+#define PPU_REGISTERS_START 0x2000
+#define IO_REGISTERS_START  0x4000
+
 
 struct bus;
 typedef struct bus *Bus;
