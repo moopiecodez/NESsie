@@ -131,7 +131,7 @@ Instruction BRK;
 Instruction RTI;
 Instruction RTS;
 
-Instruction FAKE;
+Instruction NOT;
 
 
 typedef void addr_mode_step(CPU *, Bus, Instruction *);
@@ -190,6 +190,7 @@ typedef struct addr_mode {
 typedef struct op {
     Instruction *ins;
     AddressingMode *mode;
+    char *name;
 } Operation;
 
 Operation decode(CPU *cpu);
@@ -210,6 +211,7 @@ void clocktick(CPU *cpu, Bus bus) {
     Operation operation;
     operation = decode(cpu);
     execute(cpu, operation, bus);
+    printf("%s | ", operation.name);
     print_cpu(cpu);
     cpu->T++;
 }
@@ -233,7 +235,7 @@ expands to:
 #define addressingmode(name, array) addressingmode_(name, name##_, passarray(array))
 
 
-addressingmode(addr_BRK, passarray({
+addressingmode(addr_brk, passarray({
     fetch_opcode,
     fetch_throw_brk,
     stack_push_PCH,
@@ -243,7 +245,7 @@ addressingmode(addr_BRK, passarray({
     fetch_PCH
 }));
 
-addressingmode(addr_RTS, passarray({
+addressingmode(addr_rts, passarray({
     fetch_opcode,
     fetch_throw,
     increment_S,
@@ -252,7 +254,7 @@ addressingmode(addr_RTS, passarray({
     increment_PC
 }));
 
-addressingmode(addr_JSR, passarray({
+addressingmode(addr_jsr, passarray({
     fetch_opcode,
     fetch_ADL,
     hold_ADL,
@@ -267,7 +269,7 @@ addressingmode(addr_JMP_absolute, passarray({
     set_PC_to_JMP
 }));
 
-addressingmode(addr_RTI, passarray({
+addressingmode(addr_rti, passarray({
     fetch_opcode,
     fetch_throw,
     increment_S,
@@ -526,25 +528,27 @@ addressingmode(addr_absolute_indirect, passarray({ //doesn't handle page boundar
 // Read instructions (LDA, LDX, LDY, EOR, AND, ORA, ADC, SBC, CMP, BIT, LAX, NOP)
 //Read-Modify-Write instructions (ASL, LSR, ROL, ROR, INC, DEC, SLO, SRE, RLA, RRA, ISB, DCP)
 //Write instructions (STA, STX, STY, SAX)
-Operation operations[] = {
-    { BRK, &addr_BRK }, { ORA, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ORA, &addr_zeropage_r }, { ASL, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { PHP, &addr_implied_push }, { ORA, &addr_immediate }, { ASL, &addr_accumulator }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ORA, &addr_absolute_r }, { ASL, &addr_absolute_rmw }, { FAKE, &addr_implied },
-    { BPL, &addr_relative }, { ORA, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ORA, &addr_zpindex_X_r }, { ASL, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { CLC, &addr_implied }, { ORA, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ORA, &addr_absolute_X_r }, { ASL, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
-    { JSR, &addr_JSR }, { AND, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { BIT, &addr_zeropage_r }, { AND, &addr_zeropage_r }, { ROL, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { PLP, &addr_implied_pull }, { AND, &addr_immediate }, { ROL, &addr_accumulator }, { FAKE, &addr_implied }, { BIT, &addr_absolute_r }, { AND, &addr_absolute_r }, { ROL, &addr_absolute_rmw }, { FAKE, &addr_implied },
-    { BMI, &addr_relative }, { AND, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, {AND, &addr_zpindex_X_r }, { ROL, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { SEC, &addr_implied }, { AND, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { AND, &addr_absolute_X_r }, { ROL, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
-    { RTI, &addr_RTI }, { EOR, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { EOR, &addr_zeropage_r }, { LSR, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { PHA, &addr_implied_push }, { EOR, &addr_immediate }, { LSR, &addr_accumulator }, { FAKE, &addr_implied }, { JMP, &addr_JMP_absolute }, { EOR, &addr_absolute_r }, { LSR, &addr_absolute_rmw }, { FAKE, &addr_implied },
-    { BVC, &addr_relative }, { EOR, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { EOR, &addr_zpindex_X_r }, { LSR, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { CLI, &addr_implied }, { EOR, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { EOR, &addr_absolute_X_r }, { LSR, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
-    { RTS, &addr_RTS }, { ADC, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ADC, &addr_zeropage_r }, { ROR, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { PLA, &addr_implied_pull }, { ADC, &addr_immediate }, { ROR, &addr_accumulator }, { FAKE, &addr_implied }, { JMP, &addr_absolute_indirect }, { ADC, &addr_absolute_r }, { ROR, &addr_absolute_rmw }, { FAKE, &addr_implied },
-    { BVS, &addr_relative}, { ADC, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, {ADC, &addr_zpindex_X_r }, { ROR, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { SEI, &addr_implied }, { ADC, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { ADC, &addr_absolute_X_r }, { ROR, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
-    { FAKE, &addr_implied }, { STA, &addr_indexed_indirect_w }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { STY, &addr_zeropage_w }, { STA, &addr_zeropage_w }, { STX, &addr_zeropage_w }, { FAKE, &addr_implied }, { DEY, &addr_implied }, { FAKE, &addr_implied }, { TXA, &addr_implied }, { FAKE, &addr_implied }, { STY, &addr_absolute_w }, { STA, &addr_absolute_w }, { STX, &addr_absolute_w }, { FAKE, &addr_implied },
-    { BCC, &addr_relative }, { STA, &addr_indirect_indexed_w }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { STY, &addr_zpindex_X_w }, { STA, &addr_zpindex_X_w }, { STX, &addr_zpindex_Y_w }, { FAKE, &addr_implied }, { TYA, &addr_implied }, { STA, &addr_absolute_Y_w }, { TXS, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { STA, &addr_absolute_X_w }, { FAKE, &addr_implied }, { FAKE, &addr_implied },
-    { LDY, &addr_immediate }, { LDA, & addr_indexed_indirect_r }, { LDX, &addr_immediate }, { FAKE, &addr_implied }, { LDY, &addr_zeropage_r }, { LDA, &addr_zeropage_r }, { LDX, &addr_zeropage_r }, { FAKE, &addr_implied }, { TAY, &addr_implied }, { LDA, &addr_immediate }, { TAX, &addr_implied }, { FAKE, &addr_implied }, { LDY, &addr_absolute_r }, { LDA, &addr_absolute_r }, { LDX, &addr_absolute_r }, { FAKE, &addr_implied },
-    { BCS, &addr_relative }, { LDA, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { LDY, &addr_zpindex_X_r }, { LDA, &addr_zpindex_X_r }, { LDX, &addr_zpindex_Y_r }, { FAKE, &addr_implied }, { CLV, &addr_implied }, { LDA, &addr_absolute_Y_r }, { TSX, &addr_implied }, { FAKE, &addr_implied }, { LDY, &addr_absolute_X_r }, { LDA, &addr_absolute_X_r }, { LDX, &addr_absolute_Y_r }, { FAKE, &addr_implied },
-    { CPY, &addr_immediate }, { CMP, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { CPY, &addr_zeropage_r }, { CMP, &addr_zeropage_r }, { DEC, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { INY, &addr_implied }, { CMP, &addr_immediate }, { DEX, &addr_implied }, { FAKE, &addr_implied }, { CPY, &addr_absolute_r }, { CMP, &addr_absolute_r }, { DEC, &addr_absolute_rmw }, { FAKE, &addr_implied },
-    { BNE, &addr_relative }, { CMP, &addr_indirect_indexed_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { CMP, &addr_zpindex_X_r }, { DEC, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { CLD, &addr_implied }, { CMP, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { CMP, &addr_absolute_X_r }, { DEC, &addr_absolute_X_rmw }, { FAKE, &addr_implied },
-    { CPX, &addr_immediate }, { SBC, &addr_indexed_indirect_r  }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { CPX, &addr_zeropage_r }, { SBC, &addr_zeropage_r }, { INC, &addr_zeropage_rmw }, { FAKE, &addr_implied }, { INX, &addr_implied }, { SBC, &addr_immediate }, { NOP, &addr_implied }, { FAKE, &addr_implied },  { CPX, &addr_absolute_r }, { SBC, &addr_absolute_r }, { INC, &addr_absolute_rmw }, { FAKE, &addr_implied }, 
-    { BEQ, &addr_relative }, { SBC, &addr_indexed_indirect_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { SBC, &addr_zpindex_X_r }, { INC, &addr_zpindex_X_rmw }, { FAKE, &addr_implied }, { SED, &addr_implied }, { SBC, &addr_absolute_Y_r }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { FAKE, &addr_implied }, { SBC, &addr_absolute_X_r }, { INC, &addr_absolute_X_r }, { FAKE, &addr_implied }
-};
 
+#define op(instruction, mode) { instruction, &addr_##mode , #instruction }
+
+Operation operations[] = {
+    op(BRK, brk), op(ORA, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, zeropage_r), op(ASL, zeropage_rmw), op(NOT, implied), op(PHP, implied_push), op(ORA, immediate), op(ASL, accumulator), op(NOT, implied), op(NOT, implied), op(ORA, absolute_r), op(ASL, absolute_rmw), op(NOT, implied),
+    op(BPL, relative), op(ORA, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, zpindex_X_r), op(ASL, zpindex_X_rmw), op(NOT, implied), op(CLC, implied), op(ORA, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, absolute_X_r), op(ASL, absolute_X_rmw), op(NOT, implied),
+    op(JSR, jsr), op(AND, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(BIT, zeropage_r), op(AND, zeropage_r), op(ROL, zeropage_rmw), op(NOT, implied), op(PLP, implied_pull), op(AND, immediate), op(ROL, accumulator), op(NOT, implied), op(BIT, absolute_r), op(AND, absolute_r), op(ROL, absolute_rmw), op(NOT, implied),
+    op(BMI, relative), op(AND, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(AND, zpindex_X_r), op(ROL, zpindex_X_rmw), op(NOT, implied), op(SEC, implied), op(AND, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(AND, absolute_X_r), op(ROL, absolute_X_rmw), op(NOT, implied),
+    op(RTI, rti), op(EOR, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, zeropage_r), op(LSR, zeropage_rmw), op(NOT, implied), op(PHA, implied_push), op(EOR, immediate), op(LSR, accumulator), op(NOT, implied), op(JMP, JMP_absolute), op(EOR, absolute_r), op(LSR, absolute_rmw), op(NOT, implied),
+    op(BVC, relative), op(EOR, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, zpindex_X_r), op(LSR, zpindex_X_rmw), op(NOT, implied), op(CLI, implied), op(EOR, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, absolute_X_r), op(LSR, absolute_X_rmw), op(NOT, implied),
+    op(RTS, rts), op(ADC, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, zeropage_r), op(ROR, zeropage_rmw), op(NOT, implied), op(PLA, implied_pull), op(ADC, immediate), op(ROR, accumulator), op(NOT, implied), op(JMP, absolute_indirect), op(ADC, absolute_r), op(ROR, absolute_rmw), op(NOT, implied),
+    op(BVS, relative), op(ADC, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, zpindex_X_r), op(ROR, zpindex_X_rmw), op(NOT, implied), op(SEI, implied), op(ADC, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, absolute_X_r), op(ROR, absolute_X_rmw), op(NOT, implied),
+    op(NOT, implied), op(STA, indexed_indirect_w), op(NOT, implied), op(NOT, implied), op(STY, zeropage_w), op(STA, zeropage_w), op(STX, zeropage_w), op(NOT, implied), op(DEY, implied), op(NOT, implied), op(TXA, implied), op(NOT, implied), op(STY, absolute_w), op(STA, absolute_w), op(STX, absolute_w), op(NOT, implied),
+    op(BCC, relative), op(STA, indirect_indexed_w), op(NOT, implied), op(NOT, implied), op(STY, zpindex_X_w), op(STA, zpindex_X_w), op(STX, zpindex_Y_w), op(NOT, implied), op(TYA, implied), op(STA, absolute_Y_w), op(TXS, implied), op(NOT, implied), op(NOT, implied), op(STA, absolute_X_w), op(NOT, implied), op(NOT, implied),
+    op(LDY, immediate), op(LDA, indexed_indirect_r), op(LDX, immediate), op(NOT, implied), op(LDY, zeropage_r), op(LDA, zeropage_r), op(LDX, zeropage_r), op(NOT, implied), op(TAY, implied), op(LDA, immediate), op(TAX, implied), op(NOT, implied), op(LDY, absolute_r), op(LDA, absolute_r), op(LDX, absolute_r), op(NOT, implied),
+    op(BCS, relative), op(LDA, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(LDY, zpindex_X_r), op(LDA, zpindex_X_r), op(LDX, zpindex_Y_r), op(NOT, implied), op(CLV, implied), op(LDA, absolute_Y_r), op(TSX, implied), op(NOT, implied), op(LDY, absolute_X_r), op(LDA, absolute_X_r), op(LDX, absolute_Y_r), op(NOT, implied),
+    op(CPY, immediate), op(CMP, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(CPY, zeropage_r), op(CMP, zeropage_r), op(DEC, zeropage_rmw), op(NOT, implied), op(INY, implied), op(CMP, immediate), op(DEX, implied), op(NOT, implied), op(CPY, absolute_r), op(CMP, absolute_r), op(DEC, absolute_rmw), op(NOT, implied),
+    op(BNE, relative), op(CMP, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(CMP, zpindex_X_r), op(DEC, zpindex_X_rmw), op(NOT, implied), op(CLD, implied), op(CMP, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(CMP, absolute_X_r), op(DEC, absolute_X_rmw), op(NOT, implied),
+    op(CPX, immediate), op(SBC, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(CPX, zeropage_r), op(SBC, zeropage_r), op(INC, zeropage_rmw), op(NOT, implied), op(INX, implied), op(SBC, immediate), op(NOP, implied), op(NOT, implied),  op(CPX, absolute_r), op(SBC, absolute_r), op(INC, absolute_rmw), op(NOT, implied),
+    op(BEQ, relative), op(SBC, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(SBC, zpindex_X_r), op(INC, zpindex_X_rmw), op(NOT, implied), op(SED, implied), op(SBC, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(SBC, absolute_X_r), op(INC, absolute_X_r), op(NOT, implied)
+};
 
 Operation decode(CPU *cpu) {
     Operation operation = operations[cpu->IR];
@@ -1791,10 +1795,10 @@ void NOP(CPU *cpu) {
 }
 
 /*
-    FAKE
+    NOT
     Unimplemented opcode
 */
-void FAKE(CPU *cpu) {
+void NOT(CPU *cpu) {
     printf("ERROR: this instruction is not implemented\n");
 }
 
