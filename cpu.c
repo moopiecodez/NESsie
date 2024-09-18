@@ -235,7 +235,7 @@ expands to:
 #define addressingmode(name, array) addressingmode_(name, name##_, passarray(array))
 
 
-addressingmode(addr_brk, passarray({
+addressingmode(addr_imp_brk, passarray({
     fetch_opcode,
     fetch_throw_brk,
     stack_push_PCH,
@@ -245,7 +245,7 @@ addressingmode(addr_brk, passarray({
     fetch_PCH
 }));
 
-addressingmode(addr_rts, passarray({
+addressingmode(addr_imp_rts, passarray({
     fetch_opcode,
     fetch_throw,
     increment_S,
@@ -254,7 +254,7 @@ addressingmode(addr_rts, passarray({
     increment_PC
 }));
 
-addressingmode(addr_jsr, passarray({
+addressingmode(addr_imp_jsr, passarray({
     fetch_opcode,
     fetch_ADL,
     hold_ADL,
@@ -263,13 +263,13 @@ addressingmode(addr_jsr, passarray({
     set_PC_to_JSR
 }));
 
-addressingmode(addr_JMP_absolute, passarray({
+addressingmode(addr_jmp_abs, passarray({
     fetch_opcode,
     fetch_ADL,
     set_PC_to_JMP
 }));
 
-addressingmode(addr_rti, passarray({
+addressingmode(addr_imp_rti, passarray({
     fetch_opcode,
     fetch_throw,
     increment_S,
@@ -293,18 +293,20 @@ addressingmode(addr_accumulator, passarray({
     fetch_throw_accumulator //unlike in BRK, PC not incremented
 }));
 /*
+    implied push
     addressing mode for instructions pushing to stack
 */
-addressingmode(addr_implied_push, passarray ({
+addressingmode(addr_imp_push, passarray ({
     fetch_opcode,
     fetch_throw,
     stack_push_register
 }));
 
 /*
+    implied pull
     addressing mode for instructions pulling from stack
 */
-addressingmode(addr_implied_pull, passarray ({
+addressingmode(addr_imp_pull, passarray ({
     fetch_opcode,
     fetch_throw,
     increment_S,
@@ -318,14 +320,20 @@ addressingmode(addr_relative, passarray({
     branch_fixPCH
 }));
 
-addressingmode(addr_absolute_r, passarray({
+/*
+absolute addressing - read
+*/
+addressingmode(addr_abs_r, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH,
     read_addr_exe   //executes operation
 }));
 
-addressingmode(addr_absolute_rmw, passarray({
+/*
+absolute addressing - read, modify, write
+*/
+addressingmode(addr_abs_rmw, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH,
@@ -334,19 +342,28 @@ addressingmode(addr_absolute_rmw, passarray({
     write_addr
 }));
 
-addressingmode(addr_absolute_w, passarray({
+/*
+absolute addressing - write
+*/
+addressingmode(addr_abs_w, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH,
     write_register
 }));
 
+/*
+zeropage addressing - read
+*/
 addressingmode(addr_zeropage_r, passarray({
     fetch_opcode,
     fetch_address,
     read_addr_exe   //executes operation
 }));
 
+/*
+zeropage addressing - read, modify, write
+*/
 addressingmode(addr_zeropage_rmw, passarray({
     fetch_opcode,
     fetch_address,
@@ -355,27 +372,39 @@ addressingmode(addr_zeropage_rmw, passarray({
     write_addr
 }));
 
+/*
+zeropage addressing - write
+*/
 addressingmode(addr_zeropage_w, passarray({
     fetch_opcode,
     fetch_address,
     write_register
 }));
 
-addressingmode(addr_zpindex_X_r, passarray({
+/*
+zeropage indexed X addressing - read
+*/
+addressingmode(addr_zp_X_r, passarray({
     fetch_opcode,
     fetch_address,
     read_addr_add_X,
     read_addr
 }));
 
-addressingmode(addr_zpindex_Y_r, passarray({
+/*
+zeropage indexed Y addressing - read
+*/
+addressingmode(addr_zp_Y_r, passarray({
     fetch_opcode,
     fetch_address,
     read_addr_add_Y,
     read_addr
 }));
 
-addressingmode(addr_zpindex_X_rmw, passarray({
+/*
+zeropage indexed X addressing - read, modify, write
+*/
+addressingmode(addr_zp_X_rmw, passarray({
     fetch_opcode,
     fetch_address,
     read_addr_add_X,
@@ -384,7 +413,10 @@ addressingmode(addr_zpindex_X_rmw, passarray({
     write_addr
 }));
 
-addressingmode(addr_zpindex_Y_rmw, passarray({
+/*
+zeropage indexed Y addressing - read, modify, write
+*/
+addressingmode(addr_zp_Y_rmw, passarray({
     fetch_opcode,
     fetch_address,
     read_addr_add_Y,
@@ -393,21 +425,30 @@ addressingmode(addr_zpindex_Y_rmw, passarray({
     write_addr
 }));
 
-addressingmode(addr_zpindex_X_w, passarray({
+/*
+zeropage indexed X addressing - write
+*/
+addressingmode(addr_zp_X_w, passarray({
     fetch_opcode,
     fetch_address,
     read_addr_add_X,
     write_register
 }));
 
-addressingmode(addr_zpindex_Y_w, passarray({
+/*
+zeropage indexed Y addressing - write
+*/
+addressingmode(addr_zp_Y_w, passarray({
     fetch_opcode,
     fetch_address,
     read_addr_add_Y,
     write_register
 }));
 
-addressingmode(addr_absolute_X_r, passarray({
+/*
+absolute X addressing - read
+*/
+addressingmode(addr_abs_X_r, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH_add_X,
@@ -415,7 +456,10 @@ addressingmode(addr_absolute_X_r, passarray({
     read_addr_updated_exe
 }));
 
-addressingmode(addr_absolute_Y_r, passarray({
+/*
+absolute Y addressing - read
+*/
+addressingmode(addr_abs_Y_r, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH_add_Y,
@@ -423,7 +467,10 @@ addressingmode(addr_absolute_Y_r, passarray({
     read_addr_updated_exe
 }));
 
-addressingmode(addr_absolute_X_rmw, passarray({
+/*
+absolute X addressing - read, modify, write
+*/
+addressingmode(addr_abs_X_rmw, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH_add_X,
@@ -433,7 +480,10 @@ addressingmode(addr_absolute_X_rmw, passarray({
     write_addr
 }));
 
-addressingmode(addr_absolute_Y_rmw, passarray({
+/*
+absolute Y addressing - read, modify, write
+*/
+addressingmode(addr_abs_Y_rmw, passarray({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH_add_Y,
@@ -443,7 +493,10 @@ addressingmode(addr_absolute_Y_rmw, passarray({
     write_addr
 }));
 
-addressingmode(addr_absolute_X_w, passarray ({
+/*
+absolute X addressing - write
+*/
+addressingmode(addr_abs_X_w, passarray ({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH_add_X,
@@ -451,7 +504,10 @@ addressingmode(addr_absolute_X_w, passarray ({
     write_register_fixedADH
 }));
 
-addressingmode(addr_absolute_Y_w, passarray ({
+/*
+absolute Y addressing - write
+*/
+addressingmode(addr_abs_Y_w, passarray ({
     fetch_opcode,
     fetch_ADL,
     fetch_ADH_add_Y,
@@ -459,7 +515,10 @@ addressingmode(addr_absolute_Y_w, passarray ({
     write_register_fixedADH //trace not quite accurate as accumulator should be dealt with before
 }));
 
-addressingmode(addr_indexed_indirect_r, passarray ({
+/*
+indexed indirect addressing - read
+*/
+addressingmode(addr_indX_r, passarray ({
     fetch_opcode,
     fetch_address,
     read_ptr_add_X,
@@ -468,7 +527,10 @@ addressingmode(addr_indexed_indirect_r, passarray ({
     read_addr_exe
 }));
 
-addressingmode(addr_indexed_indirect_rmw, passarray({
+/*
+indexed indirect addressing - read, modify, write
+*/
+addressingmode(addr_indX_rmw, passarray({
     fetch_opcode,
     fetch_address,
     read_ptr_add_X,
@@ -479,7 +541,10 @@ addressingmode(addr_indexed_indirect_rmw, passarray({
     write_addr
 }));
 
-addressingmode(addr_indexed_indirect_w, passarray({
+/*
+indexed indirect addressing - write
+*/
+addressingmode(addr_indX_w, passarray({
     fetch_opcode,
     fetch_address,
     read_ptr_add_X,
@@ -488,7 +553,10 @@ addressingmode(addr_indexed_indirect_w, passarray({
     write_register
 }));
 
-addressingmode(addr_indirect_indexed_r, passarray({
+/*
+indirect indexed addressing - read
+*/
+addressingmode(addr_indY_r, passarray({
     fetch_opcode,
     fetch_address,
     fetch_ptr_ADL,
@@ -497,7 +565,10 @@ addressingmode(addr_indirect_indexed_r, passarray({
     read_addr_updated_exe
 }));
 
-addressingmode(addr_indirect_indexed_rmw, passarray ({
+/*
+indirect indexed addressing - read, modify, write
+*/
+addressingmode(addr_indY_rmw, passarray ({
     fetch_opcode,
     fetch_address,
     fetch_ptr_ADL,
@@ -508,7 +579,10 @@ addressingmode(addr_indirect_indexed_rmw, passarray ({
     write_addr
 }));
 
-addressingmode(addr_indirect_indexed_w, passarray({
+/*
+indirect indexed addressing - write
+*/
+addressingmode(addr_indY_w, passarray({
     fetch_opcode,
     fetch_address,
     fetch_ptr_ADL,
@@ -517,7 +591,10 @@ addressingmode(addr_indirect_indexed_w, passarray({
     write_register_fixedADH
 }));
 
-addressingmode(addr_absolute_indirect, passarray({ //doesn't handle page boundary crossing between PCL and PCH locations
+/*
+absolute indirect addressing - used by jump
+*/
+addressingmode(addr_jmp_abs_X, passarray({ //doesn't handle page boundary crossing between PCL and PCH locations
     fetch_opcode,
     fetch_ADL,
     fetch_ADH,
@@ -532,22 +609,22 @@ addressingmode(addr_absolute_indirect, passarray({ //doesn't handle page boundar
 #define op(instruction, mode) { instruction, &addr_##mode , #instruction }
 
 Operation operations[] = {
-    op(BRK, brk), op(ORA, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, zeropage_r), op(ASL, zeropage_rmw), op(NOT, implied), op(PHP, implied_push), op(ORA, immediate), op(ASL, accumulator), op(NOT, implied), op(NOT, implied), op(ORA, absolute_r), op(ASL, absolute_rmw), op(NOT, implied),
-    op(BPL, relative), op(ORA, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, zpindex_X_r), op(ASL, zpindex_X_rmw), op(NOT, implied), op(CLC, implied), op(ORA, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, absolute_X_r), op(ASL, absolute_X_rmw), op(NOT, implied),
-    op(JSR, jsr), op(AND, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(BIT, zeropage_r), op(AND, zeropage_r), op(ROL, zeropage_rmw), op(NOT, implied), op(PLP, implied_pull), op(AND, immediate), op(ROL, accumulator), op(NOT, implied), op(BIT, absolute_r), op(AND, absolute_r), op(ROL, absolute_rmw), op(NOT, implied),
-    op(BMI, relative), op(AND, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(AND, zpindex_X_r), op(ROL, zpindex_X_rmw), op(NOT, implied), op(SEC, implied), op(AND, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(AND, absolute_X_r), op(ROL, absolute_X_rmw), op(NOT, implied),
-    op(RTI, rti), op(EOR, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, zeropage_r), op(LSR, zeropage_rmw), op(NOT, implied), op(PHA, implied_push), op(EOR, immediate), op(LSR, accumulator), op(NOT, implied), op(JMP, JMP_absolute), op(EOR, absolute_r), op(LSR, absolute_rmw), op(NOT, implied),
-    op(BVC, relative), op(EOR, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, zpindex_X_r), op(LSR, zpindex_X_rmw), op(NOT, implied), op(CLI, implied), op(EOR, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, absolute_X_r), op(LSR, absolute_X_rmw), op(NOT, implied),
-    op(RTS, rts), op(ADC, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, zeropage_r), op(ROR, zeropage_rmw), op(NOT, implied), op(PLA, implied_pull), op(ADC, immediate), op(ROR, accumulator), op(NOT, implied), op(JMP, absolute_indirect), op(ADC, absolute_r), op(ROR, absolute_rmw), op(NOT, implied),
-    op(BVS, relative), op(ADC, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, zpindex_X_r), op(ROR, zpindex_X_rmw), op(NOT, implied), op(SEI, implied), op(ADC, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, absolute_X_r), op(ROR, absolute_X_rmw), op(NOT, implied),
-    op(NOT, implied), op(STA, indexed_indirect_w), op(NOT, implied), op(NOT, implied), op(STY, zeropage_w), op(STA, zeropage_w), op(STX, zeropage_w), op(NOT, implied), op(DEY, implied), op(NOT, implied), op(TXA, implied), op(NOT, implied), op(STY, absolute_w), op(STA, absolute_w), op(STX, absolute_w), op(NOT, implied),
-    op(BCC, relative), op(STA, indirect_indexed_w), op(NOT, implied), op(NOT, implied), op(STY, zpindex_X_w), op(STA, zpindex_X_w), op(STX, zpindex_Y_w), op(NOT, implied), op(TYA, implied), op(STA, absolute_Y_w), op(TXS, implied), op(NOT, implied), op(NOT, implied), op(STA, absolute_X_w), op(NOT, implied), op(NOT, implied),
-    op(LDY, immediate), op(LDA, indexed_indirect_r), op(LDX, immediate), op(NOT, implied), op(LDY, zeropage_r), op(LDA, zeropage_r), op(LDX, zeropage_r), op(NOT, implied), op(TAY, implied), op(LDA, immediate), op(TAX, implied), op(NOT, implied), op(LDY, absolute_r), op(LDA, absolute_r), op(LDX, absolute_r), op(NOT, implied),
-    op(BCS, relative), op(LDA, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(LDY, zpindex_X_r), op(LDA, zpindex_X_r), op(LDX, zpindex_Y_r), op(NOT, implied), op(CLV, implied), op(LDA, absolute_Y_r), op(TSX, implied), op(NOT, implied), op(LDY, absolute_X_r), op(LDA, absolute_X_r), op(LDX, absolute_Y_r), op(NOT, implied),
-    op(CPY, immediate), op(CMP, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(CPY, zeropage_r), op(CMP, zeropage_r), op(DEC, zeropage_rmw), op(NOT, implied), op(INY, implied), op(CMP, immediate), op(DEX, implied), op(NOT, implied), op(CPY, absolute_r), op(CMP, absolute_r), op(DEC, absolute_rmw), op(NOT, implied),
-    op(BNE, relative), op(CMP, indirect_indexed_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(CMP, zpindex_X_r), op(DEC, zpindex_X_rmw), op(NOT, implied), op(CLD, implied), op(CMP, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(CMP, absolute_X_r), op(DEC, absolute_X_rmw), op(NOT, implied),
-    op(CPX, immediate), op(SBC, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(CPX, zeropage_r), op(SBC, zeropage_r), op(INC, zeropage_rmw), op(NOT, implied), op(INX, implied), op(SBC, immediate), op(NOP, implied), op(NOT, implied),  op(CPX, absolute_r), op(SBC, absolute_r), op(INC, absolute_rmw), op(NOT, implied),
-    op(BEQ, relative), op(SBC, indexed_indirect_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(SBC, zpindex_X_r), op(INC, zpindex_X_rmw), op(NOT, implied), op(SED, implied), op(SBC, absolute_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(SBC, absolute_X_r), op(INC, absolute_X_r), op(NOT, implied)
+    op(BRK, imp_brk), op(ORA, indX_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, zeropage_r), op(ASL, zeropage_rmw), op(NOT, implied), op(PHP, imp_push), op(ORA, immediate), op(ASL, accumulator), op(NOT, implied), op(NOT, implied), op(ORA, abs_r), op(ASL, abs_rmw), op(NOT, implied),
+    op(BPL, relative), op(ORA, indY_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, zp_X_r), op(ASL, zp_X_rmw), op(NOT, implied), op(CLC, implied), op(ORA, abs_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ORA, abs_X_r), op(ASL, abs_X_rmw), op(NOT, implied),
+    op(JSR, imp_jsr), op(AND, indX_r), op(NOT, implied), op(NOT, implied), op(BIT, zeropage_r), op(AND, zeropage_r), op(ROL, zeropage_rmw), op(NOT, implied), op(PLP, imp_pull), op(AND, immediate), op(ROL, accumulator), op(NOT, implied), op(BIT, abs_r), op(AND, abs_r), op(ROL, abs_rmw), op(NOT, implied),
+    op(BMI, relative), op(AND, indY_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(AND, zp_X_r), op(ROL, zp_X_rmw), op(NOT, implied), op(SEC, implied), op(AND, abs_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(AND, abs_X_r), op(ROL, abs_X_rmw), op(NOT, implied),
+    op(RTI, imp_rti), op(EOR, indX_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, zeropage_r), op(LSR, zeropage_rmw), op(NOT, implied), op(PHA, imp_push), op(EOR, immediate), op(LSR, accumulator), op(NOT, implied), op(JMP, jmp_abs), op(EOR, abs_r), op(LSR, abs_rmw), op(NOT, implied),
+    op(BVC, relative), op(EOR, indY_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, zp_X_r), op(LSR, zp_X_rmw), op(NOT, implied), op(CLI, implied), op(EOR, abs_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(EOR, abs_X_r), op(LSR, abs_X_rmw), op(NOT, implied),
+    op(RTS, imp_rts), op(ADC, indX_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, zeropage_r), op(ROR, zeropage_rmw), op(NOT, implied), op(PLA, imp_pull), op(ADC, immediate), op(ROR, accumulator), op(NOT, implied), op(JMP, jmp_abs_X), op(ADC, abs_r), op(ROR, abs_rmw), op(NOT, implied),
+    op(BVS, relative), op(ADC, indY_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, zp_X_r), op(ROR, zp_X_rmw), op(NOT, implied), op(SEI, implied), op(ADC, abs_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(ADC, abs_X_r), op(ROR, abs_X_rmw), op(NOT, implied),
+    op(NOT, implied), op(STA, indX_w), op(NOT, implied), op(NOT, implied), op(STY, zeropage_w), op(STA, zeropage_w), op(STX, zeropage_w), op(NOT, implied), op(DEY, implied), op(NOT, implied), op(TXA, implied), op(NOT, implied), op(STY, abs_w), op(STA, abs_w), op(STX, abs_w), op(NOT, implied),
+    op(BCC, relative), op(STA, indY_w), op(NOT, implied), op(NOT, implied), op(STY, zp_X_w), op(STA, zp_X_w), op(STX, zp_Y_w), op(NOT, implied), op(TYA, implied), op(STA, abs_Y_w), op(TXS, implied), op(NOT, implied), op(NOT, implied), op(STA, abs_X_w), op(NOT, implied), op(NOT, implied),
+    op(LDY, immediate), op(LDA, indX_r), op(LDX, immediate), op(NOT, implied), op(LDY, zeropage_r), op(LDA, zeropage_r), op(LDX, zeropage_r), op(NOT, implied), op(TAY, implied), op(LDA, immediate), op(TAX, implied), op(NOT, implied), op(LDY, abs_r), op(LDA, abs_r), op(LDX, abs_r), op(NOT, implied),
+    op(BCS, relative), op(LDA, indY_r), op(NOT, implied), op(NOT, implied), op(LDY, zp_X_r), op(LDA, zp_X_r), op(LDX, zp_Y_r), op(NOT, implied), op(CLV, implied), op(LDA, abs_Y_r), op(TSX, implied), op(NOT, implied), op(LDY, abs_X_r), op(LDA, abs_X_r), op(LDX, abs_Y_r), op(NOT, implied),
+    op(CPY, immediate), op(CMP, indX_r), op(NOT, implied), op(NOT, implied), op(CPY, zeropage_r), op(CMP, zeropage_r), op(DEC, zeropage_rmw), op(NOT, implied), op(INY, implied), op(CMP, immediate), op(DEX, implied), op(NOT, implied), op(CPY, abs_r), op(CMP, abs_r), op(DEC, abs_rmw), op(NOT, implied),
+    op(BNE, relative), op(CMP, indY_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(CMP, zp_X_r), op(DEC, zp_X_rmw), op(NOT, implied), op(CLD, implied), op(CMP, abs_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(CMP, abs_X_r), op(DEC, abs_X_rmw), op(NOT, implied),
+    op(CPX, immediate), op(SBC, indX_r), op(NOT, implied), op(NOT, implied), op(CPX, zeropage_r), op(SBC, zeropage_r), op(INC, zeropage_rmw), op(NOT, implied), op(INX, implied), op(SBC, immediate), op(NOP, implied), op(NOT, implied),  op(CPX, abs_r), op(SBC, abs_r), op(INC, abs_rmw), op(NOT, implied),
+    op(BEQ, relative), op(SBC, indY_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(SBC, zp_X_r), op(INC, zp_X_rmw), op(NOT, implied), op(SED, implied), op(SBC, abs_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(SBC, abs_X_r), op(INC, abs_X_r), op(NOT, implied)
 };
 
 Operation decode(CPU *cpu) {
