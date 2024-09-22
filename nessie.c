@@ -53,6 +53,7 @@ int main(int argc, char *argv[]) {
     Bus bus;
     CPU *cpu;
 
+    cpu = cpu_create();
     filename = check_args(argc, argv);
     cartridge = cartridge_load(filename);
     ram.data = ram_mem;
@@ -62,13 +63,12 @@ int main(int argc, char *argv[]) {
     // io.read = &read_io;
     // io.write = &write_io;
 
-
     bus = bus_create(&cartridge, &ram);
-    cpu = cpu_create();
 
     power_cpu(cpu);
     print_cpu(cpu);
     int t_limit = 50;
+
     printf("Read: %02x\n", bus_read(bus, 0xFFFC));
     printf("Read: %02x\n", bus_read(bus, 0xFFFE));
     printf("Read: %02x\n", bus_read(bus, 0xFFFF));
