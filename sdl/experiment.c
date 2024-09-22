@@ -15,12 +15,10 @@ int main(void) {
 
     while (!quit) {
         handle_events(&quit);
-        //update game state   
-        screen_pixel(screen, 0, 0, 255, 6, 30);
-        screen_pixel(screen, 0, 0, 255, 7, 30);
-        screen_pixel(screen, 0, 0, 255, 8, 30);
-        screen_pixel(screen, 0, 0, 255, 9, 30);
-        screen_pixel(screen, 0, 0, 255, 10, 30);  
+        //update game state
+        for(int i = 0; i < NTSC_SCANLINES_RENDERED; i++) {
+            screen_pixel(screen, 0, 0, 255, i, i);
+        }
         //draw current frame
         screen_draw_frame(screen);
         clock++;
