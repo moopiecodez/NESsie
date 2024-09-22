@@ -7,7 +7,7 @@
 #define BYTE uint8_t
 
 typedef struct cpu CPU;
-CPU * cpu_create();
+CPU *cpu_create();
 
 void clocktick(CPU *, Bus);
 void print_cpu(CPU *);

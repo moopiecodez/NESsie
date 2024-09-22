@@ -61,8 +61,9 @@ int main(int argc, char *argv[]) {
     Device cartridge;
     Device ram;
     Bus bus;
-    CPU cpu;
+    CPU *cpu;
 
+    cpu = cpu_create();
     filename = check_args(argc, argv);
     cartridge = cartridge_load(filename);
     ram.data = memory;
@@ -70,16 +71,16 @@ int main(int argc, char *argv[]) {
     ram.write = &write_mem;
     bus = bus_create(&cartridge, &ram);
 
-    power_cpu(&cpu);
-    print_cpu(&cpu);
-    int t_limit = 10;
+    power_cpu(cpu);
+    print_cpu(cpu);
+    int t_limit = 30;
     printf("Read: %02x\n", bus_read(bus, 0xFFFC));
     printf("Read: %02x\n", bus_read(bus, 0xFFFE));
     printf("Read: %02x\n", bus_read(bus, 0xFFFF));
     printf("Read: %02x\n", bus_read(bus, 0xC000));
 
     for (int t = 0; t < t_limit; t++) {
-        clocktick(&cpu, bus);
+        clocktick(cpu, bus);
     }
     
     return 0;

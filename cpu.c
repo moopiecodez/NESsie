@@ -42,7 +42,7 @@ struct cpu {
     BYTE ACR_FLAG;  /*ALU carry register used as a flag if ALU operation resulted in a carry*/
 };
 
-CPU * cpu_create(){
+CPU *cpu_create(){
     CPU *cpu = malloc(sizeof(struct cpu));
     return cpu;
 }
