@@ -13,22 +13,35 @@ void draw();
 void handle_events(bool *);
 
 int main(void) {
-    Uint32 flags;
+    Uint32 init_flags;
+    Uint32 renderer_flags;
+    Uint8 r;
+    Uint8 g;
+    Uint8 b;
+    Uint8 a = SDL_ALPHA_OPAQUE; //set as not using alpha channel
     bool quit;
 
-    flags = SDL_INIT_VIDEO;
-    SDL_Init(flags);
-    // SDL_Window *Nessie_screen = create_screen();
-    create_screen();
+    init_flags = SDL_INIT_VIDEO;
+    renderer_flags = 0;
+    SDL_Init(init_flags);
+
+    SDL_Window *Nessie_screen = create_screen();
+    SDL_Renderer *renderer = SDL_CreateRenderer(Nessie_screen, -1, renderer_flags);
+    r = 0;
+    g = 0;
+    b = 255;
+    SDL_SetRenderDrawColor(renderer, r, g, b, a);
+    SDL_RenderDrawPoint(renderer, 3, 3);
+    SDL_RenderPresent(renderer);
 
     quit = false;
     int clock = 0;
     while (!quit) {
-        printf("Clock cycle: %d\n", clock);
-        handle_events(&quit);
+        handle_events(&quit);     
         draw();
         clock++;
     }
+    printf("Clock cycle: %d\n", clock);
 
     SDL_Quit();
     return 0;
