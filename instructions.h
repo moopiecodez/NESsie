@@ -1,57 +1,134 @@
-#include <stdint.h>
+#ifndef INSTRUCTIONS_H
+#define INSTRUCTIONS_H
+
 #define BYTE uint8_t
 
-void ADC(BYTE memory);
 
-void BRK();
-void RTI();
-void ORA(BYTE compared);
-//may need to change to take memory address to update
-void ASL(BYTE *byte);
-void PHP(); 
-void PHA();
-void PLP();
-void PLA();
+typedef void Instruction(CPU *);
+//Read instructions:
+Instruction LDA;
+Instruction LDX;
+Instruction LDY;
+Instruction EOR;
+Instruction AND;
+Instruction ORA;
+Instruction ADC;
+Instruction SBC;
+Instruction CMP;
+Instruction BIT;
+Instruction NOP;
 
-//helper functions
-void push_to_stack(BYTE reg);
-BYTE pull_from_stack();
-void compare_flags(BYTE reg, BYTE memory);
 
-//clear flag instructions
-void CLC();
-void CLD();
-void CLI();
-void CLV();
+//RMW instructions:
+Instruction ASL;
+Instruction LSR;
+Instruction ROL;
+Instruction ROR;
+Instruction INC;
+Instruction INX;
+Instruction INY;
+Instruction DEC;
+Instruction DEX;
+Instruction DEY;
 
-//comparison instructions
-void CMP(BYTE memory);
-void CPX(BYTE memory);
-void CPY(BYTE memory);
+void increment(CPU *cpu, BYTE memory);
+void decrement(CPU *cpu, BYTE *memory);
 
-void AND(BYTE memory);
+//transfer instructions
+Instruction TAX;
+Instruction TAY;
+Instruction TSX;
+Instruction TXA;
+Instruction TXS;
+Instruction TYA;
+
+// Write instructions:
+Instruction STX;
+Instruction STA;
+Instruction STY;
+
+Instruction CLC;
+Instruction CLD;
+Instruction CLI;
+Instruction CLV;
+Instruction CPY;
+Instruction CPX;
 
 //branch instructions
-void BCC(BYTE rdisplacement);
-void BCS(BYTE rdisplacement);
-void BEQ(BYTE rdisplacement);
-void BMI(BYTE rdisplacement);
-void BNE(BYTE rdisplacement);
-void BPL(BYTE rdisplacement);
-void BVC(BYTE rdisplacement);
-void BVS(BYTE rdisplacement);
+Instruction BCC;
+Instruction BCS;
+Instruction BEQ;
+Instruction BMI;
+Instruction BNE;
+Instruction BPL;
+Instruction BVC;
+Instruction BVS;
 
-void BIT(BYTE memory);
+//stack instructions
+Instruction PHA;
+Instruction PHP;
+Instruction PLA;
+Instruction PLP;
 
-//decrement instructions
-void DEC(BYTE *memory);
-void DEX();
-void DEY();
+//interrupts
+Instruction BRK;
+Instruction RTI;
 
-void EOR(BYTE memory);
+typedef void addr_mode_step(CPU *, BYTE *, Instruction *);
+addr_mode_step fetch_opcode;
+addr_mode_step fetch_throw;
+addr_mode_step fetch_throw_brk;
+addr_mode_step imm_fetch_operand;
+addr_mode_step stack_push_PCH;
+addr_mode_step stack_push_PCL;
+addr_mode_step stack_push_register;
+addr_mode_step increment_S;
+addr_mode_step increment_PC;
+addr_mode_step stack_pull_PCH;
+addr_mode_step stack_pull_PCL;
+addr_mode_step stack_pull_register;
+addr_mode_step fetch_PCL;
+addr_mode_step fetch_PCH;
+addr_mode_step fetch_ADL;
+addr_mode_step fetch_ADH;
+addr_mode_step fetch_address;
+addr_mode_step read_addr_exe;
+addr_mode_step read_addr;
+addr_mode_step read_zp_addr_exe;
+addr_mode_step read_zp_addr;
+addr_mode_step modify;
+addr_mode_step write_addr;
+addr_mode_step write_register;
+addr_mode_step read_addr_add_X;
+addr_mode_step read_addr_add_Y;
+addr_mode_step fetch_ADH_add_X;
+addr_mode_step fetch_ADH_add_Y;
+addr_mode_step read_addr_fixADH_exe;
+addr_mode_step read_addr_updated_exe;
+addr_mode_step read_addr_fixADH;
+addr_mode_step read_addr_updated;
+addr_mode_step write_register_fixedADH;
+addr_mode_step read_ptr_add_X;
+addr_mode_step fetch_ptr_ADL;
+addr_mode_step fetch_ptr_ADH_add_Y;
+addr_mode_step fetch_ptrX_ADL;
+addr_mode_step fetch_ptrX_ADH;
+addr_mode_step branch_PCL;
+addr_mode_step branch_fixPCH;
+addr_mode_step read_PCH;
+addr_mode_step hold_ADL;
+addr_mode_step set_PC_to_JSR;
+addr_mode_step set_PC_to_JMP;
 
-//increment instructions
-void INC(BYTE *memory);
-void INX();
-void INY();
 
+typedef struct addr_mode {
+    int numsteps;
+    addr_mode_step **step;
+} AddressingMode;
+
+typedef struct op {
+    Instruction *ins;
+    AddressingMode *mode;
+} Operation;
+
+#endif
