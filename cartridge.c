@@ -41,6 +41,7 @@ struct cartridge {
     Mapper mapper;
     RomBank prg_low;
     RomBank prg_high;
+    RomBank chr_rom;
 };
 
 
@@ -177,6 +178,7 @@ uint8_t map_000_read(void *data, uint16_t address) {
 void map_000_init(Cartridge cartridge) {
     cartridge->prg_low = cartridge->bank_prg[0];
     cartridge->prg_high = cartridge->bank_prg[0];
+    cartridge->chr_rom = cartridge->bank_chr[0]; //check memory mapping
 }
 
 void set_mapper(Cartridge cartridge) {

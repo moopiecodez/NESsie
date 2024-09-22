@@ -9,7 +9,7 @@
     array to hold NES memory addresses from $0000-$FFFF, each page is 0xFF will 
     need to do memory mirroring $0000-$07FF mapped to $0800-$1FFF
 */
-BYTE memory[0x2000] = {
+BYTE ram_mem[0x2000] = {
     0x02, 0x23, 0x08, 0xfe, 0x00, 0x02, 0x01, 0x00, 0x03, 0x44, 0x01, 0x05, 0x24, 0x18, 0xCC, 0x1E,
     0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x20, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -32,18 +32,6 @@ BYTE memory[0x2000] = {
 
 };
 
-uint8_t read_mem(void *data, uint16_t address) {
-    BYTE *memory = (BYTE *) data;
-    uint8_t byte = memory[address];
-    return byte;
-}
-
-void write_mem(void *data, uint16_t address, uint8_t byte) {
-    BYTE *memory = (BYTE *) data;
-    memory[address] = byte;
-}
-
-
 char *check_args(int argc, char *argv[]) {
     if (argc == 1) {
         printf("Error: no arguments provided\n");
@@ -60,26 +48,43 @@ int main(int argc, char *argv[]) {
     char *filename;
     Device cartridge;
     Device ram;
+    Device ppu; //question how this works
+    Device io;
     Bus bus;
-    CPU cpu;
+    CPU *cpu;
 
     filename = check_args(argc, argv);
     cartridge = cartridge_load(filename);
-    ram.data = memory;
-    ram.read = &read_mem;
-    ram.write = &write_mem;
-    bus = bus_create(&cartridge, &ram);
+    ram.data = ram_mem;
+    ram.read = &read_ram;
+    ram.write = &write_ram;
+    // io.data = io_mem;
+    // io.read = &read_io;
+    // io.write = &write_io;
 
-    power_cpu(&cpu);
-    print_cpu(&cpu);
-    int t_limit = 10;
+
+    bus = bus_create(&cartridge, &ram);
+    cpu = cpu_create();
+
+    power_cpu(cpu);
+    print_cpu(cpu);
+    int t_limit = 50;
     printf("Read: %02x\n", bus_read(bus, 0xFFFC));
     printf("Read: %02x\n", bus_read(bus, 0xFFFE));
     printf("Read: %02x\n", bus_read(bus, 0xFFFF));
     printf("Read: %02x\n", bus_read(bus, 0xC000));
 
+    //change to while(!gameexit)
     for (int t = 0; t < t_limit; t++) {
-        clocktick(&cpu, bus);
+        printf("master clock cycle: %d\n", t);
+        //need to handle interrupts
+        //refresh(screen);
+        if(t % 4 == 0) {
+            pputick(ppu, bus);
+        }
+        if(t % 12 == 0) {
+            clocktick(cpu, bus);
+        }
     }
     
     return 0;
