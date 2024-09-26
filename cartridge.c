@@ -157,7 +157,7 @@ void romfile_extract_chr_rom(FILE *fp, Cartridge cartridge) {
 void map_000_write(void *data, uint16_t address, uint8_t byte) {
     // Cartridge cartridge = (Cartridge) data;
     if(address >= PRGROM_LOW_START && address < ADDR_RANGE_END) {
-        printf("PRG ROM: Invalid write\n");
+        // printf("PRG ROM: Unexpected write\n");
     };
 }
 

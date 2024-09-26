@@ -197,21 +197,12 @@ Operation decode(CPU *cpu);
 
 void execute(CPU *, Operation, Bus);
 
-void print_cpu(CPU *cpu) {
-    char flags[8];
-    for (int i = 7; i >= 0; i--) {
-        flags[7-i] = cpu->P & (1<<i) ? '1' : '0';
-    }
-    printf("PC: %04x, AB: %04x, DB: %02x, IR: %02x, A: %02x, X: %02x, Y: %02x, P: %s, T: %u, DL: %02x, ALU: %02x, ACR: %02x\n",
-            cpu->PC, cpu->AB, cpu->DB, cpu->IR, cpu->A, cpu->X, cpu->Y,
-              flags, cpu->T, cpu->DL, cpu->ALU, cpu->ACR_FLAG);
-}
+void print_cpu(CPU *cpu);
 
 void clocktick(CPU *cpu, Bus bus) {
     Operation operation;
     operation = decode(cpu);
     execute(cpu, operation, bus);
-    printf("%s | ", operation.name);
     print_cpu(cpu);
     cpu->T++;
 }
@@ -358,7 +349,7 @@ zeropage addressing - read
 addressingmode(addr_zeropage_r, passarray({
     fetch_opcode,
     fetch_address,
-    read_addr_exe   //executes operation
+    read_zp_addr_exe   //executes operation
 }));
 
 /*
@@ -367,7 +358,7 @@ zeropage addressing - read, modify, write
 addressingmode(addr_zeropage_rmw, passarray({
     fetch_opcode,
     fetch_address,
-    read_addr,
+    read_zp_addr,
     modify,
     write_addr
 }));
@@ -627,6 +618,16 @@ Operation operations[] = {
     op(BEQ, relative), op(SBC, indY_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(SBC, zp_X_r), op(INC, zp_X_rmw), op(NOT, implied), op(SED, implied), op(SBC, abs_Y_r), op(NOT, implied), op(NOT, implied), op(NOT, implied), op(SBC, abs_X_r), op(INC, abs_X_r), op(NOT, implied)
 };
 
+void print_cpu(CPU *cpu) {
+    char flags[8];
+    for (int i = 7; i >= 0; i--) {
+        flags[7-i] = cpu->P & (1<<i) ? '1' : '0';
+    }
+    printf("%s | PC: %04x, AB: %04x, DB: %02x, IR: %02x, A: %02x, X: %02x, Y: %02x, P: %s, T: %u, DL: %02x, ALU: %02x, ACR: %02x\n",
+            operations[cpu->IR].name, cpu->PC, cpu->AB, cpu->DB, cpu->IR, cpu->A, cpu->X, cpu->Y,
+              flags, cpu->T, cpu->DL, cpu->ALU, cpu->ACR_FLAG);
+}
+
 Operation decode(CPU *cpu) {
     Operation operation = operations[cpu->IR];
     if(cpu->T >= operation.mode->numsteps) {
@@ -822,6 +823,7 @@ void set_PC_to_JMP(CPU *cpu, Bus bus, Instruction *ins){
 
 void hold_ADL(CPU *cpu, Bus bus, Instruction *ins){
     cpu->ALU = cpu->DL; //holds ADL for jump later in JSR
+    cpu->AB = STACK_BASE + cpu->S; //address set to stack pointer
     ins(cpu);
 }
 
