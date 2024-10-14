@@ -44,6 +44,7 @@ struct cpu {
 
 CPU *cpu_create(){
     CPU *cpu = malloc(sizeof(struct cpu));
+    cpu->S = 0xFFu; //initialises stack pointer for RAM based program
     return cpu;
 }
 
