@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <SDL2/SDL.h>
+#include <stdbool.h>
+#include "./sdl/screen.h"
 #include "cpu.h"
 #include "cartridge.h"
 #include "bus.h"
 
 /*
-    array to hold NES memory addresses from $0000-$FFFF, each page is 0xFF will 
-    need to do memory mirroring $0000-$07FF mapped to $0800-$1FFF
+    array to hold NES RAM
 */
 
 BYTE memory[0x4020] = {
@@ -32,6 +34,32 @@ BYTE memory[0x4020] = {
     0x12, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 
 };
+//dummy graphics data
+uint8_t dummypat[0x10] = {  0x18, 0x38, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x00, 
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+uint8_t *ptr = dummypat;
+
+void handle_events(bool *quit) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_QUIT:
+            *quit = true;
+        }
+    }
+}
+
+uint8_t read_mem(void *data, uint16_t address) {
+    BYTE *memory = (BYTE *) data;
+    uint8_t byte = memory[address];
+    return byte;
+}
+
+void write_mem(void *data, uint16_t address, uint8_t byte) {
+    BYTE *memory = (BYTE *) data;
+    memory[address] = byte;
+}
+
 
 char *check_args(int argc, char *argv[]) {
     if (argc == 1) {
@@ -46,43 +74,75 @@ char *check_args(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
+    //set up components
     char *filename;
     Device cartridge;
     Device ram;
-    Device ppu; //question how this works
-    Device io;
+    //Device ppu; //placeholder
+    //Device io;  //placeholder
     Bus bus;
     CPU *cpu;
+    int ppuclock = 0;
+    int masterclock = 0;
+    int cpuclock = 0;
 
+    //set up screen
+    Uint32 init_flags = SDL_INIT_VIDEO;
+    SDL_Init(init_flags);
+    Screen screen = create_screen();
+
+    //extract dummy graphics
+    int i;
+    int j;
+    uint8_t plane1[8][8];
+    uint8_t plane2[8][8];
+    uint8_t result[8][8];
+    for(i = 0; i < 8; i++) {
+        for(j = 0; j < 8; j++) {
+        plane1[i][j] = *(ptr + i) >> (7-j) & ~(~0<<1); //7-j is needed to get it in correct position in array which is reverse of bit position
+        plane2[i][j] = *(ptr + i + 8) >> (7-j) & ~(~0<<1);
+        result[i][j] = plane1[i][j] + plane2[i][j];
+        printf("%d", result[i][j]);
+        }    
+    } 
+
+    //load cartridge
     cpu = cpu_create();
     filename = check_args(argc, argv);
     cartridge = cartridge_load(filename);
     ram.data = memory;
-    ram.read = &read_ram;
-    ram.write = &write_ram;
+    ram.read = &read_mem;
+    ram.write = &write_mem;
     // io.data = io_mem;
     // io.read = &read_io;
     // io.write = &write_io;
 
     bus = bus_create(&cartridge, &ram);
-
     power_cpu(cpu);
+        
+    bool quit = false;
 
-    int t_limit = 101;
-
-    // for (int t = 0; t < t_limit; t++) {
-    //     printf("master clock cycle: %d\n", t);
-    //     if(t % 4 == 0) {
-    //         pputick(ppu, bus);
-    //     }
-    //     if(t % 12 == 0) {
-    //         clocktick(cpu, bus);
-    //     }
-
-    for (int t = 1; t < t_limit; t++) {
-        printf("Cycle: %03d| ", t);
-        clocktick(cpu, bus);
+    while (!quit) {
+        handle_events(&quit);
+        //update game state
+        if(masterclock % 4 == 0) {
+            for(i = 0; i < 8; i++) {
+                for(int j = 0; j < 8; j++) {
+                    uint8_t pixel_on = result[i][j];
+                    if(pixel_on != 0){
+                        screen_pixel(screen, 0, 0, 255, j, i);
+                    }
+                }
+            }
+            screen_draw_frame(screen);
+            ppuclock++;
+        }
+        if(masterclock % 12 == 0) {
+            printf("Cycle: %03d| ", cpuclock);
+            clocktick(cpu, bus);
+            cpuclock++;
+        }
     }
-    
+    SDL_Quit();
     return 0;
 }

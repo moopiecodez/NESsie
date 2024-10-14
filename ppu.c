@@ -11,11 +11,7 @@ struct ppu {
     uint8_t PPUSCROLL;  //$2005 VRAM address reg 1
     uint8_t PPUADDR;    //$2006 VRAM address reg 2
     uint8_t PPUDATA;    //$2007 reads or write byte from VRAM at curent address
-    uint8_t DMA;        //$4014
-    uint8_t *nametable_0; //2kiB VRAM internal to NES
-    uint8_t *nametable_1;
-    uint8_t *OAM;       //256 bytes of memory, array with 64 entries of 4 bytes each
-    uint8_t palette_RAM[0x20]; //internal not on RAM
+    uint8_t OAMDMA;        //$4014
 };
 
 //4 palettes each containing 6bit colour value referencing one of the 64 colour

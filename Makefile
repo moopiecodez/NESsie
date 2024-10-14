@@ -9,7 +9,7 @@ TESTSUITES = testpowercpu.o	testArithmetic.o testBranch.o testFlagChanges.o\
 .PHONY: clean
 
 nessie: nessie.c cpu.c cartridge.c bus.c
-	$(CC) $(CFLAGS) nessie.c cpu.c cartridge.c bus.c -o $@
+	$(CC) $(CFLAGS) nessie.c cpu.c cartridge.c bus.c screen.c -o $@ -l SDL2
 
 loadRom: loadROM.c
 	$(CC) $(CFLAGS) loadROM.c -o $@
